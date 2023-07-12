@@ -57,8 +57,14 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		CONTENT_TYPE = req_headers:get('content-type'),
 		CONTENT_LENGTH = req_headers:get('content-length'),
 		HTTP_COOKIE = req_headers:get('cookie'),
-
 	}
+
+	-- import all nonstandard headers; they're important
+	for name, val in req_headers:each() do
+		if name:match('^[Xx]%-') then
+			request[ 'HTTP_' .. name:upper() ] = val
+		end
+	end
 
 	request.input = stream:get_body_as_file()
 
@@ -72,7 +78,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	end
 
 	local res_headers = http_headers.new()
-	res_headers:append("Server", "Multitask (lua-http)")
+	res_headers:append("Server", "nginx")	-- hide
 	res_headers:append(":status", status)
 
 	for k, v in pairs(wsapi_headers) do
@@ -86,10 +92,10 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 
 	stream:write_chunk("", true)
 
-	output.info(string.format("Web: [%s %s %s]: [%s]",
+	output.info(string.format("Web: [%s %s]: [%s]",
+		request.REMOTE_ADDR,
 		request.REQUEST_METHOD,
 		request.PATH_INFO,
-		request.SERVER_PROTOCOL,
 		status
 	))
 end

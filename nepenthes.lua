@@ -98,15 +98,26 @@ app:get "/(.*)" {
 			}
 		end
 
-		--
-		-- Oh you think this was fast?
-		--
-		cqueues.sleep( bounded_val(6, 1) )
-
-		return {
+		local ret = {
 			links = links,
-			header = getword()
+			header = getword(),
+			prefix = config.prefix
 		}
+		
+		--
+		-- Allow attaching to multiple places via nginx configuration
+		-- alone.
+		--
+		if web['HTTP_X-PREFIX'] then
+			ret.prefix = web['HTTP_X-PREFIX']
+		end
+
+		--
+		-- Oh you think this was supposed to be fast?
+		--
+		cqueues.sleep( bounded_val(config.max_wait or 10, 1) )
+
+		return ret
 
 	end,
 	
