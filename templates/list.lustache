@@ -1,0 +1,6 @@
+<h3>{{ header }}</h3>
+<ul>
+{{# links }}
+	<li><a href="{{ prefix }}/{{ link }}">{{ description }}</a></li>
+{{/ links }}
+</ul>
