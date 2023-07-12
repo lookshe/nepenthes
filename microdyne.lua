@@ -78,7 +78,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	end
 
 	local res_headers = http_headers.new()
-	res_headers:append("Server", "nginx")	-- hide
+	res_headers:append("Server", config.server_software or 'nginx')
 	res_headers:append(":status", status)
 
 	for k, v in pairs(wsapi_headers) do
