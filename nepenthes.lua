@@ -94,7 +94,7 @@ app:get "/(.*)" {
 		for i = 1, len do
 			links[ #links + 1 ] = {
 				description = getword(),
-				link = table.concat(buildtab( bounded_val( 5, 0 ) ), "/")
+				link = table.concat(buildtab( bounded_val( 5, 1 ) ), "/")
 			}
 		end
 
