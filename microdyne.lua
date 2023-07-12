@@ -78,10 +78,13 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	--
 	-- Call WSAPI application here
 	--
-	local status, wsapi_headers, iter = app.run( request )
+	local rawstatus, wsapi_headers, iter = app.run( request )
 
-	if type(status) == 'string' then
-		status = status:match("^(%d+)")
+	local status
+	if type(rawstatus) == 'string' then
+		status = rawstatus:match("^(%d+)")
+	else
+		status = rawstatus
 	end
 
 	local res_headers = http_headers.new()
@@ -99,11 +102,11 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 
 	stream:write_chunk("", true)
 
-	output.info(string.format("Web: [%s %s]: [%s]",
+	output.info(string.format("Web: %s [%s %s] %s",
 		request.REMOTE_ADDR,
 		request.REQUEST_METHOD,
 		request.PATH_INFO,
-		status
+		rawstatus
 	))
 end
 
