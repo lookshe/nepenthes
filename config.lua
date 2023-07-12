@@ -7,6 +7,7 @@ return {
 	nochdir = true,
 	pidfile = './pidfile',
 	max_wait = 10,
-	real_ip_header	= 'X-Forwarded-For'
+	real_ip_header	= 'X-Forwarded-For',
+	prefix_header = 'X-Prefix'
 
 }

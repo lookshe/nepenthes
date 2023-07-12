@@ -108,8 +108,8 @@ app:get "/(.*)" {
 		-- Allow attaching to multiple places via nginx configuration
 		-- alone.
 		--
-		if web['HTTP_X-PREFIX'] then
-			ret.prefix = web['HTTP_X-PREFIX']
+		if web.HTTP_X_PREFIX then
+			ret.prefix = web.HTTP_X_PREFIX 
 		end
 
 		--

@@ -33,6 +33,11 @@ local app_f = assert(loadfile( arg[1] ))
 for k, v in pairs(cf) do config[k] = v end
 
 
+local function header_cleanup( var )
+	return 'HTTP_' .. var:upper():gsub("%-", '_')
+end
+
+
 local function http_responder( server, stream )	-- luacheck: ignore 212
 
 	local req_headers = stream:get_headers()
@@ -62,14 +67,16 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	-- import all nonstandard headers; they're important
 	for name, val in req_headers:each() do
 		if name:match('^[Xx]%-') then
-			request[ 'HTTP_' .. name:upper() ] = val
+			request[ header_cleanup( name) ] = val
 		end
 	end
 	
 	-- X-forwarded-for or similar?
 	if config.real_ip_header then
-		if request['HTTP_' .. string.upper(config.real_ip_header)] then
-			request.REMOTE_ADDR = request['HTTP_' .. string.upper(config.real_ip_header)]
+		local real_ip = request[header_cleanup(config.real_ip_header)] 
+	
+		if real_ip then
+			request.REMOTE_ADDR = real_ip
 		end
 	end
 
