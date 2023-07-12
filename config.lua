@@ -6,6 +6,7 @@ return {
 	templates = './templates',
 	nochdir = true,
 	pidfile = './pidfile',
-	max_wait = 10
+	max_wait = 10,
+	real_ip_header	= 'X-Forwarded-For'
 
 }

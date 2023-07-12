@@ -65,6 +65,13 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 			request[ 'HTTP_' .. name:upper() ] = val
 		end
 	end
+	
+	-- X-forwarded-for or similar?
+	if config.real_ip_header then
+		if request['HTTP_' .. string.upper(config.real_ip_header)] then
+			request.REMOTE_ADDR = request['HTTP_' .. string.upper(config.real_ip_header)]
+		end
+	end
 
 	request.input = stream:get_body_as_file()
 
