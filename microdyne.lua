@@ -61,20 +61,24 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		REMOTE_USER = req_headers:get('authorization'),	-- XXX: parse this
 		CONTENT_TYPE = req_headers:get('content-type'),
 		CONTENT_LENGTH = req_headers:get('content-length'),
-		HTTP_COOKIE = req_headers:get('cookie'),
+		HTTP_COOKIE = req_headers:get('cookie')
 	}
+
+	-- XXX: I'm sorry
+	request[ header_cleanup('X_USER_AGENT') ] = req_headers:get('user-agent')
 
 	-- import all nonstandard headers; they're important
 	for name, val in req_headers:each() do
+		--print(name, val)
 		if name:match('^[Xx]%-') then
 			request[ header_cleanup( name) ] = val
 		end
 	end
-	
+
 	-- X-forwarded-for or similar?
 	if config.real_ip_header then
-		local real_ip = request[header_cleanup(config.real_ip_header)] 
-	
+		local real_ip = request[header_cleanup(config.real_ip_header)]
+
 		if real_ip then
 			request.REMOTE_ADDR = real_ip
 		end
@@ -130,7 +134,7 @@ local function startup()
 	if config.nochdir then
 		unix.chdir(location)
 	end
-	
+
 	if config.pidfile then
 		daemonize.pidfile( config.pidfile )
 	end
@@ -167,7 +171,7 @@ else
 end
 
 output.notice("Startup HTTP:", config.http_host, config.http_port)
-	
+
 repeat
 	local res, err = cq:step(2)
 	if not res then

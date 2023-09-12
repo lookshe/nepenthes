@@ -7,6 +7,8 @@ local config = require 'daemonparts.config'
 local mers = require 'random'
 local cqueues = require 'cqueues'
 
+local stats = require 'stats'
+
 
 --
 -- Load Dictionary
@@ -61,30 +63,39 @@ end
 
 local app = perihelion.new()
 
+app:get "/stats" {
+	function ( web )
+		stats.sweep()
+
+		web.CONTENT_TYPE = 'application/json'
+		return web:ok( stats.scoreboard() )
+	end
+}
+
 app:get "/(.*)" {
 	function ( web )
-	
+
 		local dig = digest.new()
 		local hash = dig:final( web.PATH_INFO )
 		local rnd = mers.new()
-	
+
 		rnd:seed(string.unpack( "j", hash ))
 
 		local function bounded_val( upper, lower )
 			return( math.floor(rnd:value() * (upper - lower)) + lower)
 		end
-		
+
 		local function getword()
 			return dict[ bounded_val( #dict, 0 ) ]
 		end
 
 		local function buildtab( size )
 			local ret = {}
-			
-			for i = 1, size do 
+
+			for i = 1, size do
 				ret[ #ret + 1 ] = getword()
 			end
-			
+
 			return ret
 		end
 
@@ -103,14 +114,20 @@ app:get "/(.*)" {
 			header = getword(),
 			prefix = config.prefix
 		}
-		
+
 		--
 		-- Allow attaching to multiple places via nginx configuration
 		-- alone.
 		--
 		if web.HTTP_X_PREFIX then
-			ret.prefix = web.HTTP_X_PREFIX 
+			ret.prefix = web.HTTP_X_PREFIX
 		end
+		
+		
+		--
+		-- Keep stats about out prey
+		--
+		stats.log_agent( web.HTTP_X_USER_AGENT )
 
 		--
 		-- Oh you think this was supposed to be fast?
@@ -120,7 +137,7 @@ app:get "/(.*)" {
 		return ret
 
 	end,
-	
+
 	render( 'list' )
 }
 
