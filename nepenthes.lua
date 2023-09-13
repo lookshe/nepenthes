@@ -141,4 +141,5 @@ app:get "/(.*)" {
 	render( 'list' )
 }
 
+stats.load()
 return app
