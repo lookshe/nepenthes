@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.3
 
 local config = require 'daemonparts.config'
+local digest = require 'openssl.digest'
 local json = require 'dkjson'
 
 local _M = {}
@@ -20,16 +21,31 @@ local function increment( ag )
 end
 
 
+--
+-- Pulled directly from Luaossl manual
+--
+local function tohex(b)
+	local x = ""
+	for i = 1, #b do
+		x = x ..  string.format("%.2x", string.byte(b, i))
+	end
+	return x
+end
+
 
 function _M.log_agent( agent )
 
 	overall.total = overall.total + 1
 	overall.last_hit = os.time()
 
-	if agents[ agent ] then
-		increment( agents[ agent ] )
+	local dig = digest.new()
+	local hash = tohex( dig:final( agent ) )
+		
+	if agents[ hash ] then
+		increment( agents[ hash ] )
 	else
-		agents[ agent ] = {
+		agents[ hash ] = {
+			agstring = agent,
 			last_seen = os.time(),
 			first_seen = os.time(),
 			hits = 1
