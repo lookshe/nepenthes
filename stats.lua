@@ -40,7 +40,7 @@ function _M.log_agent( agent )
 
 	local dig = digest.new()
 	local hash = tohex( dig:final( agent ) )
-		
+
 	if agents[ hash ] then
 		increment( agents[ hash ] )
 	else
@@ -70,17 +70,17 @@ function _M.sweep()
 	for agent in pairs(to_remove) do
 		agents[ agent ] = nil
 	end
-	
+
 	--
 	-- Because lazy, save here too. That way it'll be periodic,
 	-- but not too often.
 	--
 	if config.persist_stats then
-	
+
 		local f = assert(io.open( config.persist_stats, 'w' ))
 		f:write( _M.scoreboard() )
 		f:close()
-	
+
 	end
 
 end
@@ -102,17 +102,17 @@ function _M.load()
 			local f = assert(io.open( config.persist_stats, 'r' ))
 			local ret = f:read("*all")
 			f:close()
-			
+
 			local data = assert(json.decode( ret, 1, nil))
-		
+
 			agents = data.agents
 			overall = data.overall
 		end)
-		
+
 		if not res then
 			print("Stats not loaded:", err)
 		end
-	
+
 	end
 
 end

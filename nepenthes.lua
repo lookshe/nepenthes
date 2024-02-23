@@ -1,7 +1,6 @@
 #!/usr/bin/env lua5.3
 
 local perihelion = require 'perihelion'
-local sqltable = require 'sqltable'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
 local config = require 'daemonparts.config'
@@ -9,27 +8,11 @@ local mers = require 'random'
 local cqueues = require 'cqueues'
 
 local stats = require 'stats'
+local markov
 
-
-local sql, tokens, seq
 
 if config.markov then
-	sql = sqltable.connect {
-		type = 'SQLite3',
-		name = config.markov
-	}
-
-	tokens = assert(sql:open_table
-		{
-			name = 'tokens',
-			key = 'id'
-		})
-		
-	seq = assert(sql:open_table
-		{
-			name = 'token_sequence',
-			key = 'id'
-		})
+	markov = require 'markov'
 end
 
 
@@ -65,6 +48,7 @@ local function load_template( path )
 
 end
 
+
 ---
 -- Render the page through a template engine.
 --
@@ -82,47 +66,6 @@ local function render( template )
 		return web:ok( lustache:render(template_code, web.vars, prt) )
 	end
 
-end
-
-
---
--- Babble from a Markov corpus, because we want LLM model collapse.
---
-local function babble( rnd )
-	local len = 0
-	local prev1, prev2, cur
-	local start = seq[ rnd( 1, #seq ) ]
-	local ret = {}
-
-	local size = rnd( 100, 300 )
-	
-	
-	prev1 = start.prev_1
-	prev2 = start.prev_2
-	cur = start.next_id
-
-	repeat
-		prev1 = prev2
-		prev2 = cur
-		
-		local opts = sql.iclone( seq, 'prev_1 = $1 and prev_2 = $2', 
-			prev1, prev2 
-		)
-		
-		-- something went wrong
-		if not opts then
-			return table.concat(ret, ' ')
-		end
-		
-		local which = rnd( 1, #opts )
-		
-		--print(opts[1].prev_1, opts[1].prev_2)
-		cur = opts[ which ].next_id
-		ret[ #ret + 1 ] = tokens[ cur ].oken
-		len = len + 1
-	until len >= size
-
-	return table.concat(ret, ' ')
 end
 
 
@@ -158,7 +101,7 @@ app:get "/(.*)" {
 			local ret = {}
 
 			for i = 1, size do
-				ret[ #ret + 1 ] = getword()
+				ret[ i ] = getword()
 			end
 
 			return ret
@@ -168,7 +111,7 @@ app:get "/(.*)" {
 		local len = bounded_val( 10, 5 )
 		local links = {}
 		for i = 1, len do
-			links[ #links + 1 ] = {
+			links[ i ] = {
 				description = getword(),
 				link = table.concat(buildtab( bounded_val( 5, 1 ) ), "/")
 			}
@@ -184,7 +127,7 @@ app:get "/(.*)" {
 		-- Markov enabled?
 		--
 		if config.markov then
-			ret.content = babble( bounded_val )
+			ret.content = markov.babble( bounded_val )
 		end
 
 		--
@@ -194,8 +137,8 @@ app:get "/(.*)" {
 		if web.HTTP_X_PREFIX then
 			ret.prefix = web.HTTP_X_PREFIX
 		end
-		
-		
+
+
 		--
 		-- Keep stats about out prey
 		--
