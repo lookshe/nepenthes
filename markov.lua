@@ -38,7 +38,7 @@ function _M.babble( rnd )
 	local start = seq[ rnd( 1, seq_size ) ]
 	local ret = {}
 
-	local size = rnd( 100, 300 )
+	local size = rnd( config.markov_min or 100, config.markov_max or 300 )
 
 
 	prev2 = start.prev_2

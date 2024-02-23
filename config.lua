@@ -12,6 +12,8 @@ return {
 	forget_time = 86400,
 	forget_hits = 10,
 	persist_stats = './statsfile.json',
-	markov = './markov.db'
+	markov = './markov.db',
+	markov_min = 10,
+	markov_max = 40
 
 }
