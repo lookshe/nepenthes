@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.3
 
 local perihelion = require 'perihelion'
+local sqltable = require 'sqltable'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
 local config = require 'daemonparts.config'
@@ -8,6 +9,29 @@ local mers = require 'random'
 local cqueues = require 'cqueues'
 
 local stats = require 'stats'
+
+
+local sql, tokens, seq
+
+if config.markov then
+	sql = sqltable.connect {
+		type = 'SQLite3',
+		name = config.markov
+	}
+
+	tokens = assert(sql:open_table
+		{
+			name = 'tokens',
+			key = 'id'
+		})
+		
+	seq = assert(sql:open_table
+		{
+			name = 'token_sequence',
+			key = 'id'
+		})
+end
+
 
 
 --
@@ -58,6 +82,47 @@ local function render( template )
 		return web:ok( lustache:render(template_code, web.vars, prt) )
 	end
 
+end
+
+
+--
+-- Babble from a Markov corpus, because we want LLM model collapse.
+--
+local function babble( rnd )
+	local len = 0
+	local prev1, prev2, cur
+	local start = seq[ rnd( 1, #seq ) ]
+	local ret = {}
+
+	local size = rnd( 100, 300 )
+	
+	
+	prev1 = start.prev_1
+	prev2 = start.prev_2
+	cur = start.next_id
+
+	repeat
+		prev1 = prev2
+		prev2 = cur
+		
+		local opts = sql.iclone( seq, 'prev_1 = $1 and prev_2 = $2', 
+			prev1, prev2 
+		)
+		
+		-- something went wrong
+		if not opts then
+			return table.concat(ret, ' ')
+		end
+		
+		local which = rnd( 1, #opts )
+		
+		--print(opts[1].prev_1, opts[1].prev_2)
+		cur = opts[ which ].next_id
+		ret[ #ret + 1 ] = tokens[ cur ].oken
+		len = len + 1
+	until len >= size
+
+	return table.concat(ret, ' ')
 end
 
 
@@ -114,6 +179,13 @@ app:get "/(.*)" {
 			header = getword(),
 			prefix = config.prefix
 		}
+
+		--
+		-- Markov enabled?
+		--
+		if config.markov then
+			ret.content = babble( bounded_val )
+		end
 
 		--
 		-- Allow attaching to multiple places via nginx configuration

@@ -1,4 +1,9 @@
 <h3>{{ header }}</h3>
+{{# content }}
+<p>
+	{{ content }}
+</p>
+{{/ content }}
 <ul>
 {{# links }}
 	<li><a href="{{{ prefix }}}/{{{ link }}}">{{ description }}</a></li>

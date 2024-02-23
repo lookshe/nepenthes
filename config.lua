@@ -11,6 +11,7 @@ return {
 	prefix_header = 'X-Prefix',
 	forget_time = 86400,
 	forget_hits = 10,
-	persist_stats = './statsfile.json'
+	persist_stats = './statsfile.json',
+	markov = './markov.db'
 
 }
