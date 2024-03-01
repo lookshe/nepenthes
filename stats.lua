@@ -35,6 +35,18 @@ end
 
 function _M.log_agent( agent )
 
+	if agent:match("Mastodon") then
+		return
+	end
+	
+	if agent:match("http%:%/%/www%.google%.com%/bot%.html") then
+		agent = 'Googlebot (multiple agents condensed)'
+	end
+	
+	if agent:match("%(compatible%;% GoogleOther%)") then
+		agent = 'GoogleOther (multiple agents condensed)'
+	end
+
 	overall.total = overall.total + 1
 	overall.last_hit = os.time()
 
