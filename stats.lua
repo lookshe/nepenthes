@@ -87,8 +87,31 @@ end
 
 
 function _M.scoreboard()
+
+	local send = {}
+
+	for agent, stat in pairs(agents) do
+	
+		if stat.first_seen > ( os.time() - 172800 ) then
+			goto skip
+		end
+		
+		if stat.last_seen - stat.first_seen < 86400 then
+			goto skip
+		end
+		
+		if stat.hits < 100 then
+			goto skip
+		end
+		
+		send[ agent ] = stat
+		
+	
+		::skip::	
+	end
+
 	return json.encode {
-		agents = agents,
+		agents = send,
 		overall = overall
 	}
 end
