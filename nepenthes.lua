@@ -75,7 +75,7 @@ app:get "/stats" {
 	function ( web )
 		stats.sweep()
 
-		web.CONTENT_TYPE = 'application/json'
+		web.headers['Content-Type'] = 'application/json'
 		return web:ok( stats.scoreboard() )
 	end
 }
