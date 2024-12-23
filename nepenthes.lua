@@ -21,7 +21,7 @@ end
 -- Load Dictionary
 --
 local dict = {}
-local f = io.open("/usr/share/dict/words", "r")
+local f = io.open( config.words, "r" )
 for line in f:lines() do
 	if not line:match("%'") then
 		dict[ #dict + 1 ] = line

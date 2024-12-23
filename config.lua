@@ -4,6 +4,7 @@ return {
 	http_port = 8893,
 	prefix = '',
 	templates = './templates',
+	words = '/usr/share/dict/words',
 	nochdir = true,
 	pidfile = './pidfile',
 	max_wait = 10,
