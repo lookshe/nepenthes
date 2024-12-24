@@ -11,5 +11,9 @@ return {
 	prefix_header = 'X-Prefix',
 	forget_time = 86400,
 	forget_hits = 10,
-	persist_stats = '/vol/nepenthes/statsfile.json'
+	persist_stats = '/vol/nepenthes/statsfile.json',
+	markov = '/vol/nepenthes/corpus.sqlite.db',
+	markov_min = 20,
+	markov_max = 120
+
 }
