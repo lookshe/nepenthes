@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.3
 
-local config = require 'daemonparts.config'
+local config = require 'config'
 local digest = require 'openssl.digest'
 local json = require 'dkjson'
 
@@ -38,11 +38,11 @@ function _M.log_agent( agent )
 	if agent:match("Mastodon") then
 		return
 	end
-	
+
 	if agent:match("http%:%/%/www%.google%.com%/bot%.html") then
 		agent = 'Googlebot (multiple agents condensed)'
 	end
-	
+
 	if agent:match("%(compatible%;% GoogleOther%)") then
 		agent = 'GoogleOther (multiple agents condensed)'
 	end
@@ -102,24 +102,26 @@ function _M.scoreboard()
 
 	local send = {}
 
-	for agent, stat in pairs(agents) do
-	
+	local function is_good( stat )
 		if stat.first_seen > ( os.time() - 172800 ) then
-			goto skip
+			return false
 		end
-		
+
 		if stat.last_seen - stat.first_seen < 86400 then
-			goto skip
+			return false
 		end
-		
+
 		if stat.hits < 100 then
-			goto skip
+			return false
 		end
-		
-		send[ agent ] = stat
-		
-	
-		::skip::	
+
+		return true
+	end
+
+	for agent, stat in pairs(agents) do
+		if is_good(stat) then
+			send[ agent ] = stat
+		end
 	end
 
 	return json.encode {
