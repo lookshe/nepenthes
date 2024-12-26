@@ -1,18 +1,18 @@
-#!/usr/bin/env lua5.3
+#!/usr/bin/env lua5.4
 
 local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
-local config = require 'daemonparts.config'
+local config = require 'config'
 local mers = require 'random'
 local cqueues = require 'cqueues'
 
-local stats = require 'stats'
+local stats = require 'components.stats'
 local markov
 
 
 if config.markov then
-	markov = require 'markov'
+	markov = require 'components.markov'
 end
 
 

@@ -2,7 +2,7 @@
 
 require 'luarocks.loader'
 local sqltable = require 'sqltable'
-local dbgen = require 'dbgen'
+local dbgen = require 'components.dbgen'
 
 
 local schema = {
