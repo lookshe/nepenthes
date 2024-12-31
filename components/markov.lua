@@ -138,12 +138,10 @@ function _M.babble( rnd )
 
 	local len = 0
 	local prev1, prev2, cur
-	local start = seq[ rnd( 1, seq_size ) ]
+	local start = seq[ rnd:between( seq_size, 1 ) ]
 	local ret = {}
 
-	local size = rnd( config.markov_min or 100, config.markov_max or 300 )
-
-	--local stime = os.clock()
+	local size = rnd:between( config.markov_max or 300, config.markov_min or 100 )
 
 	prev2 = start.prev_2
 	cur = start.next_id
@@ -161,15 +159,15 @@ function _M.babble( rnd )
 			break
 		end
 
-		local which = rnd( 1, #opts )
+		local which = 1
+		if #opts > 1 then
+			which = rnd:between( #opts, 1 )
+		end
 
 		cur = opts[ which ].next_id
 		ret[ #ret + 1 ] = tokens[ cur ].oken
 		len = len + 1
 	until len >= size
-
-	--::terminate::
-	--local etime = os.clock()
 
 	return table.concat(ret, ' ')
 end

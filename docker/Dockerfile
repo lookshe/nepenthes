@@ -10,7 +10,6 @@ RUN svn export https://svn.zadzmo.org/repo/nepenthes/head /usr/nepenthes
 RUN luarocks install perihelion
 RUN luarocks install sqltable
 RUN luarocks install http
-RUN luarocks install lrandom
 RUN luarocks install daemonparts
 RUN luarocks install lustache
 RUN luarocks install dkjson

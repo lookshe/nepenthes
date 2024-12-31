@@ -4,11 +4,11 @@ local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
 local config = require 'config'
-local mers = require 'random'
 local cqueues = require 'cqueues'
 
 local util = require 'components.util'
 local stats = require 'components.stats'
+local xorshiro = require 'components.xorshiro'
 local markov
 
 
@@ -103,19 +103,15 @@ local seed = util.get_seed()
 app:get "/(.*)" {
 	function ( web )
 
-		local dig = digest.new()
+		local dig = digest.new( 'sha256' )
 		dig:update( seed )
 		local hash = dig:final( web.PATH_INFO )
-		local rnd = mers.new()
 
-		rnd:seed(string.unpack( "j", hash ))
+		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
 
-		local function bounded_val( upper, lower )
-			return( math.floor(rnd:value() * (upper - lower)) + lower)
-		end
 
 		local function getword()
-			return dict[ bounded_val( #dict, 0 ) ]
+			return dict[ rnd:between( #dict, 0 ) ]
 		end
 
 		local function buildtab( size )
@@ -129,12 +125,12 @@ app:get "/(.*)" {
 		end
 
 
-		local len = bounded_val( 10, 5 )
+		local len = rnd:between( 10, 5 )
 		local links = {}
 		for i = 1, len do
 			links[ i ] = {
 				description = getword(),
-				link = table.concat(buildtab( bounded_val( 5, 1 ) ), "/")
+				link = table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
 			}
 		end
 
@@ -148,7 +144,9 @@ app:get "/(.*)" {
 		-- Markov enabled?
 		--
 		if config.markov then
-			ret.content = markov.babble( bounded_val )
+			print("go babble")
+			ret.content = markov.babble( rnd )
+			print("done babble")
 		end
 
 		--
@@ -168,7 +166,7 @@ app:get "/(.*)" {
 		--
 		-- Oh you think this was supposed to be fast?
 		--
-		cqueues.sleep( bounded_val(config.max_wait or 10, 1) )
+		cqueues.sleep( rnd:between(config.max_wait or 10, 1) )
 
 		return ret
 
