@@ -12,6 +12,7 @@ return {
 	forget_time = 86400,
 	forget_hits = 10,
 	persist_stats = '/vol/nepenthes/statsfile.json',
+	seed_file = '/vol/nepenthes/seed.txt',
 	markov = '/vol/nepenthes/corpus.sqlite.db',
 	markov_min = 20,
 	markov_max = 120
