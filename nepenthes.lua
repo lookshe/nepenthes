@@ -81,6 +81,22 @@ app:get "/stats" {
 	end
 }
 
+app:post "/train" {
+	function ( web )
+		if not config.markov then
+			error("Markov not enabled")
+		end
+
+		if web.CONTENT_TYPE ~= 'text/plain' then
+			error("Unknown content type for training")
+		end
+
+		local count = markov.train( web.POST_RAW )
+
+		web.headers['Content-Type'] = 'text/plain'
+		return web:ok( "trained " .. count .. " tokens" )
+	end
+}
 
 local seed = util.get_seed()
 

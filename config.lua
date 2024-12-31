@@ -13,8 +13,10 @@ return {
 	forget_time = 86400,
 	forget_hits = 10,
 	persist_stats = './statsfile.json',
+	seed_file = './seed.txt',
 	markov = './markov.db',
+	--markov = './lmdb-corpus',
 	markov_min = 10,
-	markov_max = 40
+	markov_max = 50
 
 }
