@@ -112,7 +112,9 @@ function _M.train( corpus )
 		}
 
 		-- Give web requests a chance
-		cqueues.sleep(0)
+		if (count % 100) == 0 then
+			cqueues.sleep(0)
+		end
 
 		-- step forward
 		prev1 = prev2
