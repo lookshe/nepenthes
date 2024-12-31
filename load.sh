@@ -26,7 +26,7 @@ fi
 do_post()
 {
 	size_sent=`expr $size + $size_sent`
-	echo -n "`date \"+%H:%m\"` sending $size_sent of $size_lines: "
+	echo -n "`date \"+%H:%M\"` sending $size_sent of $size_lines: "
 	curl -XPOST -H'Content-type: text/plain' -d "$send" $url || exit 1
 	
 	echo "  done."
