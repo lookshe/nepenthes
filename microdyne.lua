@@ -1,4 +1,4 @@
-#!/usr/bin/env lua5.3
+#!/usr/bin/env lua5.4
 
 require "luarocks.loader"
 
@@ -9,7 +9,7 @@ local http_headers = require 'http.headers'
 local unix = require 'unix'
 
 local daemonize = require 'daemonparts.daemonize'
-local config = require 'daemonparts.config'
+local config = require 'config'
 local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
 
