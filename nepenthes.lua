@@ -144,9 +144,7 @@ app:get "/(.*)" {
 		-- Markov enabled?
 		--
 		if config.markov then
-			print("go babble")
 			ret.content = markov.babble( rnd )
-			print("done babble")
 		end
 
 		--
