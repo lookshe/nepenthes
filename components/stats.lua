@@ -3,6 +3,7 @@
 local config = require 'config'
 local digest = require 'openssl.digest'
 local json = require 'dkjson'
+local util = require 'components.util'
 
 local _M = {}
 
@@ -18,18 +19,6 @@ local function increment( ag )
 	ag.last_seen = os.time()
 	ag.hits = ag.hits + 1
 
-end
-
-
---
--- Pulled directly from Luaossl manual
---
-local function tohex(b)
-	local x = ""
-	for i = 1, #b do
-		x = x ..  string.format("%.2x", string.byte(b, i))
-	end
-	return x
 end
 
 
@@ -51,7 +40,7 @@ function _M.log_agent( agent )
 	overall.last_hit = os.time()
 
 	local dig = digest.new()
-	local hash = tohex( dig:final( agent ) )
+	local hash = util.tohex( dig:final( agent ) )
 
 	if agents[ hash ] then
 		increment( agents[ hash ] )

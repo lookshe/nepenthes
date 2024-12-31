@@ -7,6 +7,7 @@ local config = require 'config'
 local mers = require 'random'
 local cqueues = require 'cqueues'
 
+local util = require 'components.util'
 local stats = require 'components.stats'
 local markov
 
@@ -80,10 +81,14 @@ app:get "/stats" {
 	end
 }
 
+
+local seed = util.get_seed()
+
 app:get "/(.*)" {
 	function ( web )
 
 		local dig = digest.new()
+		dig:update( seed )
 		local hash = dig:final( web.PATH_INFO )
 		local rnd = mers.new()
 

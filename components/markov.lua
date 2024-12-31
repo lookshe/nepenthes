@@ -40,7 +40,7 @@ function _M.babble( rnd )
 
 	local size = rnd( config.markov_min or 100, config.markov_max or 300 )
 
-	local stime = os.clock()
+	--local stime = os.clock()
 
 	prev2 = start.prev_2
 	cur = start.next_id
@@ -55,20 +55,18 @@ function _M.babble( rnd )
 
 		-- something went wrong
 		if not opts then
-			goto terminate
-			--return table.concat(ret, ' ')
+			break
 		end
 
 		local which = rnd( 1, #opts )
 
-		--print(opts[1].prev_1, opts[1].prev_2)
 		cur = opts[ which ].next_id
 		ret[ #ret + 1 ] = tokens[ cur ].oken
 		len = len + 1
 	until len >= size
 
-	::terminate::
-	local etime = os.clock()
+	--::terminate::
+	--local etime = os.clock()
 
 	return table.concat(ret, ' ')
 end
