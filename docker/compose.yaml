@@ -1,0 +1,10 @@
+name: nepenthes
+
+services:
+  mysql:
+    image: zadzmo/nepenthes:latest
+    volumes:
+      - nepenthes:/vol/nepenthes
+
+volumes:
+  nepenthes:
