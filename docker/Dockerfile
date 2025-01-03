@@ -8,7 +8,7 @@ RUN apk add --no-cache lua5.4-ossl
 RUN apk add --no-cache lua5.4-lpeg
 RUN apk add --no-cache lua5.4-lzlib
 RUN apk add --no-cache lua5.4-dbi-sqlite3
-RUN svn export https://svn.zadzmo.org/repo/nepenthes/head /usr/nepenthes
+RUN wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.0.tar.gz
 COPY config.lua /etc/nepenthes-config.lua
 
 #
