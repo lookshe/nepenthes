@@ -18,9 +18,8 @@ else
 	boot=''
 fi
 
-/usr/bin/env lua5.4				\
+exec /usr/bin/env lua5.4		\
 	$boot						\
-	-e 'print(package.path)'	\
 	$NDIR/core/microdyne.lua	\
 	$NDIR/core/nepenthes.lua	\
 	$config
