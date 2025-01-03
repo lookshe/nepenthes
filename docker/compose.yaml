@@ -1,10 +1,12 @@
 name: nepenthes
 
 services:
-  mysql:
-    image: zadzmo/nepenthes:latest
+  tarpit:
+    build: .
+    ports:
+      - 127.0.0.1:8893:8893
     volumes:
-      - nepenthes:/vol/nepenthes
+      - data:/vol/nepenthes
 
 volumes:
-  nepenthes:
+  data:

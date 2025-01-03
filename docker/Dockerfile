@@ -8,7 +8,13 @@ RUN apk add --no-cache lua5.4-ossl
 RUN apk add --no-cache lua5.4-lpeg
 RUN apk add --no-cache lua5.4-lzlib
 RUN apk add --no-cache lua5.4-dbi-sqlite3
-RUN wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.0.tar.gz
+
+RUN <<EOF
+	wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.0.tar.gz
+	tar -xvzf nepenthes-1.0.tar.gz
+	mv nepenthes-1.0 /usr/nepenthes
+	rm nepenthes-1.0.tar.gz
+EOF
 COPY config.lua /etc/nepenthes-config.lua
 
 #
@@ -20,11 +26,15 @@ COPY config.lua /etc/nepenthes-config.lua
 #
 RUN luarocks install lunix
 
-RUN adduser -D nepenthes
-RUN chown nepenthes /var/run
-USER nepenthes
-
 VOLUME /vol/nepenthes
+RUN <<EOF
+	adduser -D nepenthes
+	chown nepenthes /var/run
+	mkdir -p /vol/nepenthes
+	chown nepenthes /vol/nepenthes
+EOF
+
+USER nepenthes
 EXPOSE 8893
 WORKDIR /usr/nepenthes
 
@@ -33,4 +43,5 @@ WORKDIR /usr/nepenthes
 #
 RUN echo 'PRAGMA journal_mode = wal;' | sqlite3 /vol/nepenthes/corpus.sqlite.db
 
-CMD ["lua", "/usr/nepenthes/microdyne.lua", "/usr/nepenthes/nepenthes.lua", "/etc/nepenthes-config.lua"]
+ENV NDIR="/usr/nepenthes"
+CMD ["sh", "/usr/nepenthes/nepenthes", "/etc/nepenthes-config.lua", "/usr/nepenthes/docker/bootstrap.lua"]
