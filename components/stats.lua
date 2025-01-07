@@ -3,7 +3,7 @@
 local config = require 'config'
 local digest = require 'openssl.digest'
 local json = require 'dkjson'
-local util = require 'components.util'
+local basexx = require 'basexx'
 
 local _M = {}
 
@@ -14,7 +14,8 @@ local overall = {
 }
 
 
-local function increment( ag )
+local function increment_agent( ag )
+
 
 	ag.last_seen = os.time()
 	ag.hits = ag.hits + 1
@@ -40,10 +41,10 @@ function _M.log_agent( agent )
 	overall.last_hit = os.time()
 
 	local dig = digest.new()
-	local hash = util.tohex( dig:final( agent ) )
+	local hash = basexx.to_hex( dig:final( agent ) ):lower()
 
 	if agents[ hash ] then
-		increment( agents[ hash ] )
+		increment_agent( agents[ hash ] )
 	else
 		agents[ hash ] = {
 			agstring = agent,

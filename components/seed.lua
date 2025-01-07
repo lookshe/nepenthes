@@ -4,23 +4,11 @@ local config = require 'config'
 
 local _M = {}
 
---
--- Copied directly from Luaossl manual
---
-function _M.tohex(b)
-	local x = ""
-	for i = 1, #b do
-		x = x ..  string.format("%.2x", string.byte(b, i))
-	end
-	return x
-end
-
-
 ---
 -- Pull the unique instance seed. Try to persist it if filesystem
 -- permissions allow it.
 --
-function _M.get_seed()
+function _M.get()
 
 	--
 	-- We allow this to fail silently, and fall back to generating

@@ -33,16 +33,16 @@ function _methods.random( s )
 					7) + s[1]
 
 	local t = s[2] << 9
-	
+
 	s[3] = s[3] ~ s[1]
 	s[4] = s[4] ~ s[2]
 	s[2] = s[2] ~ s[3]
 	s[1] = s[1] ~ s[4]
-	
+
 	s[2] = s[2] ~ t
-	
+
 	s[4] = rotl(s[4], 11)
-	
+
 	return result
 
 end
@@ -62,9 +62,9 @@ function _methods.between( s, upper, lower )
 	if (upper - lower) <= 0 then
 		error("Requested random value range invalid")
 	end
-	
-	return ((s:random() % (1 + upper - lower)) + lower)	
-	
+
+	return ((s:random() % (1 + upper - lower)) + lower)
+
 end
 
 

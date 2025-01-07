@@ -6,7 +6,7 @@ local digest = require 'openssl.digest'
 local config = require 'config'
 local cqueues = require 'cqueues'
 
-local util = require 'components.util'
+local seed = require 'components.seed'
 local stats = require 'components.stats'
 local xorshiro = require 'components.xorshiro'
 local markov
@@ -98,13 +98,13 @@ app:post "/train" {
 	end
 }
 
-local seed = util.get_seed()
+local instance_seed = seed.get()
 
 app:get "/(.*)" {
 	function ( web )
 
 		local dig = digest.new( 'sha256' )
-		dig:update( seed )
+		dig:update( instance_seed )
 		local hash = dig:final( web.PATH_INFO )
 
 		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
