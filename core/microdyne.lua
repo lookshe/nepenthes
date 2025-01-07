@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.4
 
-require "luarocks.loader"
+pcall(require, "luarocks.loader")
 
 local cqueues = require 'cqueues'
 local http_server = require 'http.server'
