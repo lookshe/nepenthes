@@ -1,18 +1,20 @@
-#!/usr/bin/env lua5.3
+#!/usr/bin/env lua5.4
 
 local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
-local config = require 'daemonparts.config'
-local mers = require 'random'
+local config = require 'config'
 local cqueues = require 'cqueues'
+local json = require 'dkjson'
 
-local stats = require 'stats'
+local seed = require 'components.seed'
+local stats = require 'components.stats'
+local xorshiro = require 'components.xorshiro'
 local markov
 
 
 if config.markov then
-	markov = require 'markov'
+	markov = require 'components.markov'
 end
 
 
@@ -75,26 +77,73 @@ app:get "/stats" {
 	function ( web )
 		stats.sweep()
 
-		web.headers['Content-Type'] = 'application/json'
-		return web:ok( stats.scoreboard() )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.scoreboard_all() )
+		)
 	end
 }
+
+local function agents( web, above )
+	stats.sweep()
+	web.headers['Content-type'] = 'application/json'
+	return web:ok(
+		json.encode( stats.agents( tonumber(above) ))
+	)
+end
+
+app:get "/stats/agents" { agents }
+app:get "/stats/agents/" { agents }
+app:get "/stats/agents/(.*)" { agents }
+app:get "/stats/agents/(.*)/" { agents }
+
+
+
+local function ips( web, above )
+	stats.sweep()
+	web.headers['Content-type'] = 'application/json'
+	return web:ok(
+		json.encode( stats.ips( tonumber(above) ))
+	)
+end
+
+app:get "/stats/ips" { ips }
+app:get "/stats/ips/" { ips }
+app:get "/stats/ips/(.*)" { ips }
+app:get "/stats/ips/(.*)/" { ips }
+
+
+app:post "/train" {
+	function ( web )
+		if not config.markov then
+			error("Markov not enabled")
+		end
+
+		if web.CONTENT_TYPE ~= 'text/plain' then
+			error("Unknown content type for training")
+		end
+
+		local count = markov.train( web.POST_RAW )
+
+		web.headers['Content-Type'] = 'text/plain'
+		return web:ok( "trained " .. count .. " tokens" )
+	end
+}
+
+local instance_seed = seed.get()
 
 app:get "/(.*)" {
 	function ( web )
 
-		local dig = digest.new()
+		local dig = digest.new( 'sha256' )
+		dig:update( instance_seed )
 		local hash = dig:final( web.PATH_INFO )
-		local rnd = mers.new()
 
-		rnd:seed(string.unpack( "j", hash ))
+		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
 
-		local function bounded_val( upper, lower )
-			return( math.floor(rnd:value() * (upper - lower)) + lower)
-		end
 
 		local function getword()
-			return dict[ bounded_val( #dict, 0 ) ]
+			return dict[ rnd:between( #dict, 0 ) ]
 		end
 
 		local function buildtab( size )
@@ -108,12 +157,12 @@ app:get "/(.*)" {
 		end
 
 
-		local len = bounded_val( 10, 5 )
+		local len = rnd:between( 10, 5 )
 		local links = {}
 		for i = 1, len do
 			links[ i ] = {
 				description = getword(),
-				link = table.concat(buildtab( bounded_val( 5, 1 ) ), "/")
+				link = table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
 			}
 		end
 
@@ -127,7 +176,7 @@ app:get "/(.*)" {
 		-- Markov enabled?
 		--
 		if config.markov then
-			ret.content = markov.babble( bounded_val )
+			ret.content = markov.babble( rnd )
 		end
 
 		--
@@ -142,12 +191,12 @@ app:get "/(.*)" {
 		--
 		-- Keep stats about out prey
 		--
-		stats.log_agent( web.HTTP_X_USER_AGENT )
+		stats.log_hit( web.HTTP_X_USER_AGENT, web.REMOTE_ADDR )
 
 		--
 		-- Oh you think this was supposed to be fast?
 		--
-		cqueues.sleep( bounded_val(config.max_wait or 10, 1) )
+		cqueues.sleep( rnd:between(config.max_wait or 10, 1) )
 
 		return ret
 
@@ -157,4 +206,12 @@ app:get "/(.*)" {
 }
 
 stats.load()
+
+if config.persist_stats then
+	-- save stats to disk on graceful shutdown.
+	function app.shutdown_hook()
+		stats.sweep()
+	end
+end
+
 return app

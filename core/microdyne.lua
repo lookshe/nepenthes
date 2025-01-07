@@ -1,6 +1,6 @@
-#!/usr/bin/env lua5.3
+#!/usr/bin/env lua5.4
 
-require "luarocks.loader"
+pcall(require, "luarocks.loader")
 
 local cqueues = require 'cqueues'
 local http_server = require 'http.server'
@@ -9,7 +9,7 @@ local http_headers = require 'http.headers'
 local unix = require 'unix'
 
 local daemonize = require 'daemonparts.daemonize'
-local config = require 'daemonparts.config'
+local config = require 'config'
 local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
 
@@ -125,8 +125,12 @@ end
 local server
 
 local function stop_notification()
-	server:pause()
+	server:close()
 	output.notice("Shutting down")
+	
+	if app.shutdown_hook then
+		pcall(app.shutdown_hook)
+	end
 end
 
 local function startup()
@@ -146,17 +150,12 @@ local function startup()
 		host = config.http_host,
 		port = math.floor(config.http_port),
 		onstream = http_responder,
-		tls = false
+		tls = false,
+		cq = cq
 	})
 
 	signals.set_callback( stop_notification )
 	signals.start(cq)
-
-	cq:wrap(function()
-		while not signals:is_stopping() do
-			server:step(2)
-		end
-	end)
 
 	assert(server:listen())
 

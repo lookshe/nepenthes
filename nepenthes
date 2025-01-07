@@ -1,0 +1,25 @@
+#!/bin/sh
+
+if [ -z "$NDIR" ]; then
+	NDIR=`pwd`
+fi
+
+if [ -z "$1" ]; then
+	echo "Specify config file"
+	exit 1
+fi
+
+config=$1
+shift
+
+if [ -f "$1" ]; then
+	boot=`printf "-e dofile('%s')" "$1"`
+else
+	boot=''
+fi
+
+exec /usr/bin/env lua5.4		\
+	$boot						\
+	$NDIR/core/microdyne.lua	\
+	$NDIR/core/nepenthes.lua	\
+	$config
