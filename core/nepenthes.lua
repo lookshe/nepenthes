@@ -206,4 +206,12 @@ app:get "/(.*)" {
 }
 
 stats.load()
+
+if config.persist_stats then
+	-- save stats to disk on graceful shutdown.
+	function app.shutdown_hook()
+		stats.sweep()
+	end
+end
+
 return app

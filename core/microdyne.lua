@@ -125,8 +125,12 @@ end
 local server
 
 local function stop_notification()
-	server:pause()
+	server:close()
 	output.notice("Shutting down")
+	
+	if app.shutdown_hook then
+		pcall(app.shutdown_hook)
+	end
 end
 
 local function startup()
@@ -146,17 +150,12 @@ local function startup()
 		host = config.http_host,
 		port = math.floor(config.http_port),
 		onstream = http_responder,
-		tls = false
+		tls = false,
+		cq = cq
 	})
 
 	signals.set_callback( stop_notification )
 	signals.start(cq)
-
-	cq:wrap(function()
-		while not signals:is_stopping() do
-			server:step(2)
-		end
-	end)
 
 	assert(server:listen())
 
