@@ -5,6 +5,7 @@ local lustache = require 'lustache'
 local digest = require 'openssl.digest'
 local config = require 'config'
 local cqueues = require 'cqueues'
+local json = require 'dkjson'
 
 local seed = require 'components.seed'
 local stats = require 'components.stats'
@@ -76,10 +77,41 @@ app:get "/stats" {
 	function ( web )
 		stats.sweep()
 
-		web.headers['Content-Type'] = 'application/json'
-		return web:ok( stats.scoreboard() )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.scoreboard_all() )
+		)
 	end
 }
+
+local function agents( web, above )
+	stats.sweep()
+	web.headers['Content-type'] = 'application/json'
+	return web:ok(
+		json.encode( stats.agents( tonumber(above) ))
+	)
+end
+
+app:get "/stats/agents" { agents }
+app:get "/stats/agents/" { agents }
+app:get "/stats/agents/(.*)" { agents }
+app:get "/stats/agents/(.*)/" { agents }
+
+
+
+local function ips( web, above )
+	stats.sweep()
+	web.headers['Content-type'] = 'application/json'
+	return web:ok(
+		json.encode( stats.ips( tonumber(above) ))
+	)
+end
+
+app:get "/stats/ips" { ips }
+app:get "/stats/ips/" { ips }
+app:get "/stats/ips/(.*)" { ips }
+app:get "/stats/ips/(.*)/" { ips }
+
 
 app:post "/train" {
 	function ( web )
@@ -159,7 +191,7 @@ app:get "/(.*)" {
 		--
 		-- Keep stats about out prey
 		--
-		stats.log_agent( web.HTTP_X_USER_AGENT )
+		stats.log_hit( web.HTTP_X_USER_AGENT, web.REMOTE_ADDR )
 
 		--
 		-- Oh you think this was supposed to be fast?
