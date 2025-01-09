@@ -228,7 +228,7 @@ app:get "/(.*)" {
 		--
 		-- Oh you think this was supposed to be fast?
 		--
-		cqueues.sleep( rnd:between(config.max_wait or 10, 1) )
+		cqueues.sleep( rnd:between(config.max_wait or 10, config.min_wait or 1) )
 		checkpoint( timestats, 'total' )
 		log_checkpoints( timestats )
 
