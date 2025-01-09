@@ -127,7 +127,7 @@ local server
 local function stop_notification()
 	server:close()
 	output.notice("Shutting down")
-	
+
 	if app.shutdown_hook then
 		pcall(app.shutdown_hook)
 	end
