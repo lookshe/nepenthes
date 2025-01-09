@@ -45,7 +45,7 @@ while read line; do
 		if [ $size -ge 10 ]; then
 			do_post
 			size=0
-			body=""
+			send=""
 		fi
 	fi
 
