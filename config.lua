@@ -7,7 +7,7 @@ return {
 	words = '/usr/share/dict/words',
 	nochdir = true,
 	pidfile = './pidfile',
-	max_wait = 10,
+	max_wait = 5,
 	real_ip_header	= 'X-Forwarded-For',
 	prefix_header = 'X-Prefix',
 	forget_time = 86400,

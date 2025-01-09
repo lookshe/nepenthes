@@ -3,6 +3,7 @@
 local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
+local output = require 'daemonparts.output'
 local config = require 'config'
 local cqueues = require 'cqueues'
 local json = require 'dkjson'
@@ -132,15 +133,41 @@ app:post "/train" {
 
 local instance_seed = seed.get()
 
+local function checkpoint( times, name )
+	times[ #times + 1 ] = {
+		name = name,
+		at = cqueues.monotime()
+	}
+end
+
+local function log_checkpoints( times )
+
+	local prev = 0
+	local parts = {}
+
+	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
+		if cp.name ~= 'start' then
+			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - prev)
+		end
+
+		prev = cp.at
+	end
+
+	output.info("req len: " .. table.concat( parts, ', ' ))
+
+end
+
 app:get "/(.*)" {
 	function ( web )
+
+		local timestats = {}
+		checkpoint( timestats, 'start' )
 
 		local dig = digest.new( 'sha256' )
 		dig:update( instance_seed )
 		local hash = dig:final( web.PATH_INFO )
 
 		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
-
 
 		local function getword()
 			return dict[ rnd:between( #dict, 0 ) ]
@@ -155,6 +182,7 @@ app:get "/(.*)" {
 
 			return ret
 		end
+
 
 
 		local len = rnd:between( 10, 5 )
@@ -172,12 +200,16 @@ app:get "/(.*)" {
 			prefix = config.prefix
 		}
 
+		checkpoint( timestats, 'words' )
+
 		--
 		-- Markov enabled?
 		--
 		if config.markov then
 			ret.content = markov.babble( rnd )
 		end
+
+		checkpoint( timestats, 'markov' )
 
 		--
 		-- Allow attaching to multiple places via nginx configuration
@@ -197,6 +229,8 @@ app:get "/(.*)" {
 		-- Oh you think this was supposed to be fast?
 		--
 		cqueues.sleep( rnd:between(config.max_wait or 10, 1) )
+		checkpoint( timestats, 'total' )
+		log_checkpoints( timestats )
 
 		return ret
 

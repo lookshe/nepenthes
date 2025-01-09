@@ -173,7 +173,7 @@ function _M.babble( rnd )
 			end
 		)
 
-		for i, v in ipairs(opts) do print(i, v) end
+		--for i, v in ipairs(opts) do print(i, v) end
 
 		-- something went wrong
 		if not opts then
