@@ -42,7 +42,7 @@ while read line; do
 	else
 		send="$send $line"
 		size=`expr $size + 1`
-		if [ $size -ge 10 ]; then
+		if [ $size -ge 50 ]; then
 			do_post
 			size=0
 			send=""
