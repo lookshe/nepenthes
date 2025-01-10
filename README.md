@@ -11,13 +11,21 @@ to be flat files that never change. Intentional delay is added to prevent crawle
 server, in addition to wasting their time. Lastly, optional Markov-babble can be added to the pages, to
 give the crawlers something to scrape up and train their LLMs on, hopefully accelerating model collapse.
 
-[You can take a look at what this looks like, here](https://zadzmo.org/nepenthes-demo)
+[You can take a look at what this looks like, here.](https://zadzmo.org/nepenthes-demo)
 
 WARNING
 =======
 
 THIS IS DELIBERATELY MALICIOUS SOFTWARE INTENDED TO CAUSE HARMFUL ACTIVITY.
 DO NOT DEPLOY IF YOU AREN'T FULLY COMFORTABLE WITH WHAT YOU ARE DOING.
+
+ANOTHER WARNING
+===============
+
+LLM scrapers are relentless and brutual. You may be able to keep them at bay
+with this software - but it works by providing them with a neverending stream
+of exactly what they are looking for. YOU ARE LIKELY TO EXPERIENCE SIGNIFICANT
+CONTINUOUS CPU LOAD, ESPECIALLY WITH THE MARKOV MODULE ENABLED.
 
 
 Latest Version
@@ -61,20 +69,21 @@ Installation
 
 You can use Docker, or install manually.
 
-A Dockerfile and compose.yaml is provided in the /docker directory. Simply tweak the configuration file to 
-your preferences, 'docker compose up'. You will still need to boostrap a Markov corpus if you enable the 
+A Dockerfile and compose.yaml is provided in the /docker directory. Simply tweak the configuration file to
+your preferences, 'docker compose up'. You will still need to boostrap a Markov corpus if you enable the
 feature (see next section.)
 
 For Manual installation, you'll need to install Lua (5.4 preferred), SQLite (if using Markov), and OpenSSL.
 The following Lua modules need to be installed - if they are all present in your package manager, use that;
 otherwise you will need to install Luarocks and install them there:
 
- - cqueues
- - ossl (aka luaossl)
- - lpeg
- - lzlib (or lua-zlib)
- - dbi-sqlite3 (aka luadbi-sqlite3)
- - lunix (aka unix)
+ - [cqueues](https://luarocks.org/modules/daurnimator/cqueues)
+ - [ossl](https://luarocks.org/modules/daurnimator/luaossl) (aka luaossl)
+ - [lpeg](https://luarocks.org/modules/gvvaughan/lpeg)
+ - [lzlib](https://luarocks.org/modules/hisham/lzlib) 
+   (or [lua-zlib](https://luarocks.org/modules/brimworks/lua-zlib), only one of the two needed)
+ - [dbi-sqlite3](https://luarocks.org/modules/sparked435/luadbi-sqlite3) (aka luadbi-sqlite3)
+ - [unix](https://luarocks.org/modules/daurnimator/lunix) (aka lunix)
 
 Create a nepenthes user (you REALLY don't want this running as root.) Let's assume the user's home
 directory is also your install directory.
@@ -83,7 +92,7 @@ directory is also your install directory.
 
 Unpack the tarball:
 
-	cd scratch/ 
+	cd scratch/
 	tar -xvzf nepenthes-1.0.tar.gz
         cp -r nepenthes-1.0/* /home/nepenthes/
 
@@ -121,7 +130,7 @@ Statistics
 
 Want to see what prey you've caught? There are several statistics endpoints, all returning JSON. To see everything:
 
-	http://{http_host:http_port}/stats 
+	http://{http_host:http_port}/stats
 
 To see user agent strings only:
 
@@ -135,7 +144,7 @@ These can get quite big; so it's possible to filter both 'agents' and 'ips', sim
 URL. For example, to see a list of all IPs that have visted more than 100 times:
 
 	http://{http_host:http_port}/stats/ips/100
- 
+
 Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script away!
 
 
