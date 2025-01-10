@@ -42,12 +42,16 @@ I'll be using nginx configurations for examples. Here's a real world snippet for
                 proxy_pass http://localhost:8893;
                 proxy_set_header X-Prefix '/nepenthes-demo';
                 proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_buffering off;
         }
 
 
 You'll see several headers are added here: "X-Prefix" tells the tarpit that all links should go to that
 path. Make this match what is in the 'location' directive. X-Forwarded-For is optional, but will make any
 statistics gathered significantly more useful.
+
+The proxy_buffering directive is important. LLM crawlers typically disconnect if not given a response within
+a few seconds; Nepenthes counters this by drip-feeding a few bytes at a time. Buffering breaks this workaround.
 
 You can have multiple proxies to an individual Nepenthes instance; simply set the X-Prefix header accordingly.
 
