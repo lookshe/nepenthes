@@ -69,9 +69,9 @@ Installation
 
 You can use Docker, or install manually.
 
-A Dockerfile and compose.yaml is provided in the /docker directory. Simply tweak the configuration file to
-your preferences, 'docker compose up'. You will still need to boostrap a Markov corpus if you enable the
-feature (see next section.)
+A Dockerfile and compose.yaml is provided in the [/docker directory.](https://svn.zadzmo.org/repo/nepenthes/head/docker/)
+Simply tweak the configuration file to your preferences, 'docker compose up'. You will still need to boostrap 
+a Markov corpus if you enable the feature (see next section.)
 
 For Manual installation, you'll need to install Lua (5.4 preferred), SQLite (if using Markov), and OpenSSL.
 The following Lua modules need to be installed - if they are all present in your package manager, use that;
@@ -80,7 +80,7 @@ otherwise you will need to install Luarocks and install them there:
  - [cqueues](https://luarocks.org/modules/daurnimator/cqueues)
  - [ossl](https://luarocks.org/modules/daurnimator/luaossl) (aka luaossl)
  - [lpeg](https://luarocks.org/modules/gvvaughan/lpeg)
- - [lzlib](https://luarocks.org/modules/hisham/lzlib) 
+ - [lzlib](https://luarocks.org/modules/hisham/lzlib)
    (or [lua-zlib](https://luarocks.org/modules/brimworks/lua-zlib), only one of the two needed)
  - [dbi-sqlite3](https://luarocks.org/modules/sparked435/luadbi-sqlite3) (aka luadbi-sqlite3)
  - [unix](https://luarocks.org/modules/daurnimator/lunix) (aka lunix)
@@ -121,8 +121,12 @@ with the default port:
 
 	curl -XPOST -d ./@corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
 
-This could take a very, VERY long time - hours. curl may potentially time out. See load.sh in the nepenthes
-distribution for a script that incrementally loads training data.
+This could take a very, VERY long time - hours. curl may potentially time out. See
+[load.sh](https://svn.zadzmo.org/repo/nepenthes/head/load.sh) in the nepenthes distribution for a script that
+incrementally loads training data.
+
+The Markov module returns an empt string if there is no corpus. Thus, the tarpit will continue to function
+as a tarpit without a corpus loaded. The extra CPU consumed for this check is almost nothing.
 
 
 Statistics
@@ -158,7 +162,6 @@ All possible directives in config.lua:
  - prefix: Prefix all generated links should be given. Can be overriden with the X-Prefix HTTP header. Defaults to nothing.
  - templates: Path to the template files. This should be the '/templates' directory inside your Nepenthes installation.
  - detach: If true, Nepenthes will fork into the background and redirect logging output to Syslog.
- - nochdir: Set to 'true'. 'false' will cause a chdir call to '/' after daemonization. This is from boilerplate code imported from a different project.
  - pidfile: Path to drop a pid file after daemonization. If empty, no pid file is created.
  - max_wait: Longest amount of delay to add to every request. Increase to slow down crawlers; too slow they might not come back.
  - real_ip_header: Changes the name of the X-Forwarded-For header that communicates the actual client IP address.
