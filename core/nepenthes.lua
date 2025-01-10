@@ -57,6 +57,27 @@ end
 --
 local function render( template )
 
+	local iter = function( s, rate )
+		--
+		-- We have '#s' bytes to dispense at 'rate' seconds.
+		-- How long do we delay and how much per?
+		--
+		local chunk_size = #s // 16
+		local delay = rate / 16
+
+		return function()
+			if #s <= 0 then
+				return nil
+			end
+
+			local ret = s:sub(1, chunk_size)
+			s = s:sub(chunk_size + 1, #s)
+			cqueues.sleep(delay)
+
+			return ret
+		end
+	end
+
 	return function( web )
 
 		local template_code = load_template( 'toplevel' )
@@ -66,7 +87,13 @@ local function render( template )
 		prt[ 'content' ] = load_template( template )
 
 		rawset(lustache, 'partial_cache', {})
-		return web:ok( lustache:render(template_code, web.vars, prt) )
+		--return web:ok(  )
+		local ret = lustache:render(template_code, web.vars, prt)
+		if web.vars.sandbag_rate then
+			return '200 OK', web.headers, iter( ret, web.vars.sandbag_rate )
+		end
+
+		return web:ok( ret )
 	end
 
 end
@@ -225,10 +252,11 @@ app:get "/(.*)" {
 		--
 		stats.log_hit( web.HTTP_X_USER_AGENT, web.REMOTE_ADDR )
 
+
 		--
 		-- Oh you think this was supposed to be fast?
 		--
-		cqueues.sleep( rnd:between(config.max_wait or 10, config.min_wait or 1) )
+		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
 		log_checkpoints( timestats )
 
