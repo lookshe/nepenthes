@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.4
 
-local config = require 'config'
+local basexx = require 'basexx'
+local config = require 'components.config'
 
 local _M = {}
 
@@ -47,7 +48,7 @@ function _M.get()
 			return nil
 		end
 
-		return _M.tohex(contents)
+		return basexx.to_hex(contents)
 	end
 
 

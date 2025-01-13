@@ -11,13 +11,21 @@ to be flat files that never change. Intentional delay is added to prevent crawle
 server, in addition to wasting their time. Lastly, optional Markov-babble can be added to the pages, to
 give the crawlers something to scrape up and train their LLMs on, hopefully accelerating model collapse.
 
-[You can take a look at what this looks like, here](https://zadzmo.org/nepenthes-demo)
+[You can take a look at what this looks like, here.](https://zadzmo.org/nepenthes-demo)
 
 WARNING
 =======
 
 THIS IS DELIBERATELY MALICIOUS SOFTWARE INTENDED TO CAUSE HARMFUL ACTIVITY.
 DO NOT DEPLOY IF YOU AREN'T FULLY COMFORTABLE WITH WHAT YOU ARE DOING.
+
+ANOTHER WARNING
+===============
+
+LLM scrapers are relentless and brutual. You may be able to keep them at bay
+with this software - but it works by providing them with a neverending stream
+of exactly what they are looking for. YOU ARE LIKELY TO EXPERIENCE SIGNIFICANT
+CONTINUOUS CPU LOAD, ESPECIALLY WITH THE MARKOV MODULE ENABLED.
 
 
 Latest Version
@@ -42,12 +50,16 @@ I'll be using nginx configurations for examples. Here's a real world snippet for
                 proxy_pass http://localhost:8893;
                 proxy_set_header X-Prefix '/nepenthes-demo';
                 proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_buffering off;
         }
 
 
 You'll see several headers are added here: "X-Prefix" tells the tarpit that all links should go to that
 path. Make this match what is in the 'location' directive. X-Forwarded-For is optional, but will make any
 statistics gathered significantly more useful.
+
+The proxy_buffering directive is important. LLM crawlers typically disconnect if not given a response within
+a few seconds; Nepenthes counters this by drip-feeding a few bytes at a time. Buffering breaks this workaround.
 
 You can have multiple proxies to an individual Nepenthes instance; simply set the X-Prefix header accordingly.
 
@@ -57,20 +69,21 @@ Installation
 
 You can use Docker, or install manually.
 
-A Dockerfile and compose.yaml is provided in the /docker directory. Simply tweak the configuration file to 
-your preferences, 'docker compose up'. You will still need to boostrap a Markov corpus if you enable the 
-feature (see next section.)
+A Dockerfile and compose.yaml is provided in the [/docker directory.](https://svn.zadzmo.org/repo/nepenthes/head/docker/)
+Simply tweak the configuration file to your preferences, 'docker compose up'. You will still need to boostrap 
+a Markov corpus if you enable the feature (see next section.)
 
 For Manual installation, you'll need to install Lua (5.4 preferred), SQLite (if using Markov), and OpenSSL.
 The following Lua modules need to be installed - if they are all present in your package manager, use that;
 otherwise you will need to install Luarocks and install them there:
 
- - cqueues
- - ossl (aka luaossl)
- - lpeg
- - lzlib (or lua-zlib)
- - dbi-sqlite3 (aka luadbi-sqlite3)
- - lunix (aka unix)
+ - [cqueues](https://luarocks.org/modules/daurnimator/cqueues)
+ - [ossl](https://luarocks.org/modules/daurnimator/luaossl) (aka luaossl)
+ - [lpeg](https://luarocks.org/modules/gvvaughan/lpeg)
+ - [lzlib](https://luarocks.org/modules/hisham/lzlib)
+   (or [lua-zlib](https://luarocks.org/modules/brimworks/lua-zlib), only one of the two needed)
+ - [dbi-sqlite3](https://luarocks.org/modules/sparked435/luadbi-sqlite3) (aka luadbi-sqlite3)
+ - [unix](https://luarocks.org/modules/daurnimator/lunix) (aka lunix)
 
 Create a nepenthes user (you REALLY don't want this running as root.) Let's assume the user's home
 directory is also your install directory.
@@ -79,7 +92,7 @@ directory is also your install directory.
 
 Unpack the tarball:
 
-	cd scratch/ 
+	cd scratch/
 	tar -xvzf nepenthes-1.0.tar.gz
         cp -r nepenthes-1.0/* /home/nepenthes/
 
@@ -108,8 +121,12 @@ with the default port:
 
 	curl -XPOST -d ./@corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
 
-This could take a very, VERY long time - hours. curl may potentially time out. See load.sh in the nepenthes
-distribution for a script that incrementally loads training data.
+This could take a very, VERY long time - hours. curl may potentially time out. See
+[load.sh](https://svn.zadzmo.org/repo/nepenthes/head/load.sh) in the nepenthes distribution for a script that
+incrementally loads training data.
+
+The Markov module returns an empt string if there is no corpus. Thus, the tarpit will continue to function
+as a tarpit without a corpus loaded. The extra CPU consumed for this check is almost nothing.
 
 
 Statistics
@@ -117,7 +134,7 @@ Statistics
 
 Want to see what prey you've caught? There are several statistics endpoints, all returning JSON. To see everything:
 
-	http://{http_host:http_port}/stats 
+	http://{http_host:http_port}/stats
 
 To see user agent strings only:
 
@@ -131,7 +148,7 @@ These can get quite big; so it's possible to filter both 'agents' and 'ips', sim
 URL. For example, to see a list of all IPs that have visted more than 100 times:
 
 	http://{http_host:http_port}/stats/ips/100
- 
+
 Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script away!
 
 
@@ -145,7 +162,6 @@ All possible directives in config.lua:
  - prefix: Prefix all generated links should be given. Can be overriden with the X-Prefix HTTP header. Defaults to nothing.
  - templates: Path to the template files. This should be the '/templates' directory inside your Nepenthes installation.
  - detach: If true, Nepenthes will fork into the background and redirect logging output to Syslog.
- - nochdir: Set to 'true'. 'false' will cause a chdir call to '/' after daemonization. This is from boilerplate code imported from a different project.
  - pidfile: Path to drop a pid file after daemonization. If empty, no pid file is created.
  - max_wait: Longest amount of delay to add to every request. Increase to slow down crawlers; too slow they might not come back.
  - real_ip_header: Changes the name of the X-Forwarded-For header that communicates the actual client IP address.

@@ -9,10 +9,11 @@ local http_headers = require 'http.headers'
 local unix = require 'unix'
 
 local daemonize = require 'daemonparts.daemonize'
-local config = require 'config'
+local config = require 'components.config'
 local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
 
+local config = require 'components.config'
 
 if not arg[1] then
 	error("Provide application")
@@ -28,9 +29,8 @@ package.path = package.path .. ';' .. location .. '/?.lua'
 local cq
 local app
 
-local cf = assert(dofile( arg[2] ))
 local app_f = assert(loadfile( arg[1] ))
-for k, v in pairs(cf) do config[k] = v end
+config( arg[2] )
 
 
 local function header_cleanup( var )
@@ -107,6 +107,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	end
 
 	stream:write_headers(res_headers, false)
+
 	for chunk in iter do
 		stream:write_chunk(chunk, false)
 	end
@@ -121,13 +122,12 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	))
 end
 
-
 local server
 
 local function stop_notification()
 	server:close()
 	output.notice("Shutting down")
-	
+
 	if app.shutdown_hook then
 		pcall(app.shutdown_hook)
 	end
@@ -175,6 +175,6 @@ repeat
 	local res, err = cq:step(2)
 	if not res then
 		output.error(err)
-		os.exit(1)
+		--os.exit(1)
 	end
 until cq:count() == 0

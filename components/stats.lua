@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.3
 
-local config = require 'config'
+local config = require 'components.config'
 local digest = require 'openssl.digest'
 local json = require 'dkjson'
 local basexx = require 'basexx'

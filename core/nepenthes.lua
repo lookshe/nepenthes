@@ -3,7 +3,8 @@
 local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
-local config = require 'config'
+local output = require 'daemonparts.output'
+local config = require 'components.config'
 local cqueues = require 'cqueues'
 local json = require 'dkjson'
 
@@ -56,6 +57,27 @@ end
 --
 local function render( template )
 
+	local iter = function( s, rate )
+		--
+		-- We have '#s' bytes to dispense at 'rate' seconds.
+		-- How long do we delay and how much per?
+		--
+		local chunk_size = #s // 16
+		local delay = rate / 16
+
+		return function()
+			if #s <= 0 then
+				return nil
+			end
+
+			local ret = s:sub(1, chunk_size)
+			s = s:sub(chunk_size + 1, #s)
+			cqueues.sleep(delay)
+
+			return ret
+		end
+	end
+
 	return function( web )
 
 		local template_code = load_template( 'toplevel' )
@@ -65,7 +87,13 @@ local function render( template )
 		prt[ 'content' ] = load_template( template )
 
 		rawset(lustache, 'partial_cache', {})
-		return web:ok( lustache:render(template_code, web.vars, prt) )
+		--return web:ok(  )
+		local ret = lustache:render(template_code, web.vars, prt)
+		if web.vars.sandbag_rate then
+			return '200 OK', web.headers, iter( ret, web.vars.sandbag_rate )
+		end
+
+		return web:ok( ret )
 	end
 
 end
@@ -132,15 +160,41 @@ app:post "/train" {
 
 local instance_seed = seed.get()
 
+local function checkpoint( times, name )
+	times[ #times + 1 ] = {
+		name = name,
+		at = cqueues.monotime()
+	}
+end
+
+local function log_checkpoints( times )
+
+	local prev = 0
+	local parts = {}
+
+	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
+		if cp.name ~= 'start' then
+			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - prev)
+		end
+
+		prev = cp.at
+	end
+
+	output.info("req len: " .. table.concat( parts, ', ' ))
+
+end
+
 app:get "/(.*)" {
 	function ( web )
+
+		local timestats = {}
+		checkpoint( timestats, 'start' )
 
 		local dig = digest.new( 'sha256' )
 		dig:update( instance_seed )
 		local hash = dig:final( web.PATH_INFO )
 
 		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
-
 
 		local function getword()
 			return dict[ rnd:between( #dict, 0 ) ]
@@ -155,6 +209,7 @@ app:get "/(.*)" {
 
 			return ret
 		end
+
 
 
 		local len = rnd:between( 10, 5 )
@@ -172,12 +227,16 @@ app:get "/(.*)" {
 			prefix = config.prefix
 		}
 
+		checkpoint( timestats, 'words' )
+
 		--
 		-- Markov enabled?
 		--
 		if config.markov then
 			ret.content = markov.babble( rnd )
 		end
+
+		checkpoint( timestats, 'markov' )
 
 		--
 		-- Allow attaching to multiple places via nginx configuration
@@ -193,10 +252,13 @@ app:get "/(.*)" {
 		--
 		stats.log_hit( web.HTTP_X_USER_AGENT, web.REMOTE_ADDR )
 
+
 		--
 		-- Oh you think this was supposed to be fast?
 		--
-		cqueues.sleep( rnd:between(config.max_wait or 10, 1) )
+		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
+		checkpoint( timestats, 'total' )
+		log_checkpoints( timestats )
 
 		return ret
 

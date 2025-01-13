@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.3
 
-local config = require 'config'
+local config = require 'components.config'
 local sqltable = require 'sqltable'
 local cqueues = require 'cqueues'
 local dbgen = require 'components.dbgen'
@@ -164,11 +164,14 @@ function _M.babble( rnd )
 		local which = 1
 		if #opts > 1 then
 			which = rnd:between( #opts, 1 )
+		elseif #opts < 1 then
+			break;	-- end of chain. We're done here no matter what.
 		end
 
 		cur = opts[ which ].next_id
 		ret[ #ret + 1 ] = tokens[ cur ].oken
 		len = len + 1
+
 	until len >= size
 
 	return table.concat(ret, ' ')

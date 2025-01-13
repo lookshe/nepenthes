@@ -15,7 +15,7 @@ RUN <<EOF
 	mv nepenthes-1.0 /usr/nepenthes
 	rm nepenthes-1.0.tar.gz
 EOF
-COPY config.lua /etc/nepenthes-config.lua
+COPY config.yaml /etc/nepenthes-config.yml
 
 #
 # Sadly this Lua C module isn't in apk. Only one missing to build the
