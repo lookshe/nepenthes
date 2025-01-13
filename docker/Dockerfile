@@ -44,4 +44,4 @@ WORKDIR /usr/nepenthes
 RUN echo 'PRAGMA journal_mode = wal;' | sqlite3 /vol/nepenthes/corpus.sqlite.db
 
 ENV NDIR="/usr/nepenthes"
-CMD ["sh", "/usr/nepenthes/nepenthes", "/etc/nepenthes-config.lua", "/usr/nepenthes/docker/bootstrap.lua"]
+CMD ["sh", "/usr/nepenthes/nepenthes", "/etc/nepenthes-config.yml", "/usr/nepenthes/docker/bootstrap.lua"]

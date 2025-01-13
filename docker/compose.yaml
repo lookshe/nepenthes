@@ -5,7 +5,7 @@ services:
   tarpit:
     build: .
     ports:
-      - 127.0.0.1:8893:8893
+      - 8893:8893
     volumes:
       - data:/vol/nepenthes
 

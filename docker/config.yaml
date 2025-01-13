@@ -1,6 +1,6 @@
 --- # Nepenthes Config
 
-http_host: '::1'
+http_host: '::'
 http_port: 8893
 templates: '/usr/nepenthes/templates'
 words: '/usr/share/dict/usa'
