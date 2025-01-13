@@ -101,7 +101,7 @@ function _M.log_hit( agent, ip )
 	-- User-agents make terrible table keys, so, hash them. Otherwise
 	-- pulling data out with (as an example) jq is near impossible.
 	--
-	local dig = digest.new()
+	local dig = digest.new('sha1')
 	local hash = basexx.to_hex( dig:final( agent ) ):lower()
 
 

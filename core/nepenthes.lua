@@ -196,7 +196,7 @@ app:get "/(.*)" {
 		local timestats = {}
 		checkpoint( timestats, 'start' )
 
-		local dig = digest.new( 'sha256' )
+		local dig = digest.new( 'sha1' )
 		dig:update( instance_seed )
 		local hash = dig:final( web.PATH_INFO )
 
