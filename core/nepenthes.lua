@@ -4,7 +4,7 @@ local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
 local output = require 'daemonparts.output'
-local config = require 'config'
+local config = require 'components.config'
 local cqueues = require 'cqueues'
 local json = require 'dkjson'
 

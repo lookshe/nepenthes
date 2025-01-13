@@ -1,7 +1,7 @@
 #!/usr/bin/env lua5.4
 
 local basexx = require 'basexx'
-local config = require 'config'
+local config = require 'components.config'
 
 local _M = {}
 

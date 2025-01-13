@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.3
 
-local config = require 'config'
+local config = require 'components.config'
 local sqltable = require 'sqltable'
 local cqueues = require 'cqueues'
 local dbgen = require 'components.dbgen'

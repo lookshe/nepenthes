@@ -9,10 +9,11 @@ local http_headers = require 'http.headers'
 local unix = require 'unix'
 
 local daemonize = require 'daemonparts.daemonize'
-local config = require 'config'
+local config = require 'components.config'
 local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
 
+local config = require 'components.config'
 
 if not arg[1] then
 	error("Provide application")
@@ -28,9 +29,8 @@ package.path = package.path .. ';' .. location .. '/?.lua'
 local cq
 local app
 
-local cf = assert(dofile( arg[2] ))
 local app_f = assert(loadfile( arg[1] ))
-for k, v in pairs(cf) do config[k] = v end
+config( arg[2] )
 
 
 local function header_cleanup( var )

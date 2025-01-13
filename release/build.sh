@@ -13,6 +13,7 @@ DEPENDS=`cat <<EOF
 	fifo
 	lpeg_patterns
 	http
+	api7-lua-tinyyaml
 EOF`
 
 if [ -z "$1" ]; then

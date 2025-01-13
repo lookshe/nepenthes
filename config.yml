@@ -1,0 +1,21 @@
+#
+# Simple config for testing.
+#
+---
+http_host: '::'
+http_port: 8893
+templates: './templates'
+words: '/usr/share/dict/words'
+
+forget_time: 86400
+forget_hits: 10
+
+persist_stats: './statsfile.json'
+seed_file: './seed.txt'
+
+markov: './corpus.sqlite.db'
+markov_min: 20
+markov_max: 120
+
+min_wait: 1
+max_wait: 3
