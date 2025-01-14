@@ -13,7 +13,6 @@ local config = require 'components.config'
 local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
 
-local config = require 'components.config'
 
 if not arg[1] then
 	error("Provide application")

@@ -59,11 +59,17 @@ local function render( template )
 
 	local iter = function( s, rate )
 		--
-		-- We have '#s' bytes to dispense at 'rate' seconds.
-		-- How long do we delay and how much per?
+		-- We have '#s' bytes to dispense through 'rate' seconds.
+		-- How long do we delay and how much per? Let them have a
+		-- taste of something every second, to keep them on the line.
 		--
-		local chunk_size = #s // 16
-		local delay = rate / 16
+		local chunk_size = #s
+		local delay = rate
+
+		repeat
+			chunk_size = chunk_size // 2
+			delay = delay / 2
+		until delay < 1
 
 		return function()
 			if #s <= 0 then

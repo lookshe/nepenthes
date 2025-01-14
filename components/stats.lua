@@ -47,6 +47,9 @@ local overall = {
 }
 
 
+local agent_hash_cache = {}
+
+
 local _M = {}
 
 
@@ -97,12 +100,20 @@ function _M.log_hit( agent, ip )
 		agent = 'GoogleOther (multiple agents condensed)'
 	end
 
+
 	---
 	-- User-agents make terrible table keys, so, hash them. Otherwise
 	-- pulling data out with (as an example) jq is near impossible.
 	--
-	local dig = digest.new()
-	local hash = basexx.to_hex( dig:final( agent ) ):lower()
+	-- As hashing is computationally expensive at scale, keep a
+	-- cache.
+	--
+	local hash = agent_hash_cache[ agent ]
+	if not hash then
+		local dig = digest.new('sha1')
+		hash = basexx.to_hex( dig:final( agent ) ):lower()
+		agent_hash_cache[ agent ] = hash
+	end
 
 
 	---
