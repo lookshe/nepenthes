@@ -11,7 +11,7 @@ to be flat files that never change. Intentional delay is added to prevent crawle
 server, in addition to wasting their time. Lastly, optional Markov-babble can be added to the pages, to
 give the crawlers something to scrape up and train their LLMs on, hopefully accelerating model collapse.
 
-[You can take a look at what this looks like, here.](https://zadzmo.org/nepenthes-demo)
+[You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/nepenthes-demo)
 
 WARNING
 =======
@@ -26,6 +26,14 @@ LLM scrapers are relentless and brutual. You may be able to keep them at bay
 with this software - but it works by providing them with a neverending stream
 of exactly what they are looking for. YOU ARE LIKELY TO EXPERIENCE SIGNIFICANT
 CONTINUOUS CPU LOAD, ESPECIALLY WITH THE MARKOV MODULE ENABLED.
+
+YET ANOTHER WARNING
+===================
+
+There is not currently a way to differentiate between web crawlers that
+are indexing sites for search purposes, vs crawlers that are training
+AI models. ANY SITE THIS SOFTWARE IS APPLIED TO WILL LIKELY DISAPPEAR
+FROM ALL SEARCH RESULTS.
 
 
 Latest Version
@@ -70,12 +78,12 @@ Installation
 You can use Docker, or install manually.
 
 A Dockerfile and compose.yaml is provided in the [/docker directory.](https://svn.zadzmo.org/repo/nepenthes/head/docker/)
-Simply tweak the configuration file to your preferences, 'docker compose up'. You will still need to boostrap 
+Simply tweak the configuration file to your preferences, 'docker compose up'. You will still need to bootstrap 
 a Markov corpus if you enable the feature (see next section.)
 
 For Manual installation, you'll need to install Lua (5.4 preferred), SQLite (if using Markov), and OpenSSL.
 The following Lua modules need to be installed - if they are all present in your package manager, use that;
-otherwise you will need to install Luarocks and install them there:
+otherwise you will need to install [Luarocks](https://luarocks.org/) and use it to install the following:
 
  - [cqueues](https://luarocks.org/modules/daurnimator/cqueues)
  - [ossl](https://luarocks.org/modules/daurnimator/luaossl) (aka luaossl)
@@ -96,10 +104,10 @@ Unpack the tarball:
 	tar -xvzf nepenthes-1.0.tar.gz
         cp -r nepenthes-1.0/* /home/nepenthes/
 
-Tweak config.lua as you prefer (see below for documentation.) Then you're
+Tweak config.yml as you prefer (see below for documentation.) Then you're
 ready to start:
 
-        su -l -u nepenthes /home/nepenthes/nepenthes /home/nepenthes/config.lua
+        su -l -u nepenthes /home/nepenthes/nepenthes /home/nepenthes/config.yml
 
 Sending SIGTERM or SIGINT will shut the process down.
 
@@ -121,7 +129,7 @@ with the default port:
 
 	curl -XPOST -d ./@corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
 
-This could take a very, VERY long time - hours. curl may potentially time out. See
+This could take a very, VERY long time - possibly hours. curl may potentially time out. See
 [load.sh](https://svn.zadzmo.org/repo/nepenthes/head/load.sh) in the nepenthes distribution for a script that
 incrementally loads training data.
 
@@ -152,19 +160,53 @@ URL. For example, to see a list of all IPs that have visted more than 100 times:
 Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script away!
 
 
+Nepenthes used Defensively
+--------------------------
+
+A link to a Nepenthes location from your site will flood out valid URLs
+within your site's domain name, making it unlikely the crawler will access
+real content.
+
+In addition, the aggregated statistics will provide a list of IP addresses
+that are almost certainly crawlers and not real users. Use this list to
+create ACLs that block those IPs from reaching your content - either return
+403, 404, or just block at the firewall level.
+
+Integration with fail2ban or blocklistd (or similar) is a future possibility, 
+allowing realtime reactions to crawlers, but not currently implemented.
+
+Using Nepenthes defensively, it would be ideal to turn off the Markov
+module, and set both max_delay and min_delay to something large, as a
+way to conserve your CPU.
+
+
+Nepenthes used Offensively
+--------------------------
+
+Let's say you've got horsepower and bandwidth to burn, and just want to
+see these AI models burn. Nepenthes has what you need:
+
+Don't make any attempt to block crawlers with the IP stats. Put the delay
+times as low as you are comfortable with. Train a big Markov corpus and
+leave the Markov module enabled, set the maximum babble size to something
+big. In short, let them suck down as much bullshit as they have diskspace
+for and choke on it.
+
+
 Configuration File
 ------------------
 
-All possible directives in config.lua:
+All possible directives in config.yaml:
 
- - http_host : sets the host that Nepenthes will listen on; default all interfaces.
+ - http_host : sets the host that Nepenthes will listen on; default is localhost only.
  - http_port : sets the listening port number; default 8893
  - prefix: Prefix all generated links should be given. Can be overriden with the X-Prefix HTTP header. Defaults to nothing.
  - templates: Path to the template files. This should be the '/templates' directory inside your Nepenthes installation.
  - detach: If true, Nepenthes will fork into the background and redirect logging output to Syslog.
  - pidfile: Path to drop a pid file after daemonization. If empty, no pid file is created.
  - max_wait: Longest amount of delay to add to every request. Increase to slow down crawlers; too slow they might not come back.
- - real_ip_header: Changes the name of the X-Forwarded-For header that communicates the actual client IP address.
+ - min_wait: The smallest amount of delay to add to every request. A random value is chosen between max_wait and min_wait.
+ - real_ip_header: Changes the name of the X-Forwarded-For header that communicates the actual client IP address for statistics gathering.
  - prefix_header: Changes the name of the X-Prefix header that overrides the prefix configuration variable.
  - forget_time: length of time, in seconds, that a given user-agent can go missing before being deleted from the statistics table.
  - forget_hits: A user-agent that generates more than this number of requests will not be deleted from the statistics table.
@@ -178,5 +220,10 @@ All possible directives in config.lua:
 
 History
 -------
+
+Version numbers use a simple process: If the only changes are fully backwards
+compatible, the minor number changes. If the user/administrator needs to change
+anything after or part of the upgrade, the major number changes and the minor
+number resets to zero.
 
 v1.0: Initial release
