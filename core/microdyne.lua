@@ -90,6 +90,19 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	--
 	local rawstatus, wsapi_headers, iter = app.run( request )
 
+	-- XXX: This is an ugly way to do this, would be better to fix 
+	-- Perihelion maybe? I think that it's a successor project problem.
+	local clean_headers = {}
+	for k, v in pairs(wsapi_headers) do
+		local lk = k:lower()
+		if lk == 'content-type'
+			and v:lower() == 'text/html' then
+				clean_headers[lk] = 'text/html; charset=utf-8'
+		else
+			clean_headers[lk] = v
+		end
+	end
+
 	local status
 	if type(rawstatus) == 'string' then
 		status = rawstatus:match("^(%d+)")
@@ -101,7 +114,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	res_headers:append("Server", config.server_software or 'nginx')
 	res_headers:append(":status", status)
 
-	for k, v in pairs(wsapi_headers) do
+	for k, v in pairs(clean_headers) do
 		res_headers:append(k, v)
 	end
 
