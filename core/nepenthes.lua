@@ -190,6 +190,17 @@ local function log_checkpoints( times )
 
 end
 
+--
+-- Some crawlers HEAD every url before GET. Since it will always
+-- result in a document, don't do anything.
+--
+app:head "/(.*)" {
+	function( web )
+		web.headers['content-type'] = 'text/html; charset=UTF-8'
+		return web:ok("")
+	end	
+}
+
 app:get "/(.*)" {
 	function ( web )
 
