@@ -177,4 +177,15 @@ function _M.babble( rnd )
 	return table.concat(ret, ' ')
 end
 
+
+---
+-- Reset the corpus to zero.
+--
+function _M.reset()
+
+	seq_size = 0
+	sql:exec("delete from token_sequence;")
+
+end
+
 return _M

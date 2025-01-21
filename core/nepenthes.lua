@@ -147,6 +147,13 @@ app:get "/stats/ips/(.*)" { ips }
 app:get "/stats/ips/(.*)/" { ips }
 
 
+app:delete "/train" {
+	function( web )
+		markov.reset()
+		return web:ok()
+	end
+}
+
 app:post "/train" {
 	function ( web )
 		if not config.markov then

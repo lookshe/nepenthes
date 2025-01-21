@@ -1,31 +1,37 @@
 Nepenthes
 =========
 
-This is a tarpit intended to catch web crawlers. Specifically, it's targetting crawlers that scrape data
-for LLM's - but really, like the plants it is named after, it'll eat just about anything that finds it's
+This is a tarpit intended to catch web crawlers. Specifically, it's
+targetting crawlers that scrape data for LLM's - but really, like the
+plants it is named after, it'll eat just about anything that finds it's
 way inside.
 
-It works by generating an endless sequences of pages, each of which with dozens of links, that simply go
-back into a the tarpit. Pages are randomly generated, but in a deterministic way, causing them to appear
-to be flat files that never change. Intentional delay is added to prevent crawlers from bogging down your
-server, in addition to wasting their time. Lastly, optional Markov-babble can be added to the pages, to
-give the crawlers something to scrape up and train their LLMs on, hopefully accelerating model collapse.
+It works by generating an endless sequences of pages, each of which with
+dozens of links, that simply go back into a the tarpit. Pages are
+randomly generated, but in a deterministic way, causing them to appear
+to be flat files that never change. Intentional delay is added to
+prevent crawlers from bogging down your server, in addition to wasting
+their time. Lastly, optional Markov-babble can be added to the pages, to
+give the crawlers something to scrape up and train their LLMs on,
+hopefully accelerating model collapse.
 
 [You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/nepenthes-demo)
 
 WARNING
 =======
 
-THIS IS DELIBERATELY MALICIOUS SOFTWARE INTENDED TO CAUSE HARMFUL ACTIVITY.
-DO NOT DEPLOY IF YOU AREN'T FULLY COMFORTABLE WITH WHAT YOU ARE DOING.
+THIS IS DELIBERATELY MALICIOUS SOFTWARE INTENDED TO CAUSE HARMFUL
+ACTIVITY. DO NOT DEPLOY IF YOU AREN'T FULLY COMFORTABLE WITH WHAT YOU
+ARE DOING.
 
 ANOTHER WARNING
 ===============
 
-LLM scrapers are relentless and brutual. You may be able to keep them at bay
-with this software - but it works by providing them with a neverending stream
-of exactly what they are looking for. YOU ARE LIKELY TO EXPERIENCE SIGNIFICANT
-CONTINUOUS CPU LOAD, ESPECIALLY WITH THE MARKOV MODULE ENABLED.
+LLM scrapers are relentless and brutual. You may be able to keep them at
+bay with this software - but it works by providing them with a
+neverending stream of exactly what they are looking for. YOU ARE LIKELY
+TO EXPERIENCE SIGNIFICANT CONTINUOUS CPU LOAD, ESPECIALLY WITH THE
+MARKOV MODULE ENABLED.
 
 YET ANOTHER WARNING
 ===================
@@ -47,11 +53,13 @@ Latest Version
 Usage
 -----
 
-Expected usage is to hide the tarpit behind nginx or Apache, or whatever else you have implemented your
-site in. Directly exposing it to the internet is ill advised. We want it to look as innocent and normal
-as possible; in addition HTTP headers are used to configure the tarpit.
+Expected usage is to hide the tarpit behind nginx or Apache, or whatever
+else you have implemented your site in. Directly exposing it to the
+internet is ill advised. We want it to look as innocent and normal as
+possible; in addition HTTP headers are used to configure the tarpit.
 
-I'll be using nginx configurations for examples. Here's a real world snippet for the demo above:
+I'll be using nginx configurations for examples. Here's a real world
+snippet for the demo above:
 
 
         location /nepenthes-demo/ {
@@ -62,14 +70,18 @@ I'll be using nginx configurations for examples. Here's a real world snippet for
         }
 
 
-You'll see several headers are added here: "X-Prefix" tells the tarpit that all links should go to that
-path. Make this match what is in the 'location' directive. X-Forwarded-For is optional, but will make any
+You'll see several headers are added here: "X-Prefix" tells the tarpit
+that all links should go to that path. Make this match what is in the
+'location' directive. X-Forwarded-For is optional, but will make any
 statistics gathered significantly more useful.
 
-The proxy_buffering directive is important. LLM crawlers typically disconnect if not given a response within
-a few seconds; Nepenthes counters this by drip-feeding a few bytes at a time. Buffering breaks this workaround.
+The proxy_buffering directive is important. LLM crawlers typically
+disconnect if not given a response within a few seconds; Nepenthes
+counters this by drip-feeding a few bytes at a time. Buffering breaks
+this workaround.
 
-You can have multiple proxies to an individual Nepenthes instance; simply set the X-Prefix header accordingly.
+You can have multiple proxies to an individual Nepenthes instance;
+simply set the X-Prefix header accordingly.
 
 
 Installation
@@ -77,13 +89,17 @@ Installation
 
 You can use Docker, or install manually.
 
-A Dockerfile and compose.yaml is provided in the [/docker directory.](https://svn.zadzmo.org/repo/nepenthes/head/docker/)
-Simply tweak the configuration file to your preferences, 'docker compose up'. You will still need to bootstrap 
-a Markov corpus if you enable the feature (see next section.)
+A Dockerfile and compose.yaml is provided in the 
+[/docker directory.](https://svn.zadzmo.org/repo/nepenthes/head/docker/)
+Simply tweak the configuration file to your preferences, 'docker compose up'. 
+You will still need to bootstrap a Markov corpus if you enable the
+feature (see next section.)
 
-For Manual installation, you'll need to install Lua (5.4 preferred), SQLite (if using Markov), and OpenSSL.
-The following Lua modules need to be installed - if they are all present in your package manager, use that;
-otherwise you will need to install [Luarocks](https://luarocks.org/) and use it to install the following:
+For Manual installation, you'll need to install Lua (5.4 preferred),
+SQLite (if using Markov), and OpenSSL. The following Lua modules need to
+be installed - if they are all present in your package manager, use
+that; otherwise you will need to install
+[Luarocks](https://luarocks.org/) and use it to install the following:
 
  - [cqueues](https://luarocks.org/modules/daurnimator/cqueues)
  - [ossl](https://luarocks.org/modules/daurnimator/luaossl) (aka luaossl)
@@ -93,8 +109,8 @@ otherwise you will need to install [Luarocks](https://luarocks.org/) and use it 
  - [dbi-sqlite3](https://luarocks.org/modules/sparked435/luadbi-sqlite3) (aka luadbi-sqlite3)
  - [unix](https://luarocks.org/modules/daurnimator/lunix) (aka lunix)
 
-Create a nepenthes user (you REALLY don't want this running as root.) Let's assume the user's home
-directory is also your install directory.
+Create a nepenthes user (you REALLY don't want this running as root.)
+Let's assume the user's home directory is also your install directory.
 
 	useradd -m nepenthes
 
@@ -104,8 +120,8 @@ Unpack the tarball:
 	tar -xvzf nepenthes-1.0.tar.gz
         cp -r nepenthes-1.0/* /home/nepenthes/
 
-Tweak config.yml as you prefer (see below for documentation.) Then you're
-ready to start:
+Tweak config.yml as you prefer (see below for documentation.) Then
+you're ready to start:
 
         su -l -u nepenthes /home/nepenthes/nepenthes /home/nepenthes/config.yml
 
@@ -115,32 +131,45 @@ Sending SIGTERM or SIGINT will shut the process down.
 Bootstrapping the Markov Babbler
 --------------------------------
 
-The Markov feature requires a trained corpus to babble from. One was intentionally omitted because, ideally,
-everyone's tarpits should look different to evade detection. Find a source of text in whatever language you
-prefer; there's lots of research corpuses out there, or possibly pull in some very long Wikipedia articles,
-maybe grab some books from Project Gutenberg, the Unix fortune file, it really doesn't matter at all. Be creative!
+The Markov feature requires a trained corpus to babble from. One was 
+intentionally omitted because, ideally, everyone's tarpits should look
+different to evade detection. Find a source of text in whatever language
+you prefer; there's lots of research corpuses out there, or possibly
+pull in some very long Wikipedia articles, maybe grab some books from 
+Project Gutenberg, the Unix fortune file, it really doesn't matter at
+all. Be creative!
 
-Training is accomplished by sending data to a POST endpoint. This only needs to be done once. Sending training
-data more than once cumulatively adds to the existing corpus, allowing you to mix different texts - or train in
-chunks.
+Training is accomplished by sending data to a POST endpoint. This only
+needs to be done once. Sending training data more than once cumulatively
+adds to the existing corpus, allowing you to mix different texts - or 
+train in chunks.
 
-Once you have your body of text, assuming it's called corpus.txt, in your working directory, and you're running
-with the default port:
+Once you have your body of text, assuming it's called corpus.txt, in 
+your working directory, and you're running with the default port:
 
 	curl -XPOST -d ./@corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
 
-This could take a very, VERY long time - possibly hours. curl may potentially time out. See
-[load.sh](https://svn.zadzmo.org/repo/nepenthes/head/load.sh) in the nepenthes distribution for a script that
-incrementally loads training data.
+This could take a very, VERY long time - possibly hours. curl may 
+potentially time out. See 
+[load.sh](https://svn.zadzmo.org/repo/nepenthes/head/load.sh) in the 
+nepenthes distribution for a script that incrementally loads training 
+data.
 
-The Markov module returns an empt string if there is no corpus. Thus, the tarpit will continue to function
-as a tarpit without a corpus loaded. The extra CPU consumed for this check is almost nothing.
+The Markov module returns an empty string if there is no corpus. Thus, 
+the tarpit will continue to function as a tarpit without a corpus 
+loaded. The extra CPU consumed for this check is almost nothing.
+
+If you desire to delete the markov corpus and start over, that is simply
+done with curl to the same endpoint using the DELETE method:
+
+	curl -XDELETE http://localhost:8893/train
 
 
 Statistics
 ----------
 
-Want to see what prey you've caught? There are several statistics endpoints, all returning JSON. To see everything:
+Want to see what prey you've caught? There are several statistics 
+endpoints, all returning JSON. To see everything:
 
 	http://{http_host:http_port}/stats
 
@@ -152,32 +181,52 @@ Or IP addresses only:
 3
 	http://{http_host:http_port}/stats/ips/
 
-These can get quite big; so it's possible to filter both 'agents' and 'ips', simply add a minimum hit count to the
-URL. For example, to see a list of all IPs that have visted more than 100 times:
+These can get quite big; so it's possible to filter both 'agents' and 
+'ips', simply add a minimum hit count to the URL. For example, to see a
+list of all IPs that have visted more than 100 times:
 
 	http://{http_host:http_port}/stats/ips/100
 
-Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script away!
+Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script
+away!
 
 
 Nepenthes used Defensively
 --------------------------
 
 A link to a Nepenthes location from your site will flood out valid URLs
-within your site's domain name, making it unlikely the crawler will access
-real content.
+within your site's domain name, making it unlikely the crawler will
+access real content.
 
-In addition, the aggregated statistics will provide a list of IP addresses
-that are almost certainly crawlers and not real users. Use this list to
-create ACLs that block those IPs from reaching your content - either return
-403, 404, or just block at the firewall level.
+In addition, the aggregated statistics will provide a list of IP
+addresses that are almost certainly crawlers and not real users. Use
+this list to create ACLs that block those IPs from reaching your content
+- either return 403, 404, or just block at the firewall level.
 
-Integration with fail2ban or blocklistd (or similar) is a future possibility, 
-allowing realtime reactions to crawlers, but not currently implemented.
+Integration with fail2ban or blocklistd (or similar) is a future
+possibility, allowing realtime reactions to crawlers, but not currently
+implemented.
 
 Using Nepenthes defensively, it would be ideal to turn off the Markov
 module, and set both max_delay and min_delay to something large, as a
 way to conserve your CPU.
+
+
+Enforcing robots.txt
+--------------------
+
+I get asked this a lot: yes, this is a valid use case. It's not what I
+intended to do (cause AI companies pain), which is a very different
+thing than making bots respect your robots.txt. But it works nicely when
+applied.
+
+Just add:
+
+	User-agent: \*
+	Disallow: /nepenthes-demo
+
+To your robots.txt, and those that respect the rules will stay out. Then
+your IP statistics can be used as a banlist to save your resources.
 
 
 Nepenthes used Offensively
@@ -221,9 +270,10 @@ All possible directives in config.yaml:
 History
 -------
 
-Version numbers use a simple process: If the only changes are fully backwards
-compatible, the minor number changes. If the user/administrator needs to change
-anything after or part of the upgrade, the major number changes and the minor
-number resets to zero.
+Version numbers use a simple process: If the only changes are fully
+backwards compatible, the minor number changes. If the user or
+administrator needs to change anything after or part of the upgrade, the
+major number changes and the minor number resets to zero.
 
 v1.0: Initial release
+v1.1: Clearer licensing, small performance improvements, corpus reset
