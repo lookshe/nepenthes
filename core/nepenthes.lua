@@ -134,9 +134,6 @@ app:get "/stats/agents/" { agents }
 app:get "/stats/agents/(.*)" { agents }
 app:get "/stats/agents/(.*)/" { agents }
 
-
-
-
 local function ips( web, above )
 	stats.sweep()
 	web.headers['Content-type'] = 'application/json'
@@ -150,6 +147,14 @@ app:get "/stats/ips/" { ips }
 app:get "/stats/ips/(.*)" { ips }
 app:get "/stats/ips/(.*)/" { ips }
 
+app:get "/stats/markov" {
+	function( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( markov.stats() )
+		)
+	end
+}
 
 app:delete "/train" {
 	function( web )

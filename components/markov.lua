@@ -140,10 +140,12 @@ function _M.babble( rnd )
 
 	local len = 0
 	local prev1, prev2, cur
-	local start = seq[ rnd:between( seq_size, 1 ) ]
+	local start_token_id = rnd:between( seq_size, 1 )
+	local start = seq[ start_token_id ]
 	local ret = {}
 
-	local size = rnd:between( config.markov_max or 300, config.markov_min or 100 )
+	local size = rnd:between( config.markov_max, config.markov_min )
+	print( seq_size, start_token_id, size )
 
 	prev2 = start.prev_2
 	cur = start.next_id
@@ -184,7 +186,24 @@ end
 function _M.reset()
 
 	seq_size = 0
-	sql:exec("delete from token_sequence;")
+	sql:exec('delete from token_sequence;')
+	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="token_sequence";')
+	
+	sql:exec('delete from tokens;')
+	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="tokens";')
+
+end
+
+
+---
+-- Corpus stats, for debugging.
+--
+function _M.stats()
+
+	return {
+		seq_size = seq_size,
+		tokens = #( tokens )
+	}
 
 end
 

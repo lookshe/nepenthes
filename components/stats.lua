@@ -142,7 +142,7 @@ function _M.check_ip( addr )
 			return true
 		end
 	end
-	
+
 	return false
 
 end
