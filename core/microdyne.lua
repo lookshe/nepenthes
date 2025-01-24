@@ -90,7 +90,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	--
 	local rawstatus, wsapi_headers, iter = app.run( request )
 
-	-- XXX: This is an ugly way to do this, would be better to fix 
+	-- XXX: This is an ugly way to do this, would be better to fix
 	-- Perihelion maybe? I think that it's a successor project problem.
 	local clean_headers = {}
 	for k, v in pairs(wsapi_headers) do
@@ -158,14 +158,22 @@ local function startup()
 	cq = cqueues.new()
 	app = app_f()
 
-	server = assert(http_server.listen {
+	local args = {
 		host = config.http_host,
 		port = math.floor(config.http_port),
 		onstream = http_responder,
 		tls = false,
 		cq = cq
-	})
+	}
 
+	if config.unix_socket then
+		unix.unlink( config.unix_socket )
+		args.host = nil
+		args.port = nil
+		args.path = config.unix_socket
+	end
+
+	server = assert(http_server.listen(args))
 	signals.set_callback( stop_notification )
 	signals.start(cq)
 
@@ -187,6 +195,9 @@ repeat
 	local res, err = cq:step(2)
 	if not res then
 		output.error(err)
-		--os.exit(1)
 	end
 until cq:count() == 0
+
+if config.unix_socket then
+	unix.unlink( config.unix_socket )
+end

@@ -286,7 +286,7 @@ app:get "/(.*)" {
 			output.notice("Bogon URL detected:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			--
 			-- Wait at least a little bit.
-			-- 
+			--
 			cqueues.sleep( rnd:between( 5, 1 ) )
 
 			if stats.check_ip( web.REMOTE_ADDR ) then

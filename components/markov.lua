@@ -188,7 +188,7 @@ function _M.reset()
 	seq_size = 0
 	sql:exec('delete from token_sequence;')
 	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="token_sequence";')
-	
+
 	sql:exec('delete from tokens;')
 	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="tokens";')
 
