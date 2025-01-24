@@ -136,6 +136,7 @@ app:get "/stats/agents/(.*)/" { agents }
 
 
 
+
 local function ips( web, above )
 	stats.sweep()
 	web.headers['Content-type'] = 'application/json'
@@ -185,15 +186,12 @@ end
 
 local function log_checkpoints( times, send_delay )
 
-	local prev = 0
 	local parts = {}
 
 	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
 		if cp.name ~= 'start' then
 			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
 		end
-
-		prev = cp.at
 	end
 
 	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
@@ -281,7 +279,11 @@ app:get "/(.*)" {
 
 		if is_bogon then
 			output.notice("Bogon URL detected:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-		
+			--
+			-- Wait at least a little bit.
+			-- 
+			cqueues.sleep( rnd:between( 5, 1 ) )
+
 			if stats.check_ip( web.REMOTE_ADDR ) then
 				return web:notfound("Nothing exists at this URL")
 			else
