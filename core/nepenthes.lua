@@ -180,19 +180,20 @@ local function checkpoint( times, name )
 	}
 end
 
-local function log_checkpoints( times )
+local function log_checkpoints( times, send_delay )
 
 	local prev = 0
 	local parts = {}
 
 	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
 		if cp.name ~= 'start' then
-			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - prev)
+			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
 		end
 
 		prev = cp.at
 	end
 
+	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
 	output.info("req len: " .. table.concat( parts, ', ' ))
 
 end
@@ -233,6 +234,15 @@ app:get "/(.*)" {
 
 			return ret
 		end
+		
+		local function make_url()
+			return table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
+		end
+
+		local ret = {
+			header = getword(),
+			prefix = config.prefix
+		}
 
 
 
@@ -241,16 +251,11 @@ app:get "/(.*)" {
 		for i = 1, len do
 			links[ i ] = {
 				description = getword(),
-				link = table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
+				link = make_url()
 			}
 		end
 
-		local ret = {
-			links = links,
-			header = getword(),
-			prefix = config.prefix
-		}
-
+		ret.links = links
 		checkpoint( timestats, 'words' )
 
 		--
@@ -261,6 +266,7 @@ app:get "/(.*)" {
 		end
 
 		checkpoint( timestats, 'markov' )
+		
 
 		--
 		-- Allow attaching to multiple places via nginx configuration
@@ -282,7 +288,7 @@ app:get "/(.*)" {
 		--
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
-		log_checkpoints( timestats )
+		log_checkpoints( timestats, ret.sandbag_rate )
 
 		return ret
 
