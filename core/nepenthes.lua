@@ -24,10 +24,13 @@ end
 -- Load Dictionary
 --
 local dict = {}
+local dict_lookup = {}
+
 local f = io.open( config.words, "r" )
 for line in f:lines() do
 	if not line:match("%'") then
 		dict[ #dict + 1 ] = line
+		dict_lookup[ line ] = true
 	end
 end
 
@@ -206,7 +209,7 @@ app:head "/(.*)" {
 	function( web )
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return web:ok("")
-	end	
+	end
 }
 
 app:get "/(.*)" {
@@ -234,7 +237,7 @@ app:get "/(.*)" {
 
 			return ret
 		end
-		
+
 		local function make_url()
 			return table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
 		end
@@ -244,6 +247,48 @@ app:get "/(.*)" {
 			prefix = config.prefix
 		}
 
+
+		--
+		-- Allow attaching to multiple places via nginx configuration
+		-- alone.
+		--
+		if web.HTTP_X_PREFIX then
+			ret.prefix = web.HTTP_X_PREFIX
+		end
+
+
+		---
+		-- I would like to thank the Slashdot commenter for his very
+		-- clever idea for detecting tarpits. It's quite clever, I'll
+		-- admit. It's also easy to defeat, which we do here.
+		--
+		-- Since the URLs are built from a known dictionary, it's not
+		-- hard to sanity check them. If it's a new IP, we 301 them; and
+		-- since we're using our deterministic random, the same bad URL
+		-- will go to the same place. This lets the crawler 'bootstrap'
+		-- itself into the tarpit if coming from an unexpected URL.
+		--
+		-- Afterwards, we throw 404, so it doesn't look like we're an
+		-- infinite site.
+		--
+		local path = web.PATH_INFO:sub( #(ret.prefix) + 1 )
+		local is_bogon = false
+		for word in path:gmatch('%w+') do
+			if not dict_lookup[ word ] then
+				is_bogon = true
+			end
+		end
+
+		if is_bogon then
+			output.notice("Bogon URL detected:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+		
+			if stats.check_ip( web.REMOTE_ADDR ) then
+				return web:notfound("Nothing exists at this URL")
+			else
+				local send_to = ret.prefix .. '/' .. make_url()
+				return web:redirect_permanent( send_to )
+			end
+		end
 
 
 		local len = rnd:between( 10, 5 )
@@ -266,15 +311,7 @@ app:get "/(.*)" {
 		end
 
 		checkpoint( timestats, 'markov' )
-		
 
-		--
-		-- Allow attaching to multiple places via nginx configuration
-		-- alone.
-		--
-		if web.HTTP_X_PREFIX then
-			ret.prefix = web.HTTP_X_PREFIX
-		end
 
 
 		--

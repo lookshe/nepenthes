@@ -275,5 +275,11 @@ backwards compatible, the minor number changes. If the user or
 administrator needs to change anything after or part of the upgrade, the
 major number changes and the minor number resets to zero.
 
-v1.0: Initial release
-v1.1: Clearer licensing, small performance improvements, corpus reset
+- v1.0: Initial release
+
+- v1.1: 
+	- Clearer licensing
+	- Small performance improvements
+	- Clearer logging
+	- Corpus reset
+	- Evasion countermeasures

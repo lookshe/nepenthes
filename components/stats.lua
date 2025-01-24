@@ -133,6 +133,22 @@ end
 
 
 ---
+-- Has this IP been seen?
+--
+function _M.check_ip( addr )
+
+	if ips[ addr ] then
+		if ips[ addr ].hits >= 5 then
+			return true
+		end
+	end
+	
+	return false
+
+end
+
+
+---
 -- Delete anything deemed forgettable.
 --
 function _M.sweep()
