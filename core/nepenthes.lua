@@ -24,10 +24,13 @@ end
 -- Load Dictionary
 --
 local dict = {}
+local dict_lookup = {}
+
 local f = io.open( config.words, "r" )
 for line in f:lines() do
 	if not line:match("%'") then
 		dict[ #dict + 1 ] = line
+		dict_lookup[ line ] = true
 	end
 end
 
@@ -59,11 +62,17 @@ local function render( template )
 
 	local iter = function( s, rate )
 		--
-		-- We have '#s' bytes to dispense at 'rate' seconds.
-		-- How long do we delay and how much per?
+		-- We have '#s' bytes to dispense through 'rate' seconds.
+		-- How long do we delay and how much per? Let them have a
+		-- taste of something every second, to keep them on the line.
 		--
-		local chunk_size = #s // 16
-		local delay = rate / 16
+		local chunk_size = #s
+		local delay = rate
+
+		repeat
+			chunk_size = chunk_size // 2
+			delay = delay / 2
+		until delay < 1
 
 		return function()
 			if #s <= 0 then
@@ -125,8 +134,6 @@ app:get "/stats/agents/" { agents }
 app:get "/stats/agents/(.*)" { agents }
 app:get "/stats/agents/(.*)/" { agents }
 
-
-
 local function ips( web, above )
 	stats.sweep()
 	web.headers['Content-type'] = 'application/json'
@@ -140,6 +147,21 @@ app:get "/stats/ips/" { ips }
 app:get "/stats/ips/(.*)" { ips }
 app:get "/stats/ips/(.*)/" { ips }
 
+app:get "/stats/markov" {
+	function( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( markov.stats() )
+		)
+	end
+}
+
+app:delete "/train" {
+	function( web )
+		markov.reset()
+		return web:ok()
+	end
+}
 
 app:post "/train" {
 	function ( web )
@@ -167,22 +189,31 @@ local function checkpoint( times, name )
 	}
 end
 
-local function log_checkpoints( times )
+local function log_checkpoints( times, send_delay )
 
-	local prev = 0
 	local parts = {}
 
 	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
 		if cp.name ~= 'start' then
-			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - prev)
+			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
 		end
-
-		prev = cp.at
 	end
 
+	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
 	output.info("req len: " .. table.concat( parts, ', ' ))
 
 end
+
+--
+-- Some crawlers HEAD every url before GET. Since it will always
+-- result in a document, don't do anything.
+--
+app:head "/(.*)" {
+	function( web )
+		web.headers['content-type'] = 'text/html; charset=UTF-8'
+		return web:ok("")
+	end
+}
 
 app:get "/(.*)" {
 	function ( web )
@@ -210,6 +241,61 @@ app:get "/(.*)" {
 			return ret
 		end
 
+		local function make_url()
+			return table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
+		end
+
+		local ret = {
+			header = getword(),
+			prefix = config.prefix
+		}
+
+
+		--
+		-- Allow attaching to multiple places via nginx configuration
+		-- alone.
+		--
+		if web.HTTP_X_PREFIX then
+			ret.prefix = web.HTTP_X_PREFIX
+		end
+
+
+		---
+		-- I would like to thank the Slashdot commenter for his very
+		-- clever idea for detecting tarpits. It's quite clever, I'll
+		-- admit. It's also easy to defeat, which we do here.
+		--
+		-- Since the URLs are built from a known dictionary, it's not
+		-- hard to sanity check them. If it's a new IP, we 301 them; and
+		-- since we're using our deterministic random, the same bad URL
+		-- will go to the same place. This lets the crawler 'bootstrap'
+		-- itself into the tarpit if coming from an unexpected URL.
+		--
+		-- Afterwards, we throw 404, so it doesn't look like we're an
+		-- infinite site.
+		--
+		local path = web.PATH_INFO:sub( #(ret.prefix) + 1 )
+		local is_bogon = false
+		for word in path:gmatch('%w+') do
+			if not dict_lookup[ word ] then
+				is_bogon = true
+			end
+		end
+
+		if is_bogon then
+			output.notice("Bogon URL detected:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+			--
+			-- Wait at least a little bit.
+			--
+			cqueues.sleep( rnd:between( 5, 1 ) )
+
+			if stats.check_ip( web.REMOTE_ADDR ) then
+				return web:notfound("Nothing exists at this URL")
+			else
+				local send_to = ret.prefix .. '/' .. make_url()
+				return web:redirect_permanent( send_to )
+			end
+		end
 
 
 		local len = rnd:between( 10, 5 )
@@ -217,16 +303,11 @@ app:get "/(.*)" {
 		for i = 1, len do
 			links[ i ] = {
 				description = getword(),
-				link = table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
+				link = make_url()
 			}
 		end
 
-		local ret = {
-			links = links,
-			header = getword(),
-			prefix = config.prefix
-		}
-
+		ret.links = links
 		checkpoint( timestats, 'words' )
 
 		--
@@ -238,13 +319,6 @@ app:get "/(.*)" {
 
 		checkpoint( timestats, 'markov' )
 
-		--
-		-- Allow attaching to multiple places via nginx configuration
-		-- alone.
-		--
-		if web.HTTP_X_PREFIX then
-			ret.prefix = web.HTTP_X_PREFIX
-		end
 
 
 		--
@@ -258,7 +332,7 @@ app:get "/(.*)" {
 		--
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
-		log_checkpoints( timestats )
+		log_checkpoints( timestats, ret.sandbag_rate )
 
 		return ret
 
