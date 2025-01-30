@@ -37,12 +37,12 @@ fi
 
 cd $scratch
 
-svn export https://svn.zadzmo.org/repo/$PROJECT/head ./$PROJECT-$version || exit 1
-#svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$version ./$PROJECT-$version || exit 1
+#svn export https://svn.zadzmo.org/repo/$PROJECT/head ./$PROJECT-$version || exit 1
+svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$version ./$PROJECT-$version || exit 1
 
 for dependency in $DEPENDS; do
 	echo $dependency
-	luarocks-5.4 --tree ./$PROJECT-$version install --deps-mode none --no-doc $dependency || exit 1
+	luarocks-5.4 --tree ./$PROJECT-$version/external install --deps-mode none --no-doc $dependency || exit 1
 done
 
 tar -cvf $PROJECT-$version.tar $PROJECT-$version/ || exit 1
