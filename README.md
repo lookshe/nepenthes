@@ -45,7 +45,7 @@ FROM ALL SEARCH RESULTS.
 Latest Version
 --------------
 
-[Nepenthes 1.0](https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.0.tar.gz)
+[Nepenthes 1.1](https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.1.tar.gz)
 
 [All downloads](https://zadzmo.org/code/nepenthes/downloads/)
 
@@ -285,6 +285,16 @@ All possible directives in config.yaml:
  - markov: Path to a SQLite database containing a Markov corpus. If not specified, the Markov feature is disabled.
  - markov_min: Minimum number of words to babble on a page.
  - markov_max: Maximum number of words to babble on a page. Very large values can cause serious CPU load.
+
+
+License Info
+------------
+
+Nepenthes is distributed under the terms of the MIT License, see the
+file 'LICENSE' in the source distribution. In addition, the release
+tarball contains several 3rd party components, see external/README.
+Using or distributing Nepenthes requires agreeing to these license
+terms as well. As of v1.1, all are also MIT or X11 licenses.
 
 
 History
