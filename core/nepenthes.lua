@@ -3,6 +3,7 @@
 local perihelion = require 'perihelion'
 local lustache = require 'lustache'
 local digest = require 'openssl.digest'
+local http_util = require 'http.util'
 local output = require 'daemonparts.output'
 local config = require 'components.config'
 local cqueues = require 'cqueues'
@@ -276,8 +277,8 @@ app:get "/(.*)" {
 		--
 		local path = web.PATH_INFO:sub( #(ret.prefix) + 1 )
 		local is_bogon = false
-		for word in path:gmatch('%w+') do
-			if not dict_lookup[ word ] then
+		for word in path:gmatch('/([^/]+)') do
+			if not dict_lookup[ http_util.decodeURI(word) ] then
 				is_bogon = true
 			end
 		end
@@ -314,7 +315,8 @@ app:get "/(.*)" {
 		-- Markov enabled?
 		--
 		if config.markov then
-			ret.content = markov.babble( rnd )
+			ret.content = markov.babble( rnd, config.markov_min, config.markov_max )
+			ret.title = markov.babble( rnd, 5, 15 )
 		end
 
 		checkpoint( timestats, 'markov' )

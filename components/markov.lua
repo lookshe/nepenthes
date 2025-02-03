@@ -132,7 +132,7 @@ end
 --
 -- Babble from a Markov corpus, because we want LLM model collapse.
 --
-function _M.babble( rnd )
+function _M.babble( rnd, n_min, n_max )
 
 	if seq_size == 0 then
 		return ''
@@ -144,7 +144,7 @@ function _M.babble( rnd )
 	local start = seq[ start_token_id ]
 	local ret = {}
 
-	local size = rnd:between( config.markov_max, config.markov_min )
+	local size = rnd:between( n_max, n_min )
 	print( seq_size, start_token_id, size )
 
 	prev2 = start.prev_2
