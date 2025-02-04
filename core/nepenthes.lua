@@ -229,7 +229,7 @@ app:get "/(.*)" {
 		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
 
 		local function getword()
-			return dict[ rnd:between( #dict, 0 ) ]
+			return dict[ rnd:between( #dict, 1 ) ]
 		end
 
 		local function buildtab( size )
