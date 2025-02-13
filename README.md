@@ -41,6 +41,15 @@ are indexing sites for search purposes, vs crawlers that are training
 AI models. ANY SITE THIS SOFTWARE IS APPLIED TO WILL LIKELY DISAPPEAR
 FROM ALL SEARCH RESULTS.
 
+So why should I run this, then?
+===============================
+ 
+So that, as I said to [Ars Technica](https://arstechnica.com/tech-policy/2025/01/ai-haters-build-tarpits-to-trap-and-trick-ai-scrapers-that-ignore-robots-txt/),
+we can fight back even if we don't succeed. Be indigestible. Grow spikes.
+
+Instead of rolling over and letting these assholes do what they want, make
+them have to work for it instead.
+
 
 Latest Version
 --------------
