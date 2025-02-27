@@ -1,19 +1,17 @@
 FROM nickblah/lua:5.4-luarocks-alpine
 RUN apk add --no-cache build-base
-RUN apk add --no-cache sqlite 
 RUN apk add --no-cache openssl
 RUN apk add --no-cache words
 RUN apk add --no-cache lua5.4-cqueues
 RUN apk add --no-cache lua5.4-ossl
 RUN apk add --no-cache lua5.4-lpeg
 RUN apk add --no-cache lua5.4-lzlib
-RUN apk add --no-cache lua5.4-dbi-sqlite3
 
 RUN <<EOF
-	wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.0.tar.gz
-	tar -xvzf nepenthes-1.0.tar.gz
-	mv nepenthes-1.0 /usr/nepenthes
-	rm nepenthes-1.0.tar.gz
+	wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.1nosql.tar.gz
+	tar -xvzf nepenthes-1.1nosql.tar.gz
+	mv nepenthes-1.1 /usr/nepenthes
+	rm nepenthes-1.1.tar.gz
 EOF
 COPY config.yaml /etc/nepenthes-config.yml
 
@@ -37,11 +35,6 @@ EOF
 USER nepenthes
 EXPOSE 8893
 WORKDIR /usr/nepenthes
-
-#
-# Performance enhancement
-#
-RUN echo 'PRAGMA journal_mode = wal;' | sqlite3 /vol/nepenthes/corpus.sqlite.db
 
 ENV NDIR="/usr/nepenthes"
 CMD ["sh", "/usr/nepenthes/nepenthes", "/etc/nepenthes-config.yml", "/usr/nepenthes/docker/bootstrap.lua"]

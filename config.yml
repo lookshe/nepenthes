@@ -13,7 +13,7 @@ forget_hits: 10
 persist_stats: './statsfile.json'
 seed_file: './seed.txt'
 
-markov: './corpus.sqlite.db'
+markov: './corpus.txt'
 markov_min: 20
 markov_max: 120
 

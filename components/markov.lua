@@ -1,77 +1,9 @@
 #!/usr/bin/env lua5.3
 
 local config = require 'components.config'
-local sqltable = require 'sqltable'
-local cqueues = require 'cqueues'
-local dbgen = require 'components.dbgen'
 
-
-local schema = {
-	--[[
-	--PRAGMA journal_mode = wal;
-	--]]
-
-	--[[
-	--PRAGMA wal_autocheckpoint(100);
-	--]]
-
-	[[
-	create table tokens (
-		id integer primary key autoincrement,
-		oken varchar(255) not null, -- this weird name will make sense later
-		unique( oken )
-	);
-	]],
-
-	[[
-	insert into tokens( id, oken ) values ( 1, '' );
-	]],
-
-	[[
-	create table token_sequence (
-		id integer primary key autoincrement,
-		prev_1 integer not null references tokens ( id ),
-		prev_2 integer not null references tokens ( id ),
-		next_id integer not null references tokens ( id )
-	);
-	]],
-
-	[[
-	create index seq on token_sequence ( prev_1, prev_2 );
-	]]
-}
-
-local sql = sqltable.connect {
-	type = 'SQLite3',
-	name = config.markov
-}
-
-dbgen.setup( 'SQLite3', sql, schema )
-sql:reset()
-
-local tokens = assert(sql:open_table
-	{
-		name = 'tokens',
-		key = 'id'
-	})
-
-local load_tokens = assert(sql:open_table
-	{
-		name = 'tokens',
-		key = 'oken'
-	})
-
-local seq = assert(sql:open_table
-	{
-		name = 'token_sequence',
-		key = 'id'
-	})
-
---
--- Assume the corpus does not change while Nepenthes is running,
--- so we can cache this value and spare 1 SQL query per hit.
---
-local seq_size = #seq
+local seq = {}
+local ord = {}
 
 
 local _M = {}
@@ -82,49 +14,44 @@ local _M = {}
 --
 function _M.train( corpus )
 
-	-- cache of seen words by ID.
-	local seen = {
-		[''] = 1
-	}
-
-	local count = 0
+	local cache = {}
 	local prev1 = ''
 	local prev2 = ''
 
 	for word in corpus:gmatch("%S+") do
-		-- insert word, if needed
-		if not seen[word] then
-			local ct = load_tokens[ word ]
-
-			if not ct then
-				load_tokens[ sql.next ] = { oken = word }
-				ct = load_tokens[ word ]
-			end
-
-			seen[word] = ct.id
+	
+		if not seq[prev1] then
+			seq[prev1] = {}
 		end
+		
+		if not seq[prev1][prev2] then
+			seq[prev1][prev2] = {}
+		end
+		
+		-- using size+1 notation here gets ... hairy, just call insert
+		table.insert(seq[prev1][prev2], word)
 
-		-- insert token sequence
-		seq[ sql.next ] = {
-			prev_1 = seen[prev1],
-			prev_2 = seen[prev2],
-			next_id = seen[word]
-		}
-
-		-- Give web requests a chance
-		if (count % 100) == 0 then
-			cqueues.sleep(0)
+		if not cache[ prev1 .. prev2 ] then
+			ord[ #ord + 1 ] = {
+				prev1 = prev1,
+				prev2 = prev2
+			}
+			
+			cache[prev1 .. prev2] = true
 		end
 
 		-- step forward
 		prev1 = prev2
 		prev2 = word
-		count = count + 1
+		
+		if #ord % 1000 == 0 then
+			io.write('.')
+			io.flush()
+		end
+		
 	end
 
-	-- update to include the newly added corpus data
-	seq_size = #seq
-	return count
+	return #ord
 
 end
 
@@ -132,29 +59,27 @@ end
 --
 -- Babble from a Markov corpus, because we want LLM model collapse.
 --
-function _M.babble( rnd )
+function _M.babble( rnd, n_min, n_max )
 
-	if seq_size == 0 then
+	if #ord == 0 then
 		return ''
 	end
 
 	local len = 0
-	local prev1, prev2, cur
-	local start = seq[ rnd:between( seq_size, 1 ) ]
 	local ret = {}
 
-	local size = rnd:between( config.markov_max or 300, config.markov_min or 100 )
+	local size = rnd:between( n_max, n_min )
 
-	prev2 = start.prev_2
-	cur = start.next_id
+	local start = ord[ rnd:between( #ord, 1 ) ]
+	local prev1
+	local prev2 = start.prev1
+	local cur = start.prev2
 
 	repeat
 		prev1 = prev2
 		prev2 = cur
 
-		local opts = sql.iclone( seq, 'prev_1 = $1 and prev_2 = $2',
-			prev1, prev2
-		)
+		local opts = seq[prev1][prev2]
 
 		-- something went wrong
 		if not opts then
@@ -168,13 +93,27 @@ function _M.babble( rnd )
 			break;	-- end of chain. We're done here no matter what.
 		end
 
-		cur = opts[ which ].next_id
-		ret[ #ret + 1 ] = tokens[ cur ].oken
+		cur = opts[ which ]
+		ret[ #ret + 1 ] = cur
 		len = len + 1
 
 	until len >= size
 
 	return table.concat(ret, ' ')
+	
+end
+
+
+---
+-- Corpus stats, for debugging.
+--
+function _M.stats()
+
+	return {
+		seq_size = #seq,
+		tokens = #ord
+	}
+
 end
 
 return _M
