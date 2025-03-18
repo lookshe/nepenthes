@@ -2,7 +2,7 @@ Nepenthes
 =========
 
 This is a tarpit intended to catch web crawlers. Specifically, it's
-targetting crawlers that scrape data for LLM's - but really, like the
+targetting crawlers that scrape data for LLMs - but really, like the
 plants it is named after, it'll eat just about anything that finds it's
 way inside.
 
