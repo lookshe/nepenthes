@@ -156,7 +156,7 @@ train in chunks.
 Once you have your body of text, assuming it's called corpus.txt, in
 your working directory, and you're running with the default port:
 
-	curl -XPOST -d ./@corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
+	curl -XPOST -d @./corpus.txt -H'Content-type: text/plain' http://localhost:8893/train
 
 This could take a very, VERY long time - possibly hours. curl may
 potentially time out. See
