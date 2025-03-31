@@ -8,15 +8,11 @@ about it. More to come as it happens / as I remember.
 But AI is the future! You can't stop it!
 ----------------------------------------
 
-First tech bubble, huh?
+[First tech bubble, huh?](https://www.wheresyoured.at/longcon/)
 
 Seriously, (a) these AI things don't really work, and (b) they have
 other significant problems and are causing real harm to people with
 little benefit.
-
-That said, we don't have to let this happen to us. We can push
-back. We can, as I said to Ars Technica, 'become indigestible. Grow
-spikes."
 
 I am unsure about effectiveness; but I can see the way crawlers have
 reacted, changed their patterns since January 2025, that they see this
