@@ -50,6 +50,8 @@ we can fight back even if we don't succeed. Be indigestible. Grow spikes.
 Instead of rolling over and letting these assholes do what they want, make
 them have to work for it instead.
 
+Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
+
 
 Latest Version
 --------------
