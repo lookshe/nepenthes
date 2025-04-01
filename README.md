@@ -189,14 +189,14 @@ To see user agent strings only:
 	http://{http_host:http_port}/stats/agents
 
 Or IP addresses only:
-3
+
 	http://{http_host:http_port}/stats/ips/
 
 These can get quite big; so it's possible to filter both 'agents' and
 'ips', simply add a minimum hit count to the URL. For example, to see a
 list of all IPs that have visted more than 100 times:
 
-	c
+	http://{http_host:http_port}/stats/ips/100
 
 Simply curl the URLs, pipe into 'jq' to pretty-print as desired. Script
 away!
