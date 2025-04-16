@@ -9,10 +9,11 @@ local config = {
 
 	http_host = '::1',
 	http_port = 8893,
+	unix_socket = cp.default_nil('string'),
 	prefix = '',
 	templates = './templates',
 	words = '/usr/share/dict/words',
-	nochdir = true,
+	nochdir = false,
 	daemonize = false,
 	pidfile = cp.default_nil('string'), -- ./pidfile',
 	min_wait = 4,

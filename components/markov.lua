@@ -132,7 +132,7 @@ end
 --
 -- Babble from a Markov corpus, because we want LLM model collapse.
 --
-function _M.babble( rnd )
+function _M.babble( rnd, n_min, n_max )
 
 	if seq_size == 0 then
 		return ''
@@ -140,10 +140,12 @@ function _M.babble( rnd )
 
 	local len = 0
 	local prev1, prev2, cur
-	local start = seq[ rnd:between( seq_size, 1 ) ]
+	local start_token_id = rnd:between( seq_size, 1 )
+	local start = seq[ start_token_id ]
 	local ret = {}
 
-	local size = rnd:between( config.markov_max or 300, config.markov_min or 100 )
+	local size = rnd:between( n_max, n_min )
+	print( seq_size, start_token_id, size )
 
 	prev2 = start.prev_2
 	cur = start.next_id
@@ -175,6 +177,34 @@ function _M.babble( rnd )
 	until len >= size
 
 	return table.concat(ret, ' ')
+end
+
+
+---
+-- Reset the corpus to zero.
+--
+function _M.reset()
+
+	seq_size = 0
+	sql:exec('delete from token_sequence;')
+	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="token_sequence";')
+
+	sql:exec('delete from tokens;')
+	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="tokens";')
+
+end
+
+
+---
+-- Corpus stats, for debugging.
+--
+function _M.stats()
+
+	return {
+		seq_size = seq_size,
+		tokens = #( tokens )
+	}
+
 end
 
 return _M

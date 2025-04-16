@@ -18,6 +18,10 @@ else
 	boot=''
 fi
 
+if [ -z "ULIMIT_FILES" ]; then
+	ulimit -n $ULIMIT_FILES
+fi
+
 exec /usr/bin/env lua5.4		\
 	$boot						\
 	$NDIR/core/microdyne.lua	\
