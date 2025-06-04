@@ -10,10 +10,10 @@ RUN apk add --no-cache lua5.4-lzlib
 RUN apk add --no-cache lua5.4-dbi-sqlite3
 
 RUN <<EOF
-	wget https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.1.tar.gz
-	tar -xvzf nepenthes-1.1.tar.gz
-	mv nepenthes-1.1 /usr/nepenthes
-	rm nepenthes-1.1.tar.gz
+	wget https://zadzmo.org/downloads/nepenthes/file/nepenthes-1.2.tar.gz
+	tar -xvzf nepenthes-1.2.tar.gz
+	mv nepenthes-1.2 /usr/nepenthes
+	rm nepenthes-1.2.tar.gz
 EOF
 COPY config.yaml /etc/nepenthes-config.yml
 
