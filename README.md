@@ -56,9 +56,13 @@ Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
 Latest Version
 --------------
 
-[Nepenthes 1.1](https://zadzmo.org/code/nepenthes/downloads/nepenthes-1.1.tar.gz)
+[Nepenthes 1.2](https://zadzmo.org/downloads/nepenthes/file/nepenthes-1.2.tar.gz)
 
-[All downloads](https://zadzmo.org/code/nepenthes/downloads/)
+[Latest Permalink](https://zadzmo.org/downloads/nepenthes/latest)
+
+[All downloads](https://zadzmo.org/downloads/nepenthes)
+
+[RSS feed of releases](https://zadzmo.org/downloads/nepenthes/rss)
 
 
 Usage
@@ -248,7 +252,7 @@ your IP statistics can be used as a banlist to save your resources.
 Nepenthes used Offensively
 --------------------------
 
-Let's say you've got horsepower and bandwidth to burn, and just want to
+Let's say you've got horsepower and bandwidth to spare, and just want to
 see these AI models burn. Nepenthes has what you need:
 
 Don't make any attempt to block crawlers with the IP stats. Put the delay
@@ -326,3 +330,7 @@ major number changes and the minor number resets to zero.
 	- Evasion countermeasures
 	- Corpus Statistics report endpoint
 	- Unix domain socket support
+
+- v1.2:
+	- Bugfix in Bogon filter for UTF8 characters
+	- Fix rare crash with stacktrace
