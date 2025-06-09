@@ -43,7 +43,7 @@ local function train_block( this, state, text )
 		state.prev1 = state.prev2
 		state.prev2 = word
 		this.seq_size = this.seq_size + 1
-		
+
 		if not state.tokens[ word ] then
 			state.tokens[word] = true
 		end
@@ -66,7 +66,7 @@ local function finalize( this, state )
 	for k in pairs(state.tokens) do
 		this.tokens[ #(this.tokens) + 1 ] = k
 	end
-	
+
 end
 
 
@@ -88,7 +88,7 @@ function _methods.train_file( this, fpath )
 	end
 
 	finalize( this, state )
-	
+
 end
 
 

@@ -27,12 +27,12 @@ describe("Markov Babbler", function()
 		assert.is_equal("and this and", mk:babble( rnd, 2, 3))
 
 	end)
-	
+
 	it("Trains and runs on a text file", function()
 
 		local mk = markov.new()
 		assert.is_table(markov)
-		
+
 		mk:train_file( './tests/share/wiki-markov.txt' )
 		local status = mk:stats()
 
@@ -41,12 +41,12 @@ describe("Markov Babbler", function()
 
 		local rnd = xorshiro.new( 5, 6, 7, 8 )
 		assert.is_equal(
-			'complex probability distributions, and have found application in areas including Bayesian statistics, biology,', 
+			'complex probability distributions, and have found application in areas including Bayesian statistics, biology,',
 			mk:babble( rnd, 10, 15)
 		)
-		
+
 		assert.is_equal(
-			'the nature of time), but it is a type of Markov process is called', 
+			'the nature of time), but it is a type of Markov process is called',
 			mk:babble( rnd, 10, 15)
 		)
 	end)
