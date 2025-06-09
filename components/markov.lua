@@ -1,130 +1,76 @@
-#!/usr/bin/env lua5.3
+#!/usr/bin/env lua5.4
 
-local config = require 'components.config'
-local sqltable = require 'sqltable'
-local cqueues = require 'cqueues'
-local dbgen = require 'components.dbgen'
-
-
-local schema = {
-	--[[
-	--PRAGMA journal_mode = wal;
-	--]]
-
-	--[[
-	--PRAGMA wal_autocheckpoint(100);
-	--]]
-
-	[[
-	create table tokens (
-		id integer primary key autoincrement,
-		oken varchar(255) not null, -- this weird name will make sense later
-		unique( oken )
-	);
-	]],
-
-	[[
-	insert into tokens( id, oken ) values ( 1, '' );
-	]],
-
-	[[
-	create table token_sequence (
-		id integer primary key autoincrement,
-		prev_1 integer not null references tokens ( id ),
-		prev_2 integer not null references tokens ( id ),
-		next_id integer not null references tokens ( id )
-	);
-	]],
-
-	[[
-	create index seq on token_sequence ( prev_1, prev_2 );
-	]]
-}
-
-local sql = sqltable.connect {
-	type = 'SQLite3',
-	name = config.markov
-}
-
-dbgen.setup( 'SQLite3', sql, schema )
-sql:reset()
-
-local tokens = assert(sql:open_table
+local _methods = {}
+local NOWORD = setmetatable( {},
 	{
-		name = 'tokens',
-		key = 'id'
-	})
-
-local load_tokens = assert(sql:open_table
-	{
-		name = 'tokens',
-		key = 'oken'
-	})
-
-local seq = assert(sql:open_table
-	{
-		name = 'token_sequence',
-		key = 'id'
-	})
-
---
--- Assume the corpus does not change while Nepenthes is running,
--- so we can cache this value and spare 1 SQL query per hit.
---
-local seq_size = #seq
-
-
-local _M = {}
-
+		__tostring = function() return "NOWORD" end,
+		__concat = function( a ) return a end
+	}
+)
 
 ---
 -- Called by frontend to load into the corpus.
 --
-function _M.train( corpus )
+function _methods.train( this, corpus )
 
-	-- cache of seen words by ID.
-	local seen = {
-		[''] = 1
-	}
+	local cache = {}
+	local prev1 = NOWORD
+	local prev2 = NOWORD
 
-	local count = 0
-	local prev1 = ''
-	local prev2 = ''
+	local ending_in = 2
+	local iter = corpus:gmatch("%S+")
+	local function splitter()
+		local ret = iter()
 
-	for word in corpus:gmatch("%S+") do
-		-- insert word, if needed
-		if not seen[word] then
-			local ct = load_tokens[ word ]
-
-			if not ct then
-				load_tokens[ sql.next ] = { oken = word }
-				ct = load_tokens[ word ]
-			end
-
-			seen[word] = ct.id
+		if ret then
+			return ret
 		end
 
-		-- insert token sequence
-		seq[ sql.next ] = {
-			prev_1 = seen[prev1],
-			prev_2 = seen[prev2],
-			next_id = seen[word]
-		}
+		if ending_in == 0 then
+			return nil
+		end
 
-		-- Give web requests a chance
-		if (count % 100) == 0 then
-			cqueues.sleep(0)
+		ending_in = ending_in - 1
+		return NOWORD
+
+	end
+
+
+	for word in splitter do
+
+		if not this.seq[prev1] then
+			this.seq[prev1] = {}
+		end
+
+		if not this.seq[prev1][prev2] then
+			this.seq[prev1][prev2] = {}
+		end
+
+		-- using size+1 notation here gets ... hairy, just call insert
+		table.insert(this.seq[prev1][prev2], word)
+
+		if not cache[ prev1 .. prev2 ] then
+			this.ord[ #(this.ord) + 1 ] = {
+				prev1 = prev1,
+				prev2 = prev2
+			}
+
+			cache[prev1 .. prev2] = true
 		end
 
 		-- step forward
 		prev1 = prev2
 		prev2 = word
-		count = count + 1
+		this.seq_size = this.seq_size + 1
+
+		if #(this.ord) % 1000 == 0 then
+			io.write('.')
+			io.flush()
+		end
+
 	end
 
-	-- update to include the newly added corpus data
-	seq_size = #seq
-	return count
+	return #this.ord
 
 end
 
@@ -132,31 +78,28 @@ end
 --
 -- Babble from a Markov corpus, because we want LLM model collapse.
 --
-function _M.babble( rnd, n_min, n_max )
+function _methods.babble( this, rnd, n_min, n_max )
 
-	if seq_size == 0 then
+	if #(this.ord) == 0 then
 		return ''
 	end
 
 	local len = 0
-	local prev1, prev2, cur
-	local start_token_id = rnd:between( seq_size, 1 )
-	local start = seq[ start_token_id ]
 	local ret = {}
 
 	local size = rnd:between( n_max, n_min )
-	print( seq_size, start_token_id, size )
 
-	prev2 = start.prev_2
-	cur = start.next_id
+	local start = this.ord[ rnd:between( #(this.ord), 1 ) ]
+
+	local prev1
+	local prev2 = start.prev1
+	local cur = start.prev2
 
 	repeat
 		prev1 = prev2
 		prev2 = cur
 
-		local opts = sql.iclone( seq, 'prev_1 = $1 and prev_2 = $2',
-			prev1, prev2
-		)
+		local opts = this.seq[prev1][prev2]
 
 		-- something went wrong
 		if not opts then
@@ -170,27 +113,23 @@ function _M.babble( rnd, n_min, n_max )
 			break;	-- end of chain. We're done here no matter what.
 		end
 
-		cur = opts[ which ].next_id
-		ret[ #ret + 1 ] = tokens[ cur ].oken
+		cur = opts[ which ]
+		if cur == NOWORD then	-- end-of-chain.
+			break
+		end
+
+		ret[ #ret + 1 ] = cur
 		len = len + 1
 
 	until len >= size
 
+	for i in ipairs(ret) do
+		if ret[i] == NOWORD then
+			ret[i] = '\n'
+		end
+	end
+
 	return table.concat(ret, ' ')
-end
-
-
----
--- Reset the corpus to zero.
---
-function _M.reset()
-
-	seq_size = 0
-	sql:exec('delete from token_sequence;')
-	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="token_sequence";')
-
-	sql:exec('delete from tokens;')
-	sql:exec('UPDATE sqlite_sequence SET seq = 0 WHERE name="tokens";')
 
 end
 
@@ -198,12 +137,28 @@ end
 ---
 -- Corpus stats, for debugging.
 --
-function _M.stats()
+function _methods.stats( this )
 
 	return {
-		seq_size = seq_size,
-		tokens = #( tokens )
+		seq_size = this.seq_size,
+		tokens = #(this.ord)
 	}
+
+end
+
+
+
+local _M = {}
+
+function _M.new()
+
+	local ret = {
+		seq_size = 0,
+		seq = {},
+		ord = {}
+	}
+
+	return setmetatable( ret, { __index = _methods } )
 
 end
 
