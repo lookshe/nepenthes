@@ -123,12 +123,6 @@ function _methods.babble( this, rnd, n_min, n_max )
 
 	until len >= size
 
-	for i in ipairs(ret) do
-		if ret[i] == NOWORD then
-			ret[i] = '\n'
-		end
-	end
-
 	return table.concat(ret, ' ')
 
 end
