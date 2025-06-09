@@ -8,60 +8,45 @@ local NOWORD = setmetatable( {},
 	}
 )
 
----
--- Called by frontend to load into the corpus.
---
-function _methods.train( this, corpus )
+local function training_state()
 
-	local cache = {}
-	local prev1 = NOWORD
-	local prev2 = NOWORD
+	return {
+		prev1 = NOWORD,
+		prev2 = NOWORD,
+		tokens = {}
+	}
 
-	local ending_in = 2
-	local iter = corpus:gmatch("%S+")
-	local function splitter()
-		local ret = iter()
+end
 
-		if ret then
-			return ret
+
+
+local function train_block( this, state, text )
+
+	for word in text:gmatch("%S+") do
+
+		if not this.seq[ state.prev1 ] then
+			this.seq[ state.prev1 ] = {}
 		end
 
-		if ending_in == 0 then
-			return nil
-		end
-
-		ending_in = ending_in - 1
-		return NOWORD
-
-	end
-
-
-	for word in splitter do
-
-		if not this.seq[prev1] then
-			this.seq[prev1] = {}
-		end
-
-		if not this.seq[prev1][prev2] then
-			this.seq[prev1][prev2] = {}
+		if not this.seq[ state.prev1 ][ state.prev2 ] then
+			this.seq[ state.prev1 ][ state.prev2 ] = {}
 		end
 
 		-- using size+1 notation here gets ... hairy, just call insert
-		table.insert(this.seq[prev1][prev2], word)
+		table.insert(this.seq[ state.prev1 ][ state.prev2 ], word)
 
-		if not cache[ prev1 .. prev2 ] then
-			this.ord[ #(this.ord) + 1 ] = {
-				prev1 = prev1,
-				prev2 = prev2
-			}
+		this.ord[ #(this.ord) + 1 ] = {
+			prev1 = state.prev1,
+			prev2 = state.prev2
+		}
 
-			cache[prev1 .. prev2] = true
-		end
-
-		-- step forward
-		prev1 = prev2
-		prev2 = word
+		state.prev1 = state.prev2
+		state.prev2 = word
 		this.seq_size = this.seq_size + 1
+		
+		if not state.tokens[ word ] then
+			state.tokens[word] = true
+		end
 
 		if #(this.ord) % 1000 == 0 then
 			io.write('.')
@@ -73,6 +58,39 @@ function _methods.train( this, corpus )
 	return #this.ord
 
 end
+
+
+local function finalize( this, state )
+
+	this.tokens = {}
+	for k in pairs(state.tokens) do
+		this.tokens[ #(this.tokens) + 1 ] = k
+	end
+	
+end
+
+
+function _methods.train( this, text )
+
+	local state = training_state()
+	train_block( this, state, text )
+	finalize( this, state )
+
+end
+
+
+function _methods.train_file( this, fpath )
+
+	local state = training_state()
+	local f <close> = assert(io.open( fpath, 'r' ))
+	for line in f:lines() do
+		train_block( this, state, line )
+	end
+
+	finalize( this, state )
+	
+end
+
 
 
 --
@@ -135,7 +153,7 @@ function _methods.stats( this )
 
 	return {
 		seq_size = this.seq_size,
-		tokens = #(this.ord)
+		tokens = #(this.tokens)
 	}
 
 end
