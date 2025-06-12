@@ -51,7 +51,7 @@ describe("Send-Request-Output Module", function()
 			local bytes_total = 0
 			local delay_total = 0
 
-			for i, packet in ipairs( pattern ) do
+			for i, packet in ipairs( pattern ) do	-- luacheck: ignore 213
 				assert.is_table( packet )
 				assert.is_number( packet.delay )
 				assert.is_number( packet.bytes )

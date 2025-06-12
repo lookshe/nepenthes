@@ -74,8 +74,6 @@ function _M.generate_pattern( delay, bytes )
 	assert(delay > 0)
 	assert(bytes > 0)
 
-	local ret = {}
-
 	--
 	-- The original Nepenthes 1.x algorithm. Easily identified by
 	-- it's constant rate of output.
@@ -115,7 +113,7 @@ function _M.generate_pattern( delay, bytes )
 		local new_delay = ret[largest].delay
 		local new_bytes = ret[largest].bytes
 
-		for i, fix in ipairs( to_fix ) do
+		for i, fix in ipairs( to_fix ) do	-- luacheck: ignore 213
 			new_delay = new_delay + ret[fix].delay
 			new_bytes = new_bytes + ret[fix].bytes
 		end
@@ -123,7 +121,7 @@ function _M.generate_pattern( delay, bytes )
 		to_fix[ #to_fix + 1 ] = largest
 		table.sort(to_fix, function( a, b ) return a > b end )
 
-		for i, fix in ipairs(to_fix) do
+		for i, fix in ipairs(to_fix) do	-- luacheck: ignore 213
 			table.remove(ret, fix)
 		end
 
@@ -131,11 +129,11 @@ function _M.generate_pattern( delay, bytes )
 		ret = merge( ret, split( new_delay, new_bytes ) )
 	end
 
-	local delayout = 0
-	local bytesout = 0
-	for i, v in ipairs( ret ) do
-		delayout = delayout + v.delay
-		bytesout = bytesout + v.bytes
+	--local delayout = 0
+	--local bytesout = 0
+	for i, v in ipairs( ret ) do	-- luacheck: ignore 213
+		--delayout = delayout + v.delay
+		--bytesout = bytesout + v.bytes
 		v.delay = v.delay / 1000
 	end
 
