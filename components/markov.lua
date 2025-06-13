@@ -48,7 +48,7 @@ local function train_block( this, state, text )
 			state.tokens[word] = true
 		end
 
-		if #(this.ord) % 1000 == 0 then
+		if #(this.ord) % 10000 == 0 then
 			io.write('.')
 			io.flush()
 		end
