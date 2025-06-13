@@ -9,15 +9,10 @@ local config = require 'components.config'
 local cqueues = require 'cqueues'
 local json = require 'dkjson'
 
+local send = require 'components.send'
 local seed = require 'components.seed'
-local stats = require 'components.stats'
 local xorshiro = require 'components.xorshiro'
-local markov
-
-
-if config.markov then
-	markov = require 'components.markov'
-end
+local markov = require 'components.markov'
 
 
 
@@ -34,6 +29,13 @@ for line in f:lines() do
 		dict_lookup[ line ] = true
 	end
 end
+
+
+--
+-- Train Markov corpus
+--
+local mk = markov.new()
+mk:train_file( config.markov_corpus )
 
 
 ---
@@ -56,37 +58,37 @@ local function load_template( path )
 end
 
 
----
+---web.v
 -- Render the page through a template engine.
 --
 local function render( template )
 
-	local iter = function( s, rate )
-		--
-		-- We have '#s' bytes to dispense through 'rate' seconds.
-		-- How long do we delay and how much per? Let them have a
-		-- taste of something every second, to keep them on the line.
-		--
-		local chunk_size = #s
-		local delay = rate
+	--local iter = function( s, rate )
+		----
+		---- We have '#s' bytes to dispense through 'rate' seconds.
+		---- How long do we delay and how much per? Let them have a
+		---- taste of something every second, to keep them on the line.
+		----
+		--local chunk_size = #s
+		--local delay = rate
 
-		repeat
-			chunk_size = chunk_size // 2
-			delay = delay / 2
-		until delay < 1
+		--repeat
+			--chunk_size = chunk_size // 2
+			--delay = delay / 2
+		--until delay < 1
 
-		return function()
-			if #s <= 0 then
-				return nil
-			end
+		--return function()
+			--if #s <= 0 then
+				--return nil
+			--end
 
-			local ret = s:sub(1, chunk_size)
-			s = s:sub(chunk_size + 1, #s)
-			cqueues.sleep(delay)
+			--local ret = s:sub(1, chunk_size)
+			--s = s:sub(chunk_size + 1, #s)
+			--cqueues.sleep(delay)
 
-			return ret
-		end
-	end
+			--return ret
+		--end
+	--end
 
 	return function( web )
 
@@ -97,10 +99,11 @@ local function render( template )
 		prt[ 'content' ] = load_template( template )
 
 		rawset(lustache, 'partial_cache', {})
-		--return web:ok(  )
 		local ret = lustache:render(template_code, web.vars, prt)
 		if web.vars.sandbag_rate then
-			return '200 OK', web.headers, iter( ret, web.vars.sandbag_rate )
+			local p = send.generate_pattern( web.vars.sandbag_rate, #ret )
+
+			return '200 OK', web.headers, send.delay_iterator( ret, p )
 		end
 
 		return web:ok( ret )
@@ -111,43 +114,6 @@ end
 
 local app = perihelion.new()
 
-app:get "/stats" {
-	function ( web )
-		stats.sweep()
-
-		web.headers['Content-type'] = 'application/json'
-		return web:ok(
-			json.encode( stats.scoreboard_all() )
-		)
-	end
-}
-
-local function agents( web, above )
-	stats.sweep()
-	web.headers['Content-type'] = 'application/json'
-	return web:ok(
-		json.encode( stats.agents( tonumber(above) ))
-	)
-end
-
-app:get "/stats/agents" { agents }
-app:get "/stats/agents/" { agents }
-app:get "/stats/agents/(.*)" { agents }
-app:get "/stats/agents/(.*)/" { agents }
-
-local function ips( web, above )
-	stats.sweep()
-	web.headers['Content-type'] = 'application/json'
-	return web:ok(
-		json.encode( stats.ips( tonumber(above) ))
-	)
-end
-
-app:get "/stats/ips" { ips }
-app:get "/stats/ips/" { ips }
-app:get "/stats/ips/(.*)" { ips }
-app:get "/stats/ips/(.*)/" { ips }
-
 app:get "/stats/markov" {
 	function( web )
 		web.headers['Content-type'] = 'application/json'
@@ -157,29 +123,6 @@ app:get "/stats/markov" {
 	end
 }
 
-app:delete "/train" {
-	function( web )
-		markov.reset()
-		return web:ok()
-	end
-}
-
-app:post "/train" {
-	function ( web )
-		if not config.markov then
-			error("Markov not enabled")
-		end
-
-		if web.CONTENT_TYPE ~= 'text/plain' then
-			error("Unknown content type for training")
-		end
-
-		local count = markov.train( web.POST_RAW )
-
-		web.headers['Content-Type'] = 'text/plain'
-		return web:ok( "trained " .. count .. " tokens" )
-	end
-}
 
 local instance_seed = seed.get()
 
@@ -260,7 +203,6 @@ app:get "/(.*)" {
 			ret.prefix = web.HTTP_X_PREFIX
 		end
 
-
 		---
 		-- I would like to thank the Slashdot commenter for his very
 		-- clever idea for detecting tarpits. It's quite clever, I'll
@@ -290,12 +232,12 @@ app:get "/(.*)" {
 			--
 			cqueues.sleep( rnd:between( 5, 1 ) )
 
-			if stats.check_ip( web.REMOTE_ADDR ) then
-				return web:notfound("Nothing exists at this URL")
-			else
+			--if stats.check_ip( web.REMOTE_ADDR ) then
+				--return web:notfound("Nothing exists at this URL")
+			--else
 				local send_to = ret.prefix .. '/' .. make_url()
 				return web:redirect_permanent( send_to )
-			end
+			--end
 		end
 
 
@@ -311,23 +253,10 @@ app:get "/(.*)" {
 		ret.links = links
 		checkpoint( timestats, 'words' )
 
-		--
-		-- Markov enabled?
-		--
-		if config.markov then
-			ret.content = markov.babble( rnd, config.markov_min, config.markov_max )
-			ret.title = markov.babble( rnd, 5, 15 )
-		end
+		ret.content = mk:babble( rnd, config.markov_min, config.markov_max )
+		ret.title = mk:babble( rnd, 5, 15 )
 
 		checkpoint( timestats, 'markov' )
-
-
-
-		--
-		-- Keep stats about out prey
-		--
-		stats.log_hit( web.HTTP_X_USER_AGENT, web.REMOTE_ADDR )
-
 
 		--
 		-- Oh you think this was supposed to be fast?
@@ -342,14 +271,5 @@ app:get "/(.*)" {
 
 	render( 'list' )
 }
-
-stats.load()
-
-if config.persist_stats then
-	-- save stats to disk on graceful shutdown.
-	function app.shutdown_hook()
-		stats.sweep()
-	end
-end
 
 return app

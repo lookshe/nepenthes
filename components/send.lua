@@ -1,6 +1,8 @@
 #!/usr/bin/env lua5.4
 
+local cqueues = require 'cqueues'
 local rand = require 'openssl.rand'
+
 
 for i = 1, 5 do
 	if not rand.ready() then
@@ -87,7 +89,8 @@ function _M.generate_pattern( delay, bytes )
 	--until delay < 1
 
 	--
-	-- Fire the recursively splitting packet randomizer.
+	-- Fire the recursively splitting packet randomizer. Math is entirely
+	-- integer, so convert delay into milliseconds.
 	--
 	local ret = split( delay * 1000, bytes )
 
@@ -129,15 +132,47 @@ function _M.generate_pattern( delay, bytes )
 		ret = merge( ret, split( new_delay, new_bytes ) )
 	end
 
-	--local delayout = 0
-	--local bytesout = 0
+
+	--
+	-- Convert delay back into seconds.
+	--
 	for i, v in ipairs( ret ) do	-- luacheck: ignore 213
-		--delayout = delayout + v.delay
-		--bytesout = bytesout + v.bytes
 		v.delay = v.delay / 1000
 	end
 
 	return ret
+
+end
+
+
+function _M.delay_iterator( s, pattern )
+
+	return function()
+
+		if #pattern == 0 then
+			if s and #s > 0 then
+				-- if by happenstance we run out of pattern with bytes
+				-- remaining, fling it all.
+				local ret = s
+				s = nil
+				return ret
+			end
+
+			return nil
+		end
+
+		if not s then
+			return nil
+		end
+
+		local block = table.remove(pattern, 1)
+		local ret = s:sub(1, block.bytes)
+		s = s:sub(block.bytes + 1, #s)
+		cqueues.sleep(block.delay)
+
+		return ret
+
+	end
 
 end
 

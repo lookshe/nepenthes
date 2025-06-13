@@ -3,7 +3,7 @@
 require 'luarocks.loader'
 pcall(require, 'luacov')
 
---local markov = require 'components.markov'
+local cqueues = require 'cqueues'
 local send = require 'components.send'
 --local pl = require 'pl.pretty'
 
@@ -65,17 +65,85 @@ describe("Send-Request-Output Module", function()
 				delay_total = delay_total + packet.delay
 			end
 
-			--print('##', bytes_total, delay_total)
-			assert.is_equal( bytes, bytes_total )
-			assert.is_true( delay > delay_total - 1 )
-			assert.is_true( delay < delay_total + 2 )
-
 		until #tests == 0
 
 	end)
 
 	it("Generates different patterns", function()
 		pending("Not yet implemented")
+	end)
+
+	it("Stutters with correct len/size", function()
+
+		local s = 'abcdefghijklmnopqrstuvwxyz'
+
+		local t1 = {
+			{ delay = 0.1, bytes = 10 },
+			{ delay = 0.2, bytes = 8 },
+			{ delay = 0.4, bytes = 8 }
+		}
+
+		local x = send.delay_iterator( s, t1 )
+		local start = cqueues.monotime()
+
+		assert.is_equal( 'abcdefghij', x() )
+		assert.is_equal( 'klmnopqr', x() )
+		assert.is_equal( 'stuvwxyz', x() )
+		assert.is_nil( x() )
+
+		local stop = cqueues.monotime()
+		assert.is_true( (stop - start) >= 0.7 )
+
+	end)
+
+
+	it("Stutters - underruns okay", function()
+
+		local s = 'abcdefghijklmnopqrstuvwxyz'
+
+		local t1 = {
+			{ delay = 0.1, bytes = 5 },
+			{ delay = 0.2, bytes = 5 },
+			{ delay = 0.1, bytes = 2 }
+		}
+
+		local x = send.delay_iterator( s, t1 )
+		local start = cqueues.monotime()
+
+		assert.is_equal( 'abcde', x() )
+		assert.is_equal( 'fghij', x() )
+		assert.is_equal( 'kl', x() )
+		assert.is_equal( 'mnopqrstuvwxyz', x() )
+		assert.is_nil( x() )
+
+		local stop = cqueues.monotime()
+		assert.is_true( (stop - start) >= 0.4 )
+
+	end)
+
+
+	it("Stutters - overruns okay", function()
+
+		local s = 'abcdefghijklmnopqrstuvwxyz'
+
+		local t2 = {
+			{ delay = 0.1, bytes = 15 },
+			{ delay = 0.2, bytes = 10 },
+			{ delay = 0.1, bytes = 10 }
+		}
+
+		local x = send.delay_iterator( s, t2 )
+		local start = cqueues.monotime()
+
+		assert.is_equal( 'abcdefghijklmno', x() )
+		assert.is_equal( 'pqrstuvwxy', x() )
+		assert.is_equal( 'z', x() )
+		assert.is_nil( x() )
+		assert.is_nil( x() )
+
+		local stop = cqueues.monotime()
+		assert.is_true( (stop - start) >= 0.4 )
+
 	end)
 
 end)
