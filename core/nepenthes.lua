@@ -1,14 +1,16 @@
 #!/usr/bin/env lua5.4
 
-local perihelion = require 'perihelion'
+local cqueues = require 'cqueues'
 local lustache = require 'lustache'
+local json = require 'dkjson'
 local digest = require 'openssl.digest'
 local http_util = require 'http.util'
-local output = require 'daemonparts.output'
-local config = require 'components.config'
-local cqueues = require 'cqueues'
-local json = require 'dkjson'
 
+local perihelion = require 'perihelion'
+local output = require 'daemonparts.output'
+
+local config = require 'components.config'
+local stats = require 'components.stats'
 local send = require 'components.send'
 local seed = require 'components.seed'
 local xorshiro = require 'components.xorshiro'
@@ -58,37 +60,10 @@ local function load_template( path )
 end
 
 
----web.v
+--
 -- Render the page through a template engine.
 --
 local function render( template )
-
-	--local iter = function( s, rate )
-		----
-		---- We have '#s' bytes to dispense through 'rate' seconds.
-		---- How long do we delay and how much per? Let them have a
-		---- taste of something every second, to keep them on the line.
-		----
-		--local chunk_size = #s
-		--local delay = rate
-
-		--repeat
-			--chunk_size = chunk_size // 2
-			--delay = delay / 2
-		--until delay < 1
-
-		--return function()
-			--if #s <= 0 then
-				--return nil
-			--end
-
-			--local ret = s:sub(1, chunk_size)
-			--s = s:sub(chunk_size + 1, #s)
-			--cqueues.sleep(delay)
-
-			--return ret
-		--end
-	--end
 
 	return function( web )
 
@@ -126,6 +101,7 @@ app:get "/stats/markov" {
 
 local instance_seed = seed.get()
 
+
 local function checkpoint( times, name )
 	times[ #times + 1 ] = {
 		name = name,
@@ -147,6 +123,34 @@ local function log_checkpoints( times, send_delay )
 	output.info("req len: " .. table.concat( parts, ', ' ))
 
 end
+
+
+app:get "/stats" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.compute() )
+		)
+	end
+}
+
+app:get "/stats/addresses" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.address_list() )
+		)
+	end
+}
+
+app:get "/stats/agents" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.agent_list() )
+		)
+	end
+}
 
 --
 -- Some crawlers HEAD every url before GET. Since it will always
@@ -231,13 +235,7 @@ app:get "/(.*)" {
 			-- Wait at least a little bit.
 			--
 			cqueues.sleep( rnd:between( 5, 1 ) )
-
-			--if stats.check_ip( web.REMOTE_ADDR ) then
-				--return web:notfound("Nothing exists at this URL")
-			--else
-				local send_to = ret.prefix .. '/' .. make_url()
-				return web:redirect_permanent( send_to )
-			--end
+			return web:notfound("Nothing exists at this URL")
 		end
 
 
@@ -264,6 +262,22 @@ app:get "/(.*)" {
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
 		log_checkpoints( timestats, ret.sandbag_rate )
+		
+		print( timestats[ #timestats ].at )
+
+		-- XXX: Call this after rendering the template.
+		stats.log {
+			address = web.REMOTE_ADDR,
+			uri = web.PATH_INFO,
+			agent = web.HTTP_X_USER_AGENT,
+			silo = 'default',
+			bytes = 0,
+			when = cqueues.monotime(),
+			response = 200,	-- faked, probable, needs overall refactor
+			delay = ret.sandbag_rate,
+			cpu = timestats[ #timestats ].at
+
+		}
 
 		return ret
 

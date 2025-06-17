@@ -134,6 +134,25 @@ function _M.default_nil( valtype )
 
 end
 
+function _M.not_nil( valtype )
+
+	return setmetatable( {}, {
+
+		isnil = false,
+
+		__call = function( t, prefix, data )	-- luacheck: ignore 212
+			if type(data) == valtype then
+				return data
+			else
+				error("Incorrect data type for " .. prefix .. " - must be: " .. valtype)
+			end
+		end
+
+	})
+
+end
+
+
 
 function _M.prepare( tab )
 

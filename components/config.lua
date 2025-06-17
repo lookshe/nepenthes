@@ -24,10 +24,10 @@ local config = {
 	forget_hits = 10,
 	persist_stats = cp.default_nil('string'), -- './statsfile.json',
 	seed_file = cp.default_nil('string'), -- './seed.txt',
-	markov = cp.default_nil('string'), -- './markov.db',
+	markov_corpus = cp.not_nil('string'), -- './markov.db',
 	markov_min = 10,
-	markov_max = 50
-
+	markov_max = 50,
+	stats_remember_time = 1800
 }
 
 ---
