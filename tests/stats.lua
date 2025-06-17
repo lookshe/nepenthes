@@ -85,6 +85,10 @@ local entries = {
 
 local function float_equals( a, b )
 
+	--
+	-- In a passing test suite, these cases are never true.
+	--
+	-- luacov: disable
 	if (a - b) > 0.0001 then
 		return false
 	end
@@ -92,6 +96,7 @@ local function float_equals( a, b )
 	if (b - a) > 0.0001 then
 		return false
 	end
+	-- luacov: enable
 
 	return true
 
@@ -226,7 +231,9 @@ describe("Hit Counting/Statistics Module", function()
 
 		local count = 0
 		for k in pairs(list) do	-- luacheck: ignore 213
+			-- luacov: disable
 			count = count + 1
+			-- luacov: enable
 		end
 		assert.is_equal(0, count)
 
@@ -287,7 +294,9 @@ describe("Hit Counting/Statistics Module", function()
 
 		local count = 0
 		for k in pairs(list) do	-- luacheck: ignore 213
+			-- luacov: disable
 			count = count + 1
+			-- luacov: enable
 		end
 		assert.is_equal(0, count)
 

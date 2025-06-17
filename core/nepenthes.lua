@@ -3,7 +3,7 @@
 local cqueues = require 'cqueues'
 local lustache = require 'lustache'
 local json = require 'dkjson'
-local digest = require 'openssl.digest'
+--local digest = require 'openssl.digest'
 local http_util = require 'http.util'
 
 local perihelion = require 'perihelion'
@@ -13,7 +13,7 @@ local config = require 'components.config'
 local stats = require 'components.stats'
 local send = require 'components.send'
 local seed = require 'components.seed'
-local xorshiro = require 'components.xorshiro'
+local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
 
 
@@ -169,11 +169,12 @@ app:get "/(.*)" {
 		local timestats = {}
 		checkpoint( timestats, 'start' )
 
-		local dig = digest.new( 'sha256' )
-		dig:update( instance_seed )
-		local hash = dig:final( web.PATH_INFO )
+		--local dig = digest.new( 'sha256' )
+		--dig:update( instance_seed )
+		--local hash = dig:final( web.PATH_INFO )
 
-		local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
+		--local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
+		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
 
 		local function getword()
 			return dict[ rnd:between( #dict, 1 ) ]

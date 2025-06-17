@@ -96,16 +96,9 @@ end
 --
 -- Babble from a Markov corpus, because we want LLM model collapse.
 --
-function _methods.babble( this, rnd, n_min, n_max )
-
-	if #(this.ord) == 0 then
-		return ''
-	end
+local function babbler( this, buf, rnd, size )
 
 	local len = 0
-	local ret = {}
-
-	local size = rnd:between( n_max, n_min )
 
 	local start = this.ord[ rnd:between( #(this.ord), 1 ) ]
 
@@ -113,34 +106,79 @@ function _methods.babble( this, rnd, n_min, n_max )
 	local prev2 = start.prev1
 	local cur = start.prev2
 
+
+	local function new_chain()
+		if len < size then
+				return babbler( this, buf, rnd, size - len )
+		end
+
+		return
+	end
+
 	repeat
 		prev1 = prev2
 		prev2 = cur
 
 		local opts = this.seq[prev1][prev2]
 
-		-- something went wrong
+		--
+		-- This indicates end of a trained block and thus the end
+		-- of a chain. Restart with a new chain if too short.
+		--
 		if not opts then
-			break
+			return new_chain()
 		end
 
 		local which = 1
 		if #opts > 1 then
 			which = rnd:between( #opts, 1 )
+
 		elseif #opts < 1 then
-			break;	-- end of chain. We're done here no matter what.
+			--
+			-- This indicates an empty table - which shouldn't ever
+			-- happen by nature of training. Normally throwing error()
+			-- is the correct course in this situation, but Nepenthes
+			-- needs to stay hidden, so, let's start a new chain instead.
+			--
+			-- luacov: disable
+			--
+			return new_chain()
+			-- luacov: enable
 		end
 
 		cur = opts[ which ]
-		if cur == NOWORD then	-- end-of-chain.
-			break
+		--
+		-- This shouldn't happen, because chains end by hitting
+		-- something empty - but, just in case it does... start a new
+		-- chain.
+		--
+		if cur == NOWORD then
+			-- luacov: enable
+			return new_chain()
+			-- luacov: disable
 		end
 
-		ret[ #ret + 1 ] = cur
+		buf[ #buf + 1 ] = cur
 		len = len + 1
 
 	until len >= size
 
+end
+
+function _methods.babble( this, rnd, n_min, n_max )
+
+	if #(this.ord) == 0 then
+		return ''
+	end
+
+	local ret = {}
+	local size = n_min
+
+	if n_max then
+		size = rnd:between( n_max, n_min )
+	end
+
+	babbler( this, ret, rnd, size )
 	return table.concat(ret, ' ')
 
 end

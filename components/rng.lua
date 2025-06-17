@@ -1,5 +1,8 @@
 #!/usr/bin/env lua5.4
 
+local digest = require 'openssl.digest'
+
+
 ---
 -- Simple direct one-to-one line rewrite of the xoshiro128* generator
 -- into a pure Lua, reentrant module.
@@ -14,9 +17,7 @@
 --
 -- For the original algorithm, see: https://prng.di.unimi.it/
 --
-
-
-local _methods = {}
+local _xorshiro = {}
 
 local function rotl( x, k )
 
@@ -24,7 +25,7 @@ local function rotl( x, k )
 
 end
 
-function _methods.random( s )
+function _xorshiro.random( s )
 
 	local result = rotl(  s[1]
 						+ s[2]
@@ -47,17 +48,7 @@ function _methods.random( s )
 
 end
 
-function _methods.reseed( s, a, b, c, d )
-
-	s[1] = a
-	s[2] = b
-	s[3] = c
-	s[4] = d
-
-end
-
-
-function _methods.between( s, upper, lower )
+function _xorshiro.between( s, upper, lower )
 
 	if (upper - lower) <= 0 then
 		error("Requested random value range invalid")
@@ -68,12 +59,25 @@ function _methods.between( s, upper, lower )
 end
 
 
+
 local _M = {}
 
-function _M.new( a, b, c, d )
+---
+-- Seed a new Xorshiro generator from the SHA256 hash of the URL
+-- that was requested. This makes every load of a specific URL look
+-- identical.
+--
+-- Additionally include a 'seed' value that makes the different instances
+-- with the same corpus unique.
+--
+function _M.new( seed, uri )
 
-	local s = { a, b, c, d }
-	return setmetatable( s, { __index = _methods } )
+	local dig = digest.new( 'sha256' )
+	dig:update( seed )
+	local hash = dig:final( uri )
+
+	local ret = { string.unpack( "jjjj", hash ) }
+	return setmetatable( ret, { __index = _xorshiro } )
 
 end
 

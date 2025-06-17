@@ -4,11 +4,15 @@ require 'luarocks.loader'
 pcall(require, 'luacov')
 
 local markov = require 'components.markov'
-local xorshiro = require 'components.xorshiro'
---local pl = require 'pl.pretty'
+local rng_factory = require 'components.rng'
 
 require 'busted.runner'()
 describe("Markov Babbler", function()
+
+	--
+	-- Must be static across all test runs
+	--
+	local seed = 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
 
 	it("Trains and runs on a string", function()
 
@@ -22,11 +26,12 @@ describe("Markov Babbler", function()
 		assert.is_equal(6, status.seq_size)
 		assert.is_equal(5, status.tokens)
 
-		local rnd = xorshiro.new( 1, 2, 3, 4 )
-		assert.is_equal("this and that.", mk:babble( rnd, 2, 6))
-		assert.is_equal("and this and", mk:babble( rnd, 2, 3))
+		local rnd = rng_factory.new( seed, '/maze/place/x' )
+		assert.is_equal('and this and', mk:babble( rnd, 2, 6))
+		assert.is_equal('that. that and this and', mk:babble( rnd, 3, 5))
 
 	end)
+
 
 	it("Trains and runs on a text file", function()
 
@@ -39,16 +44,53 @@ describe("Markov Babbler", function()
 		assert.is_equal(339, status.seq_size)
 		assert.is_equal(174, status.tokens)
 
-		local rnd = xorshiro.new( 5, 6, 7, 8 )
-		assert.is_equal(
-			'complex probability distributions, and have found application in areas including Bayesian statistics, biology,',
-			mk:babble( rnd, 10, 15)
-		)
+		local rnd = rng_factory.new( seed, '/maze/place' )
+		local expect1 = '(sometimes characterized as "memorylessness"). In simpler terms, it is a type of Markov process that'
+		local babble1 = mk:babble( rnd, 10, 15 )
 
-		assert.is_equal(
-			'the nature of time), but it is a type of Markov process is called',
-			mk:babble( rnd, 10, 15)
-		)
+		assert.is_equal( expect1, babble1 )
+
+		local len1 = 0
+		for part in babble1:gmatch('(%S+)') do	-- luacheck: ignore 213
+			len1 = len1 + 1
+		end
+		assert.is_true(len1 <= 15)
+		assert.is_true(len1 >= 10)
+
+		--
+		-- This particular run is known to hit the end-of-chain
+		-- condition.
+		--
+		local expect2 = 'the state space). present state of the Russian mathematician Andrey Markov. Markov chains have'
+		local babble2 = mk:babble( rnd, 10, 15 )
+
+		assert.is_equal( expect2, babble2 )
+
+		local len2 = 0
+		for part in babble2:gmatch('(%S+)') do	-- luacheck: ignore 213
+			len2 = len2 + 1
+		end
+		assert.is_true(len2 <= 15)
+		assert.is_true(len2 >= 10)
+	end)
+
+
+	it("Very Large Run", function()
+
+		local mk = markov.new()
+		assert.is_table(markov)
+
+		mk:train_file( './tests/share/wiki-markov.txt' )
+		local rnd = rng_factory.new( seed, '/whatever' )
+
+		local babble1 = mk:babble( rnd, 1500 )
+
+		local len1 = 0
+		for part in babble1:gmatch('(%S+)') do	-- luacheck: ignore 213
+			len1 = len1 + 1
+		end
+		assert.is_equal(1500, len1)
+
 	end)
 
 end)
