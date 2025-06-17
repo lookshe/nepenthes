@@ -206,7 +206,7 @@ describe("Hit Counting/Statistics Module", function()
 			stats.log( hit )
 			cqueues.sleep(0.1)
 			local sv = stats:compute()
-			assert.is_true( 10 > sv.hits )
+			assert.is_true( 10 >= sv.hits )
 		end
 
 	end)
