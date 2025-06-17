@@ -262,7 +262,7 @@ app:get "/(.*)" {
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
 		log_checkpoints( timestats, ret.sandbag_rate )
-		
+
 		print( timestats[ #timestats ].at )
 
 		-- XXX: Call this after rendering the template.
