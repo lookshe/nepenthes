@@ -169,11 +169,6 @@ app:get "/(.*)" {
 		local timestats = {}
 		checkpoint( timestats, 'start' )
 
-		--local dig = digest.new( 'sha256' )
-		--dig:update( instance_seed )
-		--local hash = dig:final( web.PATH_INFO )
-
-		--local rnd = xorshiro.new( string.unpack( "jjjj", hash ) )
 		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
 
 		local function getword()
@@ -276,7 +271,7 @@ app:get "/(.*)" {
 			when = cqueues.monotime(),
 			response = 200,	-- faked, probable, needs overall refactor
 			delay = ret.sandbag_rate,
-			cpu = timestats[ #timestats ].at
+			cpu = timestats[ #timestats ].at - timestats[1].at
 
 		}
 
