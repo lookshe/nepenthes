@@ -2,7 +2,6 @@
 
 pcall(require, "luarocks.loader")
 
-local cqueues = require 'cqueues'
 local http_server = require 'http.server'
 local http_headers = require 'http.headers'
 
@@ -10,8 +9,8 @@ local unix = require 'unix'
 
 local daemonize = require 'daemonparts.daemonize'
 local config = require 'components.config'
-local signals = require 'daemonparts.signals'
 local output = require 'daemonparts.output'
+local corewait = require 'daemonparts.corewait'
 
 
 if not arg[1] then
@@ -25,9 +24,7 @@ end
 local location = unix.getcwd()
 package.path = package.path .. ';' .. location .. '/?.lua'
 
-local cq
 local app
-
 local app_f = assert(loadfile( arg[1] ))
 config( arg[2] )
 
@@ -136,15 +133,6 @@ end
 
 local server
 
-local function stop_notification()
-	server:close()
-	output.notice("Shutting down")
-
-	if app.shutdown_hook then
-		pcall(app.shutdown_hook)
-	end
-end
-
 local function startup()
 
 	if config.nochdir then
@@ -155,7 +143,7 @@ local function startup()
 		daemonize.pidfile( config.pidfile )
 	end
 
-	cq = cqueues.new()
+	--cq = cqueues.new()
 	app = app_f()
 
 	local args = {
@@ -163,7 +151,7 @@ local function startup()
 		port = math.floor(config.http_port),
 		onstream = http_responder,
 		tls = false,
-		cq = cq
+		cq = corewait.cq()
 	}
 
 	if config.unix_socket then
@@ -174,9 +162,18 @@ local function startup()
 	end
 
 	server = assert(http_server.listen(args))
-	signals.set_callback( stop_notification )
-	signals.start(cq)
 
+	corewait.cq():wrap(function()
+		corewait.poll()
+		output.info("Stop Signal Recieved")
+		server:close()
+
+		if app.shutdown_hook then
+			pcall(app.shutdown_hook)
+		end
+	end)
+
+	corewait.start_signal_handler()
 	assert(server:listen())
 
 end
@@ -192,11 +189,11 @@ end
 output.notice("Startup HTTP:", config.http_host, config.http_port)
 
 repeat
-	local res, err = cq:step(2)
+	local res, err = corewait.cq():step(2)
 	if not res then
 		output.error(err)
 	end
-until cq:count() == 0
+until corewait.cq():count() == 0
 
 if config.unix_socket then
 	unix.unlink( config.unix_socket )
