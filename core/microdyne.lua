@@ -143,7 +143,6 @@ local function startup()
 		daemonize.pidfile( config.pidfile )
 	end
 
-	--cq = cqueues.new()
 	app = app_f()
 
 	local args = {
@@ -188,12 +187,9 @@ end
 
 output.notice("Startup HTTP:", config.http_host, config.http_port)
 
-repeat
-	local res, err = corewait.cq():step(2)
-	if not res then
-		output.error(err)
-	end
-until corewait.cq():count() == 0
+for err in corewait.cq():errors() do
+	output.error(err)
+end
 
 if config.unix_socket then
 	unix.unlink( config.unix_socket )
