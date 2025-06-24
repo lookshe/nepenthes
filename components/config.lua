@@ -1,11 +1,14 @@
 #!/usr/bin/env lua5.4
 
-local cp = require 'components.config_loader'
+local cp = require 'daemonparts.config_loader'
+local yaml = require 'tinyyaml'
 
 ---
 -- Default configuration
 --
-local config = {
+return cp.prepare {
+
+	cp.parse_function( yaml.parse ),
 
 	http_host = '::1',
 	http_port = 8893,
@@ -28,17 +31,5 @@ local config = {
 	markov_min = 10,
 	markov_max = 50,
 	stats_remember_time = 1800
+	
 }
-
----
--- Make the default callable, calling the table loads the given YAML
--- file to overwrite defaults with error checking.
---
-cp.prepare( config )
-
-
----
--- Return the original config object as a singleton. Every module
--- gets the same config, even after loading.
---
-return config
