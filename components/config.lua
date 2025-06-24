@@ -31,5 +31,5 @@ return cp.prepare {
 	markov_min = 10,
 	markov_max = 50,
 	stats_remember_time = 1800
-	
+
 }

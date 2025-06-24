@@ -3,8 +3,6 @@
 local cqueues = require 'cqueues'
 local lustache = require 'lustache'
 local json = require 'dkjson'
---local digest = require 'openssl.digest'
-local http_util = require 'http.util'
 
 local perihelion = require 'perihelion'
 local output = require 'daemonparts.output'
@@ -15,23 +13,14 @@ local send = require 'components.send'
 local seed = require 'components.seed'
 local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
+local wordlist = require 'components.wordlist'
 
 
 
---
--- Load Dictionary
---
-local dict = {}
-local dict_lookup = {}
-
-local f = io.open( config.words, "r" )
-for line in f:lines() do
-	if not line:match("%'") then
-		dict[ #dict + 1 ] = line
-		dict_lookup[ line ] = true
-	end
-end
-
+----
+---- Load Dictionary
+----
+local wl = wordlist.new( config.words )
 
 --
 -- Train Markov corpus
@@ -93,7 +82,16 @@ app:get "/stats/markov" {
 	function( web )
 		web.headers['Content-type'] = 'application/json'
 		return web:ok(
-			json.encode( markov.stats() )
+			json.encode( mk:stats() )
+		)
+	end
+}
+
+app:get "/stats/words" {
+	function( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( { count = wl.count() } )
 		)
 	end
 }
@@ -171,15 +169,11 @@ app:get "/(.*)" {
 
 		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
 
-		local function getword()
-			return dict[ rnd:between( #dict, 1 ) ]
-		end
-
 		local function buildtab( size )
 			local ret = {}
 
 			for i = 1, size do
-				ret[ i ] = getword()
+				ret[ i ] = wl.choose( rnd )
 			end
 
 			return ret
@@ -190,7 +184,7 @@ app:get "/(.*)" {
 		end
 
 		local ret = {
-			header = getword(),
+			header = wl.choose( rnd ),
 			prefix = config.prefix
 		}
 
@@ -220,7 +214,7 @@ app:get "/(.*)" {
 		local path = web.PATH_INFO:sub( #(ret.prefix) + 1 )
 		local is_bogon = false
 		for word in path:gmatch('/([^/]+)') do
-			if not dict_lookup[ http_util.decodeURI(word) ] then
+			if not wl.lookup( word ) then
 				is_bogon = true
 			end
 		end
@@ -239,7 +233,7 @@ app:get "/(.*)" {
 		local links = {}
 		for i = 1, len do
 			links[ i ] = {
-				description = getword(),
+				description = wl.choose( rnd ),
 				link = make_url()
 			}
 		end
