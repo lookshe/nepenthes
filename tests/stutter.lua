@@ -4,8 +4,8 @@ require 'luarocks.loader'
 pcall(require, 'luacov')
 
 local cqueues = require 'cqueues'
-local send = require 'components.send'
---local pl = require 'pl.pretty'
+local stutter = require 'components.stutter'
+
 
 require 'busted.runner'()
 describe("Send-Request-Output Module", function()
@@ -24,7 +24,7 @@ describe("Send-Request-Output Module", function()
 			local delay = table.remove(tests, 1)
 			local bytes = table.remove(tests, 1)
 
-			local pattern = send.generate_pattern( delay, bytes )
+			local pattern = stutter.generate_pattern( delay, bytes )
 			assert.is_table(pattern)
 
 			--
@@ -83,7 +83,7 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.4, bytes = 8 }
 		}
 
-		local x = send.delay_iterator( s, t1 )
+		local x = stutter.delay_iterator( s, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghij', x() )
@@ -107,7 +107,7 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 2 }
 		}
 
-		local x = send.delay_iterator( s, t1 )
+		local x = stutter.delay_iterator( s, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcde', x() )
@@ -132,7 +132,7 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 10 }
 		}
 
-		local x = send.delay_iterator( s, t2 )
+		local x = stutter.delay_iterator( s, t2 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghijklmno', x() )

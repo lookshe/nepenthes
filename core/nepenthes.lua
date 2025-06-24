@@ -9,7 +9,7 @@ local output = require 'daemonparts.output'
 
 local config = require 'components.config'
 local stats = require 'components.stats'
-local send = require 'components.send'
+local stutter = require 'components.stutter'
 local seed = require 'components.seed'
 local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
@@ -17,10 +17,15 @@ local wordlist = require 'components.wordlist'
 
 
 
-----
----- Load Dictionary
-----
+--
+-- Load Dictionary
+--
 local wl = wordlist.new( config.words )
+
+--
+-- Seed is important
+--
+local instance_seed = seed.get()
 
 --
 -- Train Markov corpus
@@ -65,9 +70,9 @@ local function render( template )
 		rawset(lustache, 'partial_cache', {})
 		local ret = lustache:render(template_code, web.vars, prt)
 		if web.vars.sandbag_rate then
-			local p = send.generate_pattern( web.vars.sandbag_rate, #ret )
+			local p = stutter.generate_pattern( web.vars.sandbag_rate, #ret )
 
-			return '200 OK', web.headers, send.delay_iterator( ret, p )
+			return '200 OK', web.headers, stutter.delay_iterator( ret, p )
 		end
 
 		return web:ok( ret )
@@ -95,33 +100,6 @@ app:get "/stats/words" {
 		)
 	end
 }
-
-
-local instance_seed = seed.get()
-
-
-local function checkpoint( times, name )
-	times[ #times + 1 ] = {
-		name = name,
-		at = cqueues.monotime()
-	}
-end
-
-local function log_checkpoints( times, send_delay )
-
-	local parts = {}
-
-	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
-		if cp.name ~= 'start' then
-			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
-		end
-	end
-
-	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
-	output.info("req len: " .. table.concat( parts, ', ' ))
-
-end
-
 
 app:get "/stats" {
 	function ( web )
@@ -160,6 +138,31 @@ app:head "/(.*)" {
 		return web:ok("")
 	end
 }
+
+
+
+
+local function checkpoint( times, name )
+	times[ #times + 1 ] = {
+		name = name,
+		at = cqueues.monotime()
+	}
+end
+
+local function log_checkpoints( times, send_delay )
+
+	local parts = {}
+
+	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
+		if cp.name ~= 'start' then
+			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
+		end
+	end
+
+	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
+	output.info("req len: " .. table.concat( parts, ', ' ))
+
+end
 
 app:get "/(.*)" {
 	function ( web )
