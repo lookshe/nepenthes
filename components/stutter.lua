@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.4
 
-local cqueues = require 'cqueues'
+--local cqueues = require 'cqueues'
+local corewait = require 'daemonparts.corewait'
 local rand = require 'openssl.rand'
 
 
@@ -168,7 +169,7 @@ function _M.delay_iterator( s, pattern )
 		local block = table.remove(pattern, 1)
 		local ret = s:sub(1, block.bytes)
 		s = s:sub(block.bytes + 1, #s)
-		cqueues.sleep(block.delay)
+		corewait.poll(block.delay)
 
 		return ret
 
