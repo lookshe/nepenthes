@@ -1,7 +1,6 @@
 #!/usr/bin/env lua5.4
 
 local cqueues = require 'cqueues'
-local lustache = require 'lustache'
 local json = require 'dkjson'
 
 local perihelion = require 'perihelion'
@@ -14,6 +13,7 @@ local seed = require 'components.seed'
 local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
 local wordlist = require 'components.wordlist'
+local template = require 'components.template'
 
 
 
@@ -34,51 +34,6 @@ local mk = markov.new()
 mk:train_file( config.markov_corpus )
 
 
----
--- Pull a template code from disk.
---
-local function load_template( path )
-
-	local template_path = string.format(
-		"%s/%s.lustache",
-			config.templates,
-			path
-	)
-
-	local template_file = assert(io.open(template_path, "r"))
-	local ret = template_file:read("*all")
-	template_file:close()
-
-	return ret
-
-end
-
-
---
--- Render the page through a template engine.
---
-local function render( template )
-
-	return function( web )
-
-		local template_code = load_template( 'toplevel' )
-		local prt = {}
-
-		web.vars.app_path = config.prefix
-		prt[ 'content' ] = load_template( template )
-
-		rawset(lustache, 'partial_cache', {})
-		local ret = lustache:render(template_code, web.vars, prt)
-		if web.vars.sandbag_rate then
-			local p = stutter.generate_pattern( web.vars.sandbag_rate, #ret )
-
-			return '200 OK', web.headers, stutter.delay_iterator( ret, p )
-		end
-
-		return web:ok( ret )
-	end
-
-end
 
 
 local app = perihelion.new()
@@ -134,6 +89,7 @@ app:get "/stats/agents" {
 --
 app:head "/(.*)" {
 	function( web )
+		-- XXX: Detect bogons here too
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return web:ok("")
 	end
@@ -255,28 +211,40 @@ app:get "/(.*)" {
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
 		checkpoint( timestats, 'total' )
 		log_checkpoints( timestats, ret.sandbag_rate )
-
-		print( timestats[ #timestats ].at )
-
-		-- XXX: Call this after rendering the template.
-		stats.log {
-			address = web.REMOTE_ADDR,
-			uri = web.PATH_INFO,
-			agent = web.HTTP_X_USER_AGENT,
-			silo = 'default',
-			bytes = 0,
-			when = cqueues.monotime(),
-			response = 200,	-- faked, probable, needs overall refactor
-			delay = ret.sandbag_rate,
-			cpu = timestats[ #timestats ].at - timestats[1].at
-
-		}
+		ret.time_spent = timestats[ #timestats ].at - timestats[1].at
 
 		return ret
 
 	end,
 
-	render( 'list' )
+	template.render( 'list' ),
+
+	function( web )
+
+		local page = web.vars.rendered_output
+
+		stats.log {
+			address = web.REMOTE_ADDR,
+			uri = web.PATH_INFO,
+			agent = web.HTTP_X_USER_AGENT,
+			silo = 'default',
+			bytes = #page,
+			when = cqueues.monotime(),
+			response = 200,
+			delay = web.vars.sandbag_rate,
+			cpu = web.vars.time_spent
+		}
+
+		if web.vars.sandbag_rate then
+			return '200 OK', web.headers, stutter.delay_iterator(
+				page,
+				stutter.generate_pattern( web.vars.sandbag_rate, #page )
+			)
+		end
+
+		return web:ok( page )
+
+	end
 }
 
 return app
