@@ -13,7 +13,7 @@ describe("Word List / Dictionary Module", function()
 	local wl
 
 	setup(function()
-		wl = wordlist.new('/usr/share/dict/words')
+		wl = wordlist.new('./tests/share/words.txt')
 	end)
 
 	it("Loads", function()
@@ -23,10 +23,9 @@ describe("Word List / Dictionary Module", function()
 		assert.is_function(wl.lookup)
 
 		--
-		-- NetBSD 9.1 is 235972 entries, Debian 11 is 102774.
-		-- So more than 10,000 should be fine, right? Right?
+		-- Mini chopped down word list to ensure tests pass in containers.
 		--
-		assert.is_true( wl.count() > 10000 )
+		assert.is_true( wl.count() == 150 )
 	end)
 
 
@@ -45,9 +44,9 @@ describe("Word List / Dictionary Module", function()
 		--
 		-- XXX: I'm assuming English/UTF-8
 		--
-		assert.is_true( wl.lookup( 'this' ) )
-		assert.is_true( wl.lookup( 'and' ) )
-		assert.is_true( wl.lookup( 'left' ) )
+		assert.is_true( wl.lookup( 'demurs' ) )
+		assert.is_true( wl.lookup( 'shoring' ) )
+		assert.is_true( wl.lookup( 'bit' ) )
 
 		assert.is_false( wl.lookup( 'snaaerf34mr443' ) )
 		assert.is_false( wl.lookup( '65156415641515' ) )
