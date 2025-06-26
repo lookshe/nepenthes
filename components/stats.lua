@@ -49,7 +49,9 @@ function _M.compute()
 		addresses = 0,
 		agents = 0,
 		cpu = 0,
-		bytes = 0,
+		cpu_total = os.clock(),
+		bytes_sent = 0,
+		memory_usage = collectgarbage( "count" ) * 1024,
 		delay = 0
 	}
 
@@ -70,7 +72,7 @@ function _M.compute()
 		end
 
 		ret.cpu = ret.cpu + v.cpu
-		ret.bytes = ret.bytes + v.bytes
+		ret.bytes_sent = ret.bytes_sent + v.bytes
 		ret.delay = ret.delay + v.delay
 	end
 
