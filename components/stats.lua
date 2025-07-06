@@ -9,6 +9,7 @@ local _M = {}
 
 
 local buf = fifo()
+local start = os.time()
 
 function _M.clear()
 	buf = fifo()
@@ -52,8 +53,13 @@ function _M.compute()
 		cpu_total = os.clock(),
 		bytes_sent = 0,
 		memory_usage = collectgarbage( "count" ) * 1024,
-		delay = 0
+		delay = 0,
+		uptime = os.time() - start
 	}
+
+	-- this is inaccurate at first (due to training) but will decay
+	-- to close enough with time.
+	ret.cpu_percent = ( ret.cpu_total / ret.uptime ) * 100
 
 	local seen_addresses = {}
 	local seen_agents = {}
