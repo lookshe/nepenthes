@@ -23,7 +23,8 @@ local entries = {
 		bytes = 1809,
 		response = 200,
 		delay = 13,
-		cpu = 0.000305
+		cpu = 0.000305,
+		complete = true
 	},
 	{
 		address = '146.174.188.199',
@@ -34,7 +35,8 @@ local entries = {
 		bytes = 1569,
 		response = 200,
 		delay = 20,
-		cpu = 0.000219
+		cpu = 0.000219,
+		complete = true
 	},
 	{
 		address = '44.205.74.196',
@@ -45,7 +47,8 @@ local entries = {
 		bytes = 1515,
 		response = 200,
 		delay = 5,
-		cpu = 0.000372
+		cpu = 0.000372,
+		complete = true
 	},
 	{
 		address = '114.119.132.202',
@@ -56,7 +59,8 @@ local entries = {
 		bytes = 1887,
 		response = 200,
 		delay = 11,
-		cpu = 0.000248
+		cpu = 0.000248,
+		complete = true
 	},
 	{
 		address = '5.255.231.147',
@@ -67,7 +71,8 @@ local entries = {
 		bytes = 1805,
 		response = 200,
 		delay = 8,
-		cpu = 0.000401
+		cpu = 0.000401,
+		complete = true
 	},
 	{
 		address = '146.174.187.165',
@@ -78,7 +83,8 @@ local entries = {
 		bytes = 1550,
 		response = 200,
 		delay = 6,
-		cpu = 0.000293
+		cpu = 0.000293,
+		complete = true
 	}
 }
 

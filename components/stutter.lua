@@ -146,7 +146,9 @@ function _M.generate_pattern( delay, bytes )
 end
 
 
-function _M.delay_iterator( s, pattern )
+function _M.delay_iterator( s, pattern, callback )
+
+	assert(type(callback) == 'function', 'improper callback value')
 
 	return function()
 
@@ -159,10 +161,12 @@ function _M.delay_iterator( s, pattern )
 				return ret
 			end
 
+			callback()
 			return nil
 		end
 
 		if not s then
+			callback()
 			return nil
 		end
 

@@ -26,6 +26,8 @@ function _M.log( val )
 	assert(type(val.uri) == 'string')
 	assert(type(val.silo) == 'string')
 
+	assert(type(val.complete) == 'boolean')
+
 	assert(type(val.when) == 'number')
 	assert(type(val.bytes) == 'number')
 	assert(type(val.response) == 'number')
@@ -54,6 +56,7 @@ function _M.compute()
 		bytes_sent = 0,
 		memory_usage = collectgarbage( "count" ) * 1024,
 		delay = 0,
+		active = 0,
 		uptime = os.time() - start
 	}
 
@@ -75,6 +78,10 @@ function _M.compute()
 		if not seen_agents[ v.agent ] then
 			seen_agents[ v.agent ] = true
 			ret.agents = ret.agents + 1
+		end
+
+		if not v.complete then
+			ret.active = ret.active + 1
 		end
 
 		ret.cpu = ret.cpu + v.cpu

@@ -202,7 +202,7 @@ app:get "/(.*)" {
 		log_checkpoints( ret.timestats, ret.sandbag_rate )
 		ret.time_spent = ret.timestats[ #(ret.timestats) ].at - ret.timestats[1].at
 
-		stats.log {
+		local logged = {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
@@ -211,16 +211,25 @@ app:get "/(.*)" {
 			when = cqueues.monotime(),
 			response = 200,
 			delay = web.vars.sandbag_rate,
-			cpu = web.vars.time_spent
+			cpu = web.vars.time_spent,
+			complete = false
 		}
+
+		stats.log( logged )
+		local function end_logging()
+			logged.complete = true
+		end
 
 		if web.vars.sandbag_rate then
 			return '200 OK', web.headers, stutter.delay_iterator(
-				page,
-				stutter.generate_pattern( web.vars.sandbag_rate, #page )
-			)
+					page,
+					stutter.generate_pattern( web.vars.sandbag_rate, #page ),
+					end_logging
+				)
 		end
 
+
+		logged.complete = true
 		return web:ok( page )
 
 	end
