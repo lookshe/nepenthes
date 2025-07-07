@@ -16,9 +16,8 @@ local function load_template( path )
 			path
 	)
 
-	local template_file = assert(io.open(template_path, "r"))
+	local template_file <close> = assert(io.open(template_path, "r"))
 	local ret = template_file:read("*all")
-	template_file:close()
 
 	return ret
 
@@ -29,14 +28,9 @@ end
 --
 function _M.render( template )
 
-	local template_code = load_template( 'toplevel' )
-	local prt = {}
-	prt[ 'content' ] = load_template( template )
-
+	local template_code = load_template( template )
 	return function( web )
 		web.vars.app_path = config.prefix
-
-		rawset(lustache, 'partial_cache', {})
 		web.vars.rendered_output = lustache:render(template_code, web.vars, prt)
 		return web.vars
 	end

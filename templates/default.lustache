@@ -1,3 +1,8 @@
+<html>
+<head>
+	{{#title}}<title>{{title}}</title>{{/title}}
+</head>
+<body>
 <h3>{{ header }}</h3>
 {{# content }}
 <p>
@@ -9,3 +14,5 @@
 	<li><a href="{{{ prefix }}}/{{{ link }}}">{{ description }}</a></li>
 {{/ links }}
 </ul>
+</body>
+</html>
