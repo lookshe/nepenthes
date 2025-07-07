@@ -11,16 +11,16 @@ local urlgen = require 'components.urlgen'
 require 'busted.runner'()
 describe("URL Generator Module", function()
 
-	local ug
+	local wl
 
 	setup(function()
-		local wl = wordlist.new('./tests/share/words.txt')
-		ug = urlgen.new( wl )
+		wl = wordlist.new('./tests/share/words.txt')
 	end)
 
 
 	it("Generates a URL", function()
 
+		local ug = urlgen.new( wl )
 		local rng = rng_factory.new( 'anything', '/just/some/whatever/url' )
 
 		assert.is_equal('/sibyl', ug:create( rng ))
@@ -32,12 +32,29 @@ describe("URL Generator Module", function()
 
 
 	it("Identifies a valid URL", function()
-		pending("To be written")
+
+		local ug = urlgen.new( wl )
+
+		assert.is_false( ug:check('/sibyl') )
+		assert.is_false( ug:check('/shoring/rewinds/yourself') )
+		assert.is_false( ug:check('/fascists/insetting') )
+		assert.is_false( ug:check('/freebased/internment/dearths/crankcase') )
+
+		assert.is_true( ug:check('/non-existant-path') )
+		assert.is_true( ug:check('/defjwejfne4/3krnjk2/egnmi34t/erge8wjt4') )
+		assert.is_true( ug:check('/sibyl/but/wrong') )
+		assert.is_true( ug:check('/catalogers/drachma/death/posterity') )
+
 	end)
 
 
-	it("Detects Bogons", function()
-		pending("To be written")
+	it("Strips a configured prefix during checks", function()
+
+		local ug = urlgen.new( wl, '/testprefix' )
+
+		assert.is_false( ug:check('/testprefix/sibyl') )
+		assert.is_false( ug:check('/testprefix/shoring/rewinds/yourself') )
+
 	end)
 
 end)

@@ -24,11 +24,6 @@ local urlgen = require 'components.urlgen'
 local wl = wordlist.new( config.words )
 
 --
--- URL generator
---
-local ug = urlgen.new( wl )
-
---
 -- Seed is important
 --
 local instance_seed = seed.get()
@@ -95,7 +90,18 @@ app:get "/stats/agents" {
 --
 app:head "/(.*)" {
 	function( web )
-		-- XXX: Detect bogons here too
+		local prefix = config.prefix
+
+		if web.HTTP_X_PREFIX then
+			prefix = web.HTTP_X_PREFIX
+		end
+
+		local ug = urlgen.new( wl, prefix )
+		if ug:check( web.PATH_INFO ) then
+			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+			return web:notfound()
+		end
+
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return web:ok("")
 	end
@@ -126,6 +132,7 @@ local function log_checkpoints( times, send_delay )
 
 end
 
+
 app:get "/(.*)" {
 	function ( web )
 
@@ -139,7 +146,6 @@ app:get "/(.*)" {
 			prefix = config.prefix
 		}
 
-
 		--
 		-- Allow attaching to multiple places via nginx configuration
 		-- alone.
@@ -148,33 +154,12 @@ app:get "/(.*)" {
 			ret.prefix = web.HTTP_X_PREFIX
 		end
 
-		---
-		-- I would like to thank the Slashdot commenter for his very
-		-- clever idea for detecting tarpits. It's quite clever, I'll
-		-- admit. It's also easy to defeat, which we do here.
-		--
-		-- Since the URLs are built from a known dictionary, it's not
-		-- hard to sanity check them. If it's a new IP, we 301 them; and
-		-- since we're using our deterministic random, the same bad URL
-		-- will go to the same place. This lets the crawler 'bootstrap'
-		-- itself into the tarpit if coming from an unexpected URL.
-		--
-		-- Afterwards, we throw 404, so it doesn't look like we're an
-		-- infinite site.
-		--
-		local path = web.PATH_INFO:sub( #(ret.prefix) + 1 )
-		local is_bogon = false
-		for word in path:gmatch('/([^/]+)') do
-			if not wl.lookup( word ) then
-				is_bogon = true
-			end
-		end
 
-		if is_bogon then
-			output.notice("Bogon URL detected:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-			--
-			-- Wait at least a little bit.
-			--
+		local ug = urlgen.new( wl, ret.prefix )
+
+
+		if ug:check( web.PATH_INFO ) then
+			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			cqueues.sleep( rnd:between( 5, 1 ) )
 			return web:notfound("Nothing exists at this URL")
 		end
