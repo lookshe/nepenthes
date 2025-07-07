@@ -4,14 +4,21 @@ local _methods = {}
 
 
 function _methods.create( this, rng )
+
 	local size = rng:between( 5, 1 )
 	local parts = {}
+
 
 	for i = 1, size do
 		parts[ i ] = this.wordlist.choose( rng )
 	end
 
-	return '/' .. table.concat(parts, "/")
+	if this.prefix then
+		table.insert(parts, 1, this.prefix)
+	end
+
+	return '/' .. table.concat(parts, '/')
+
 end
 
 ---
@@ -29,18 +36,26 @@ end
 --
 function _methods.check( this, url )
 
-		if this.prefix then
-			url = url:sub( #(this.prefix) + 1 )
-		end
+	local is_bogon = false
+	local count = 1
 
-		local is_bogon = false
-		for word in url:gmatch('/([^/]+)') do
+	for word in url:gmatch('/([^/]+)') do
+		if count == 1 and this.prefix then
+			if word ~= this.prefix then
+				is_bogon = true
+				break
+			end
+		else
 			if not this.wordlist.lookup( word ) then
 				is_bogon = true
+				break
 			end
 		end
 
-		return is_bogon
+		count = count + 1
+	end
+
+	return is_bogon
 
 end
 
@@ -48,6 +63,26 @@ end
 local _M = {}
 
 function _M.new( wordlist, prefix )
+
+	assert(wordlist, "Wordlist not provided")
+
+	--
+	-- Normalize the leading slash to simplify the rest of this module.
+	--
+	if prefix then
+		if prefix == '/' then
+			prefix = ""
+		end
+
+		if prefix:sub(1, 1) == '/' then
+			prefix = prefix:sub(2, -1)
+		end
+
+		if prefix == '' then
+			prefix = nil
+		end
+	end
+
 	local ret = {
 		wordlist = wordlist,
 		prefix = prefix
@@ -56,6 +91,7 @@ function _M.new( wordlist, prefix )
 	return setmetatable(
 		ret, { __index = _methods }
 	)
+
 end
 
 return _M

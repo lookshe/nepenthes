@@ -5,6 +5,7 @@ local json = require 'dkjson'
 
 local perihelion = require 'perihelion'
 local output = require 'daemonparts.output'
+local corewait = require 'daemonparts.corewait'
 
 local config = require 'components.config'
 local stats = require 'components.stats'
@@ -84,30 +85,6 @@ app:get "/stats/agents" {
 	end
 }
 
---
--- Some crawlers HEAD every url before GET. Since it will always
--- result in a document, don't do anything.
---
-app:head "/(.*)" {
-	function( web )
-		local prefix = config.prefix
-
-		if web.HTTP_X_PREFIX then
-			prefix = web.HTTP_X_PREFIX
-		end
-
-		local ug = urlgen.new( wl, prefix )
-		if ug:check( web.PATH_INFO ) then
-			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-			return web:notfound()
-		end
-
-		web.headers['content-type'] = 'text/html; charset=UTF-8'
-		return web:ok("")
-	end
-}
-
-
 
 
 local function checkpoint( times, name )
@@ -133,63 +110,83 @@ local function log_checkpoints( times, send_delay )
 end
 
 
+---
+-- Figure out which instance/silo will process the request, and
+-- check for bogons.
+--
+local function setup_request( web )
+
+	local ret = {
+		prefix = config.prefix,
+		timestats = {}
+	}
+
+	checkpoint( ret.timestats, 'start' )
+
+	if web.HTTP_X_PREFIX then
+		ret.prefix = web.HTTP_X_PREFIX
+	end
+
+	ret.urlgen = urlgen.new( wl, ret.prefix )
+
+	if ret.urlgen:check( web.PATH_INFO ) then
+		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+		corewait.poll( 5 )
+		return web:notfound("Nothing exists at this URL")
+	end
+
+	return ret
+
+end
+
+
+---
+-- Some crawlers HEAD every url before GET. Since it will always result
+-- in a document (request has already cleared the bogon check during
+-- setup), don't do anything.
+--
+app:head "/(.*)" {
+	setup_request,
+	function( web )
+		web.headers['content-type'] = 'text/html; charset=UTF-8'
+		return web:ok("")
+	end
+}
+
+
+---
+-- Actual tarpitting happens here.
+--
 app:get "/(.*)" {
+	setup_request,
+
+
 	function ( web )
 
-		local timestats = {}
-		checkpoint( timestats, 'start' )
+		local ret = web.vars
 
+		checkpoint( ret.timestats, 'preprocessing' )
 		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
-
-		local ret = {
-			header = wl.choose( rnd ),
-			prefix = config.prefix
-		}
-
-		--
-		-- Allow attaching to multiple places via nginx configuration
-		-- alone.
-		--
-		if web.HTTP_X_PREFIX then
-			ret.prefix = web.HTTP_X_PREFIX
-		end
-
-
-		local ug = urlgen.new( wl, ret.prefix )
-
-
-		if ug:check( web.PATH_INFO ) then
-			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-			cqueues.sleep( rnd:between( 5, 1 ) )
-			return web:notfound("Nothing exists at this URL")
-		end
-
 
 		local len = rnd:between( 10, 5 )
 		local links = {}
 		for i = 1, len do
 			links[ i ] = {
 				description = wl.choose( rnd ),
-				link = ug:create( rnd )
+				link = web.vars.urlgen:create( rnd )
 			}
 		end
 
+		ret.header = wl.choose( rnd )
 		ret.links = links
-		checkpoint( timestats, 'words' )
+		checkpoint( ret.timestats, 'links' )
 
 		ret.content = mk:babble( rnd, config.markov_min, config.markov_max )
 		ret.title = mk:babble( rnd, 5, 15 )
 
-		checkpoint( timestats, 'markov' )
+		checkpoint( ret.timestats, 'markov' )
 
-		--
-		-- Oh you think this was supposed to be fast?
-		--
 		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
-		checkpoint( timestats, 'total' )
-		log_checkpoints( timestats, ret.sandbag_rate )
-		ret.time_spent = timestats[ #timestats ].at - timestats[1].at
-
 		return ret
 
 	end,
@@ -199,12 +196,17 @@ app:get "/(.*)" {
 	function( web )
 
 		local page = web.vars.rendered_output
+		local ret = web.vars
+
+		checkpoint( ret.timestats, 'total' )
+		log_checkpoints( ret.timestats, ret.sandbag_rate )
+		ret.time_spent = ret.timestats[ #(ret.timestats) ].at - ret.timestats[1].at
 
 		stats.log {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
-			silo = 'default',
+			silo = ret.prefix,
 			bytes = #page,
 			when = cqueues.monotime(),
 			response = 200,

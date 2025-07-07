@@ -48,12 +48,31 @@ describe("URL Generator Module", function()
 	end)
 
 
+	it("Generates URLs with proper prefix", function()
+
+		local ug = urlgen.new( wl, '/default' )
+		local rng = rng_factory.new( 'anything', '/just/some/whatever/url' )
+
+		assert.is_equal('/default/sibyl', ug:create( rng ))
+		assert.is_equal('/default/shoring/rewinds/yourself', ug:create( rng ))
+		assert.is_equal('/default/fascists/insetting', ug:create( rng ))
+		assert.is_equal('/default/freebased/internment/dearths/crankcase', ug:create( rng ))
+
+	end)
+
+
 	it("Strips a configured prefix during checks", function()
 
 		local ug = urlgen.new( wl, '/testprefix' )
 
 		assert.is_false( ug:check('/testprefix/sibyl') )
 		assert.is_false( ug:check('/testprefix/shoring/rewinds/yourself') )
+
+		assert.is_true( ug:check('/non-existant-path') )
+		assert.is_true( ug:check('/defjwejfne4/3krnjk2/egnmi34t/erge8wjt4') )
+
+		assert.is_true( ug:check('/testprefix/non-existant-path') )
+		assert.is_true( ug:check('/testprefix/defjwejfne4/3krnjk2/egnmi34t/erge8wjt4') )
 
 	end)
 
