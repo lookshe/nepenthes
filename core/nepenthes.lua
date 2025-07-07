@@ -14,6 +14,7 @@ local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
 local wordlist = require 'components.wordlist'
 local template = require 'components.template'
+local urlgen = require 'components.urlgen'
 
 
 
@@ -21,6 +22,11 @@ local template = require 'components.template'
 -- Load Dictionary
 --
 local wl = wordlist.new( config.words )
+
+--
+-- URL generator
+--
+local ug = urlgen.new( wl )
 
 --
 -- Seed is important
@@ -128,20 +134,6 @@ app:get "/(.*)" {
 
 		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
 
-		local function buildtab( size )
-			local ret = {}
-
-			for i = 1, size do
-				ret[ i ] = wl.choose( rnd )
-			end
-
-			return ret
-		end
-
-		local function make_url()
-			return table.concat(buildtab( rnd:between( 5, 1 ) ), "/")
-		end
-
 		local ret = {
 			header = wl.choose( rnd ),
 			prefix = config.prefix
@@ -193,7 +185,7 @@ app:get "/(.*)" {
 		for i = 1, len do
 			links[ i ] = {
 				description = wl.choose( rnd ),
-				link = make_url()
+				link = ug:create( rnd )
 			}
 		end
 
