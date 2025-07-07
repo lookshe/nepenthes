@@ -217,7 +217,7 @@ app:get "/(.*)" {
 
 	end,
 
-	template.render( 'list' ),
+	template.render( 'default' ),
 
 	function( web )
 

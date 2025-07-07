@@ -9,7 +9,7 @@ require 'busted.runner'()
 describe("Templating Module", function()
 
 	it("Loads, renders a template", function()
-		local x = template.render( 'list' )
+		local x = template.render( 'default' )
 		local res = x( { vars = {} } )
 
 		assert.is_table(res)

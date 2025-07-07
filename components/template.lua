@@ -31,7 +31,7 @@ function _M.render( template )
 	local template_code = load_template( template )
 	return function( web )
 		web.vars.app_path = config.prefix
-		web.vars.rendered_output = lustache:render(template_code, web.vars, prt)
+		web.vars.rendered_output = lustache:render(template_code, web.vars, {})
 		return web.vars
 	end
 
