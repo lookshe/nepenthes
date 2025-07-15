@@ -1,0 +1,12 @@
+---
+markov:
+  - name: content
+    min: 15
+    max: 200
+...
+<!DOCTYPE html>
+<html>
+<body>
+{{ content }}
+</body>
+</html>

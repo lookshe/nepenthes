@@ -30,10 +30,16 @@ local wl = wordlist.new( config.words )
 local instance_seed = seed.get()
 
 --
+-- Default Template
+--
+local tmp = template.load( 'default' )
+
+--
 -- Train Markov corpus
 --
 local mk = markov.new()
 mk:train_file( config.markov_corpus )
+
 
 
 
@@ -191,7 +197,10 @@ app:get "/(.*)" {
 
 	end,
 
-	template.render( 'default' ),
+	function( web )
+		web.vars.rendered_output = tmp:render( web.vars )
+		return web.vars
+	end,
 
 	function( web )
 

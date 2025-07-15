@@ -1,40 +1,120 @@
 #!/usr/bin/env lua5.4
 
 local lustache = require 'lustache'
+local yaml = require 'tinyyaml'
+
+local cl = require 'daemonparts.config_loader'
+
 local config = require 'components.config'
+
+
+local function template_schema()
+	return cl.prepare {
+		cl.parse_function( yaml.parse ),
+
+		markov = cl.array {
+			{
+				name = 'title',
+				['min'] = 5,
+				['max'] = 10
+			},
+			{
+				name = 'header',
+				['min'] = 5,
+				['max'] = 10
+			},
+			{
+				name = 'content',
+				['min'] = 25,
+				['max'] = 200
+			}
+		},
+
+		link_array = cl.default_nil ({
+			name = 'links',
+			min_count = 5,
+			max_count = 8,
+			depth_min = 1,
+			depth_max = 5,
+			description_min = 1,
+			description_max = 5
+		}),
+
+		links = cl.array {
+			{
+				name = 'footer_link',
+				depth_min = 1,
+				depth_max = 5,
+				description_min = 1,
+				description_max = 5
+			}
+		}
+	}
+end
+
+
+local _methods = {}
+
+function _methods.render( this, vars )
+
+	return lustache:render( this.code, vars, {})
+
+end
+
+
 
 local _M = {}
 
 ---
 -- Pull a template code from disk.
 --
-local function load_template( path )
+function _M.load( path )
+
+	local ret = {
+		body = '',
+		data = template_schema()
+	}
 
 	local template_path = string.format(
-		"%s/%s.lustache",
+		"%s/%s.lmt",
 			config.templates,
 			path
 	)
 
+
 	local template_file <close> = assert(io.open(template_path, "r"))
-	local ret = template_file:read("*all")
 
-	return ret
+	local yaml_code = template_file:read("*line")
+	local body = ''
 
-end
-
-
--- Render the page through a template engine.
---
-function _M.render( template )
-
-	local template_code = load_template( template )
-	return function( web )
-		web.vars.app_path = config.prefix
-		web.vars.rendered_output = lustache:render(template_code, web.vars, {})
-		return web.vars
+	if yaml_code == '---' then
+		for line in template_file:lines() do
+			if line == '...' then
+				break
+			elseif line then
+				yaml_code = yaml_code .. '\n' .. line
+			end
+		end
+	else
+		body = yaml_code
+		yaml_code = ''
 	end
 
+	ret.code = body .. template_file:read("*all")
+
+	if #yaml_code > 0 then
+		cl.load_string( ret.data, yaml_code )
+	end
+
+	if #(ret.code) > 1 then
+		ret.is_valid = true
+	else
+		ret.is_valid = false
+	end
+
+	return setmetatable( ret, { __index = _methods } )
+
 end
+
 
 return _M

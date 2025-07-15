@@ -1,0 +1,5 @@
+---
+markov:
+  - name: content
+    min: 15
+    max: 200
