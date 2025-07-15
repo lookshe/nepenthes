@@ -119,16 +119,16 @@ describe("Templating Module", function()
 
 
 	it("Can render", function()
-	
+
 		local x = template.load( 'noyaml' )
 		local output = x:render {
 			content = 'Test Test Test'
 		}
-		
+
 		assert.is_string(output)
 		assert.is_match('Test Test Test', output)
 		assert.is_not_match('%{%{ content %}%}', output)
-		
+
 	end)
 
 end)
