@@ -3,6 +3,14 @@
 require 'luarocks.loader'
 pcall(require, 'luacov')
 
+--
+-- Monkey patch this to make it identical from test run to test run.
+--
+local seed = require 'components.seed'
+seed.get = function()
+	return 'anything'
+end
+
 local rng_factory = require 'components.rng'
 local wordlist = require 'components.wordlist'
 local urlgen = require 'components.urlgen'
@@ -21,7 +29,7 @@ describe("URL Generator Module", function()
 	it("Generates a URL", function()
 
 		local ug = urlgen.new( wl )
-		local rng = rng_factory.new( 'anything', '/just/some/whatever/url' )
+		local rng = rng_factory.new( '/just/some/whatever/url' )
 
 		assert.is_equal('/sibyl', ug:create( rng ))
 		assert.is_equal('/shoring/rewinds/yourself', ug:create( rng ))
@@ -51,7 +59,7 @@ describe("URL Generator Module", function()
 	it("Generates URLs with proper prefix", function()
 
 		local ug = urlgen.new( wl, '/default' )
-		local rng = rng_factory.new( 'anything', '/just/some/whatever/url' )
+		local rng = rng_factory.new( '/just/some/whatever/url' )
 
 		assert.is_equal('/default/sibyl', ug:create( rng ))
 		assert.is_equal('/default/shoring/rewinds/yourself', ug:create( rng ))

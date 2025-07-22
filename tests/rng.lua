@@ -3,15 +3,20 @@
 require 'luarocks.loader'
 pcall(require, 'luacov')
 
+local seed = require 'components.seed'
+
+--
+-- Must be static across all test runs; monkey patch it
+--
+seed.get = function()
+	return 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
+end
+
+
 local rng = require 'components.rng'
 
 require 'busted.runner'()
 describe("Deterministic Psuedo-RNG Generator", function()
-
-	--
-	-- Must be static across all test runs
-	--
-	local seed = 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
 
 	it("Makes a stream per URI", function()
 
@@ -30,7 +35,7 @@ describe("Deterministic Psuedo-RNG Generator", function()
 
 
 		for test, expected in pairs( tests ) do
-			local test_rng = rng.new( seed, test )
+			local test_rng = rng.new( test )
 
 			for i, v in ipairs( expected ) do	-- luacheck: ignore 213
 				local g = test_rng:between( 100, 1 )
@@ -44,7 +49,7 @@ describe("Deterministic Psuedo-RNG Generator", function()
 	it("Makes a reasonably uniform distribution", function()
 
 		local buckets = {}
-		local test_rng = rng.new( seed, '/maze' )
+		local test_rng = rng.new( '/maze' )
 
 		for i = 1, 1000 do	-- luacheck: ignore 213
 			local x = test_rng:between( 100, 1 )

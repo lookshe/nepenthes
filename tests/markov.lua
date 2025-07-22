@@ -3,16 +3,19 @@
 require 'luarocks.loader'
 pcall(require, 'luacov')
 
+--
+-- Monkey patch this to make it identical from test run to test run.
+--
+local seed = require 'components.seed'
+seed.get = function()
+	return 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
+end
+
 local markov = require 'components.markov'
 local rng_factory = require 'components.rng'
 
 require 'busted.runner'()
 describe("Markov Babbler", function()
-
-	--
-	-- Must be static across all test runs
-	--
-	local seed = 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
 
 	it("Trains and runs on a string", function()
 
@@ -26,7 +29,7 @@ describe("Markov Babbler", function()
 		assert.is_equal(6, status.seq_size)
 		assert.is_equal(5, status.tokens)
 
-		local rnd = rng_factory.new( seed, '/maze/place/x' )
+		local rnd = rng_factory.new( '/maze/place/x' )
 		assert.is_equal('and this and', mk:babble( rnd, 2, 6))
 		assert.is_equal('that. that and this and', mk:babble( rnd, 3, 5))
 
@@ -44,7 +47,7 @@ describe("Markov Babbler", function()
 		assert.is_equal(339, status.seq_size)
 		assert.is_equal(174, status.tokens)
 
-		local rnd = rng_factory.new( seed, '/maze/place' )
+		local rnd = rng_factory.new( '/maze/place' )
 		local expect1 = '(sometimes characterized as "memorylessness"). In simpler terms, it is a type of Markov process that'
 		local babble1 = mk:babble( rnd, 10, 15 )
 
@@ -81,7 +84,7 @@ describe("Markov Babbler", function()
 		assert.is_table(markov)
 
 		mk:train_file( './tests/share/wiki-markov.txt' )
-		local rnd = rng_factory.new( seed, '/whatever' )
+		local rnd = rng_factory.new( '/whatever' )
 
 		local babble1 = mk:babble( rnd, 1500 )
 

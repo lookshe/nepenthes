@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.4
 
 local digest = require 'openssl.digest'
+local seed = require 'components.seed'
 
 
 ---
@@ -70,10 +71,10 @@ local _M = {}
 -- Additionally include a 'seed' value that makes the different instances
 -- with the same corpus unique.
 --
-function _M.new( seed, uri )
+function _M.new( uri )
 
 	local dig = digest.new( 'sha256' )
-	dig:update( seed )
+	dig:update( seed.get() )
 	local hash = dig:final( uri )
 
 	local ret = { string.unpack( "jjjj", hash ) }
