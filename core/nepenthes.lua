@@ -10,36 +10,21 @@ local corewait = require 'daemonparts.corewait'
 local config = require 'components.config'
 local stats = require 'components.stats'
 local stutter = require 'components.stutter'
-local seed = require 'components.seed'
-local rng_factory = require 'components.rng'
 local markov = require 'components.markov'
-local wordlist = require 'components.wordlist'
-local template = require 'components.template'
-local urlgen = require 'components.urlgen'
+local request = require 'components.request'
 
 
 
 --
 -- Load Dictionary
 --
-local wl = wordlist.new( config.words )
-
---
--- Seed is important
---
-local instance_seed = seed.get()
-
---
--- Default Template
---
-local tmp = template.load( 'default' )
+--local wl = wordlist.new( config.words )
 
 --
 -- Train Markov corpus
 --
 local mk = markov.new()
 mk:train_file( config.markov_corpus )
-
 
 
 
@@ -55,14 +40,14 @@ app:get "/stats/markov" {
 	end
 }
 
-app:get "/stats/words" {
-	function( web )
-		web.headers['Content-type'] = 'application/json'
-		return web:ok(
-			json.encode( { count = wl.count() } )
-		)
-	end
-}
+--app:get "/stats/words" {
+	--function( web )
+		--web.headers['Content-type'] = 'application/json'
+		--return web:ok(
+			--json.encode( { count = wl.count() } )
+		--)
+	--end
+--}
 
 app:get "/stats" {
 	function ( web )
@@ -110,38 +95,11 @@ local function log_checkpoints( times, send_delay )
 		end
 	end
 
-	parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
+	if send_delay then
+		parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
+	end
+
 	output.info("req len: " .. table.concat( parts, ', ' ))
-
-end
-
-
----
--- Figure out which instance/silo will process the request, and
--- check for bogons.
---
-local function setup_request( web )
-
-	local ret = {
-		prefix = config.prefix,
-		timestats = {}
-	}
-
-	checkpoint( ret.timestats, 'start' )
-
-	if web.HTTP_X_PREFIX then
-		ret.prefix = web.HTTP_X_PREFIX
-	end
-
-	ret.urlgen = urlgen.new( wl, ret.prefix )
-
-	if ret.urlgen:check( web.PATH_INFO ) then
-		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-		corewait.poll( 5 )
-		return web:notfound("Nothing exists at this URL")
-	end
-
-	return ret
 
 end
 
@@ -152,75 +110,57 @@ end
 -- setup), don't do anything.
 --
 app:head "/(.*)" {
-	setup_request,
 	function( web )
+
+		local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
+		if req:is_bogon() then
+			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+			corewait.poll( 5 )
+			return web:notfound("Nothing exists at this URL")
+		end
+
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return web:ok("")
+
 	end
 }
-
 
 ---
 -- Actual tarpitting happens here.
 --
 app:get "/(.*)" {
-	setup_request,
+	function( web )
 
+		local ts = {}
+		checkpoint( ts, 'start' )
 
-	function ( web )
-
-		local ret = web.vars
-
-		checkpoint( ret.timestats, 'preprocessing' )
-		local rnd = rng_factory.new( instance_seed, web.PATH_INFO )
-
-		local len = rnd:between( 10, 5 )
-		local links = {}
-		for i = 1, len do
-			links[ i ] = {
-				description = wl.choose( rnd ),
-				link = web.vars.urlgen:create( rnd )
-			}
+		local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
+		if req:is_bogon() then
+			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+			corewait.poll( 5 )
+			return web:notfound("Nothing exists at this URL")
 		end
 
-		ret.header = wl.choose( rnd )
-		ret.links = links
-		checkpoint( ret.timestats, 'links' )
+		checkpoint( ts, 'preprocess' )
+		req:load_markov( mk )
+		checkpoint( ts, 'markov' )
+		local page = req:render()
+		local wait = req:send_delay()
+		checkpoint( ts, 'rendering' )
+		log_checkpoints( ts, wait )
 
-		ret.content = mk:babble( rnd, config.markov_min, config.markov_max )
-		ret.title = mk:babble( rnd, 5, 15 )
-
-		checkpoint( ret.timestats, 'markov' )
-
-		ret.sandbag_rate = rnd:between(config.max_wait or 10, config.min_wait or 1)
-		return ret
-
-	end,
-
-	function( web )
-		web.vars.rendered_output = tmp:render( web.vars )
-		return web.vars
-	end,
-
-	function( web )
-
-		local page = web.vars.rendered_output
-		local ret = web.vars
-
-		checkpoint( ret.timestats, 'total' )
-		log_checkpoints( ret.timestats, ret.sandbag_rate )
-		ret.time_spent = ret.timestats[ #(ret.timestats) ].at - ret.timestats[1].at
+		local time_spent = ts[ #ts ].at - ts[1].at
 
 		local logged = {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
-			silo = ret.prefix,
+			silo = web.HTTP_X_PREFIX or 'default',
 			bytes = #page,
 			when = cqueues.monotime(),
 			response = 200,
-			delay = web.vars.sandbag_rate,
-			cpu = web.vars.time_spent,
+			delay = wait,
+			cpu = time_spent,
 			complete = false
 		}
 
@@ -229,18 +169,12 @@ app:get "/(.*)" {
 			logged.complete = true
 		end
 
-		if web.vars.sandbag_rate then
-			return '200 OK', web.headers, stutter.delay_iterator(
-					page,
-					stutter.generate_pattern( web.vars.sandbag_rate, #page ),
-					end_logging
-				)
-		end
-
-
-		logged.complete = true
-		return web:ok( page )
-
+		web.headers['content-type'] = 'text/html; charset=UTF-8'
+		return '200 OK', web.headers, stutter.delay_iterator(
+				page,
+				stutter.generate_pattern( wait, #page ),
+				end_logging
+			)
 	end
 }
 

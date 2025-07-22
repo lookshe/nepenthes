@@ -25,16 +25,6 @@ function _methods.is_bogon( this )
 
 end
 
---function _methods.seed( this, seed )
-
-	--if seed then
-		--this._seed = seed
-	--end
-
-	--return this._seed
-
---end
-
 function _methods.urllist( this )
 
 	assert( not this._is_bogon, 'Unable to load URLs: bogon request' )
@@ -68,6 +58,13 @@ function _methods.load_markov( this, markov )
 	for i, v in ipairs( this.template.data.markov ) do	-- luacheck: ignore 213
 		this.vars[v.name] = markov:babble( this.rnd, v.min, v.max )
 	end
+
+end
+
+
+function _methods.send_delay( this )
+
+	return this.rnd:between(config.max_wait or 10, config.min_wait or 1)
 
 end
 

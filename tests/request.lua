@@ -123,10 +123,13 @@ describe("Request Processor Module", function()
 		local req = request.new( '/', '/catastrophic' )
 		req:load_markov( mk )
 		local out = req:render()
+		local wait = req:send_delay()
 
 		assert.is_string(out)
 		assert.is_match('^%<%!DOCTYPE html%>', out)
 		assert.is_match('In other words, conditional on the state of affairs now', out)
+		assert.is_number(wait)
+		assert.is_equal(7, wait)
 
 	end)
 
