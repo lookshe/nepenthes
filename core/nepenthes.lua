@@ -151,7 +151,12 @@ app:get "/(.*)" {
 
 		local time_spent = ts[ #ts ].at - ts[1].at
 
-		local logged = {
+		--
+		-- Somewhat "magic": Utilize to-be-closed variable to log that
+		-- the request has completed when this function terminates,
+		-- regardless of how this function terminated.
+		--
+		local logged <close> = stats.build_entry {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
@@ -160,20 +165,15 @@ app:get "/(.*)" {
 			when = cqueues.monotime(),
 			response = 200,
 			delay = wait,
-			cpu = time_spent,
-			complete = false
+			cpu = time_spent
 		}
 
 		stats.log( logged )
-		local function end_logging()
-			logged.complete = true
-		end
 
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return '200 OK', web.headers, stutter.delay_iterator(
 				page,
-				stutter.generate_pattern( wait, #page ),
-				end_logging
+				stutter.generate_pattern( wait, #page )
 			)
 	end
 }

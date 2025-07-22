@@ -76,10 +76,6 @@ describe("Send-Request-Output Module", function()
 	it("Stutters with correct len/size", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local got_callback = false
-		local function callback()
-			got_callback = true
-		end
 
 		local t1 = {
 			{ delay = 0.1, bytes = 10 },
@@ -87,17 +83,13 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.4, bytes = 8 }
 		}
 
-		local x = stutter.delay_iterator( s, t1, callback )
+		local x = stutter.delay_iterator( s, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghij', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'klmnopqr', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'stuvwxyz', x() )
-		assert.is_false(got_callback)
 		assert.is_nil( x() )
-		assert.is_true(got_callback)
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.7 )
@@ -108,10 +100,6 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - underruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local got_callback = false
-		local function callback()
-			got_callback = true
-		end
 
 		local t1 = {
 			{ delay = 0.1, bytes = 5 },
@@ -119,19 +107,14 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 2 }
 		}
 
-		local x = stutter.delay_iterator( s, t1, callback )
+		local x = stutter.delay_iterator( s, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcde', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'fghij', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'kl', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'mnopqrstuvwxyz', x() )
-		assert.is_false(got_callback)
 		assert.is_nil( x() )
-		assert.is_true(got_callback)
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.4 )
@@ -142,10 +125,6 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - overruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local got_callback = false
-		local function callback()
-			got_callback = true
-		end
 
 		local t2 = {
 			{ delay = 0.1, bytes = 15 },
@@ -153,19 +132,14 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 10 }
 		}
 
-		local x = stutter.delay_iterator( s, t2, callback )
+		local x = stutter.delay_iterator( s, t2 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghijklmno', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'pqrstuvwxy', x() )
-		assert.is_false(got_callback)
 		assert.is_equal( 'z', x() )
-		assert.is_false(got_callback)
 		assert.is_nil( x() )
-		assert.is_true(got_callback)
 		assert.is_nil( x() )
-		assert.is_true(got_callback)
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.4 )

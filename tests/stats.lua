@@ -374,4 +374,61 @@ describe("Hit Counting/Statistics Module", function()
 		pending("Not implemented")
 	end)
 
+
+	it("Tracks Active Connections", function()
+
+		local e = {}
+		for k, v in pairs( entries[1] ) do
+			e[k] = v
+		end
+
+		e.complete = false
+		stats.clear()
+
+		local s1 = stats.compute()
+		assert.is_equal( 0, s1.active )
+
+		stats.log(e)
+
+		local s2 = stats.compute()
+		assert.is_equal( 1, s2.active )
+
+		e.complete = true
+
+		local s3 = stats.compute()
+		assert.is_equal( 0, s3.active )
+
+	end)
+
+
+	it("Automatically clears an active entry", function()
+
+		local did_run = false
+		stats.clear()
+		local sb = stats.compute()
+		assert.is_equal( 0, sb.active )
+
+		local function run()
+
+			local e <close> = stats.build_entry( entries[1] )
+			local s1 = stats.compute()
+			assert.is_equal( 0, s1.active )
+
+			stats.log(e)
+
+			local s2 = stats.compute()
+			assert.is_equal( 1, s2.active )
+
+			did_run = true
+
+		end
+
+		run()
+
+		local sf = stats.compute()
+		assert.is_equal( 0, sf.active )
+		assert.is_true( did_run )
+
+	end)
+
 end)

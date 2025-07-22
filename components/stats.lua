@@ -45,6 +45,24 @@ function _M.log( val )
 end
 
 
+function _M.build_entry( x )
+
+	local ret = {}
+	for k, v in pairs(x) do
+		ret[k] = v
+	end
+
+	ret.complete = false
+	return setmetatable( ret, {
+		__close = function()
+			ret.complete = true
+		end
+	})
+
+end
+
+
+
 function _M.compute()
 
 	local ret = {
