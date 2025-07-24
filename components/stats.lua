@@ -72,6 +72,7 @@ function _M.compute()
 		cpu = 0,
 		cpu_total = os.clock(),
 		bytes_sent = 0,
+		bytes_generated = 0,
 		memory_usage = collectgarbage( "count" ) * 1024,
 		delay = 0,
 		active = 0,
@@ -103,7 +104,8 @@ function _M.compute()
 		end
 
 		ret.cpu = ret.cpu + v.cpu
-		ret.bytes_sent = ret.bytes_sent + v.bytes
+		ret.bytes_generated = ret.bytes_generated + v.bytes
+		ret.bytes_sent = ret.bytes_sent + v.bytes_sent
 		ret.delay = ret.delay + v.delay
 	end
 

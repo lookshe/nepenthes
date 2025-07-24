@@ -4,6 +4,7 @@ require 'luarocks.loader'
 pcall(require, 'luacov')
 
 local cqueues = require 'cqueues'
+local stats = require 'components.stats'
 local stutter = require 'components.stutter'
 
 
@@ -76,6 +77,10 @@ describe("Send-Request-Output Module", function()
 	it("Stutters with correct len/size", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
+		local sl = stats.build_entry {
+			bytes = #s,
+			bytes_sent = 0
+		}
 
 		local t1 = {
 			{ delay = 0.1, bytes = 10 },
@@ -83,16 +88,27 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.4, bytes = 8 }
 		}
 
-		local x = stutter.delay_iterator( s, t1 )
+		local x = stutter.delay_iterator( s, sl, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghij', x() )
+		assert.is_equal( 10, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'klmnopqr', x() )
+		assert.is_equal( 18, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'stuvwxyz', x() )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
 		assert.is_nil( x() )
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.7 )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
 
 	end)
 
@@ -100,6 +116,10 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - underruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
+		local sl = stats.build_entry {
+			bytes = #s,
+			bytes_sent = 0
+		}
 
 		local t1 = {
 			{ delay = 0.1, bytes = 5 },
@@ -107,17 +127,31 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 2 }
 		}
 
-		local x = stutter.delay_iterator( s, t1 )
+		local x = stutter.delay_iterator( s, sl, t1 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcde', x() )
+		assert.is_equal( 5, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'fghij', x() )
+		assert.is_equal( 10, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'kl', x() )
+		assert.is_equal( 12, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'mnopqrstuvwxyz', x() )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
 		assert.is_nil( x() )
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.4 )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
 
 	end)
 
@@ -125,6 +159,10 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - overruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
+		local sl = stats.build_entry {
+			bytes = #s,
+			bytes_sent = 0
+		}
 
 		local t2 = {
 			{ delay = 0.1, bytes = 15 },
@@ -132,17 +170,31 @@ describe("Send-Request-Output Module", function()
 			{ delay = 0.1, bytes = 10 }
 		}
 
-		local x = stutter.delay_iterator( s, t2 )
+		local x = stutter.delay_iterator( s, sl, t2 )
 		local start = cqueues.monotime()
 
 		assert.is_equal( 'abcdefghijklmno', x() )
+		assert.is_equal( 15, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'pqrstuvwxy', x() )
+		assert.is_equal( 25, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
 		assert.is_equal( 'z', x() )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
 		assert.is_nil( x() )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
 		assert.is_nil( x() )
 
 		local stop = cqueues.monotime()
 		assert.is_true( (stop - start) >= 0.4 )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
 
 	end)
 

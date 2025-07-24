@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.4
 
---local cqueues = require 'cqueues'
+local auxlib = require 'cqueues.auxlib'
 local corewait = require 'daemonparts.corewait'
 local rand = require 'openssl.rand'
 
@@ -146,34 +146,49 @@ function _M.generate_pattern( delay, bytes )
 end
 
 
-function _M.delay_iterator( s, pattern )
+function _M.delay_iterator( s, log_entry, pattern )
 
-	--assert(type(callback) == 'function', 'improper callback value')
+	local iter = coroutine.create(function()
+		local sl <close> = log_entry
 
-	return function()
+		repeat
 
-		if #pattern == 0 then
-			if s and #s > 0 then
-				-- if by happenstance we run out of pattern with bytes
-				-- remaining, fling it all.
-				local ret = s
-				s = nil
+			local block = table.remove(pattern, 1)
+
+			if not block then
+				sl.bytes_sent = sl.bytes_sent + #s
+				return s
+			end
+
+			local ret = s:sub(1, block.bytes)
+			s = s:sub(block.bytes + 1, #s)
+			sl.bytes_sent = sl.bytes_sent + #ret
+			corewait.poll(block.delay)
+
+			if #s > 0 then
+				coroutine.yield( ret )
+			else
 				return ret
 			end
 
+		until #s <= 0
+		return nil
+
+	end)
+
+	return function()
+
+		if coroutine.status( iter ) == 'dead' then
 			return nil
 		end
 
-		if not s then
-			return nil
+		local ret, out = auxlib.resume( iter )
+
+		if not ret then
+			error(out)
 		end
 
-		local block = table.remove(pattern, 1)
-		local ret = s:sub(1, block.bytes)
-		s = s:sub(block.bytes + 1, #s)
-		corewait.poll(block.delay)
-
-		return ret
+		return out
 
 	end
 

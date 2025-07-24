@@ -156,12 +156,13 @@ app:get "/(.*)" {
 		-- the request has completed when this function terminates,
 		-- regardless of how this function terminated.
 		--
-		local logged <close> = stats.build_entry {
+		local logged = stats.build_entry {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
 			silo = web.HTTP_X_PREFIX or 'default',
 			bytes = #page,
+			bytes_sent = 0,
 			when = cqueues.monotime(),
 			response = 200,
 			delay = wait,
@@ -171,8 +172,8 @@ app:get "/(.*)" {
 		stats.log( logged )
 
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
-		return '200 OK', web.headers, stutter.delay_iterator(
-				page,
+		return '200 OK', web.headers, stutter.delay_iterator (
+				page, logged,
 				stutter.generate_pattern( wait, #page )
 			)
 	end
