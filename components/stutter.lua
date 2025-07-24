@@ -148,6 +148,11 @@ end
 
 function _M.delay_iterator( s, log_entry, pattern )
 
+	--
+	-- Use a coroutine as the actual iterator. This way <close>
+	-- works as expected, and the log entry gets marked 'complete'
+	-- no matter what happens in the end.
+	--
 	local iter = coroutine.create(function()
 		local sl <close> = log_entry
 
@@ -176,6 +181,11 @@ function _M.delay_iterator( s, log_entry, pattern )
 
 	end)
 
+	--
+	-- Iterator wrapper so Microdyne knows what to do with it.
+	-- Also use cqueues.auxlib.resume to avoid the 'nested coroutine'
+	-- problem
+	--
 	return function()
 
 		if coroutine.status( iter ) == 'dead' then
