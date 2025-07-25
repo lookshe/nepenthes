@@ -29,7 +29,8 @@ function _M.log( val )
 	assert(type(val.complete) == 'boolean')
 
 	assert(type(val.when) == 'number')
-	assert(type(val.bytes) == 'number')
+	assert(type(val.bytes_sent) == 'number')
+	assert(type(val.bytes_generated) == 'number')
 	assert(type(val.response) == 'number')
 	assert(type(val.delay) == 'number')
 	assert(type(val.cpu) == 'number')
@@ -104,9 +105,15 @@ function _M.compute()
 		end
 
 		ret.cpu = ret.cpu + v.cpu
-		ret.bytes_generated = ret.bytes_generated + v.bytes
+		ret.bytes_generated = ret.bytes_generated + v.bytes_generated
 		ret.bytes_sent = ret.bytes_sent + v.bytes_sent
 		ret.delay = ret.delay + v.delay
+	end
+
+	ret.unsent_bytes = ret.bytes_generated - ret.bytes_sent
+
+	if ret.bytes_generated > 0 then
+		ret.unsent_bytes_percent = (( ret.bytes_generated - ret.bytes_sent ) / ret.bytes_generated ) * 100
 	end
 
 	return ret

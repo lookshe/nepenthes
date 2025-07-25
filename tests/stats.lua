@@ -20,7 +20,7 @@ local entries = {
 		uri = '/maze/digynian/phellem/Adelbert/jug/bemat',
 		when = os.time() - 10,
 		silo = 'default',
-		bytes = 1809,
+		bytes_generated = 1809,
 		bytes_sent = 1809,
 		response = 200,
 		delay = 13,
@@ -33,7 +33,7 @@ local entries = {
 		uri = '/maze/refectory/punnology/resorb/zoosphere',
 		when = os.time() - 9,
 		silo = 'default',
-		bytes = 1569,
+		bytes_generated = 1569,
 		bytes_sent = 1569,
 		response = 200,
 		delay = 20,
@@ -46,7 +46,7 @@ local entries = {
 		uri = '/maze/yacht/herringbone',
 		when = os.time() - 8,
 		silo = 'default',
-		bytes = 1515,
+		bytes_generated = 1515,
 		bytes_sent = 1515,
 		response = 200,
 		delay = 5,
@@ -59,7 +59,7 @@ local entries = {
 		uri = '/maze/unchafed/stolewise',
 		silo = 'default',
 		when = os.time() - 7,
-		bytes = 1887,
+		bytes_generated = 1887,
 		bytes_sent = 1887,
 		response = 200,
 		delay = 11,
@@ -72,7 +72,7 @@ local entries = {
 		uri = '/maze/boobook/bandhu',
 		silo = 'default',
 		when = os.time() - 6,
-		bytes = 1805,
+		bytes_generated = 1805,
 		bytes_sent = 1805,
 		response = 200,
 		delay = 8,
@@ -85,7 +85,7 @@ local entries = {
 		uri = '/maze/estamene/cacodylic/miskeep',
 		when = os.time() - 5,
 		silo = 'default',
-		bytes = 1550,
+		bytes_generated = 1550,
 		bytes_sent = 1550,
 		response = 200,
 		delay = 6,
@@ -222,6 +222,60 @@ describe("Hit Counting/Statistics Module", function()
 
 		assert.is_number(s7.memory_usage)
 		assert.is_number(s7.cpu_total)
+
+	end)
+
+
+	it("Correctly accounts unfinished entries", function()
+
+		stats.clear()
+		local s1 = stats.compute()
+		assert.is_equal(0, s1.hits)
+		assert.is_equal(0, s1.addresses)
+		assert.is_equal(0, s1.agents)
+		assert.is_equal(0, s1.cpu)
+		assert.is_equal(0, s1.bytes_generated)
+		assert.is_equal(0, s1.bytes_sent)
+		assert.is_equal(0, s1.delay)
+		assert.is_equal(0, s1.active)
+
+		-- some stats not keyed to requests
+		assert.is_number(s1.memory_usage)
+		assert.is_number(s1.cpu_total)
+
+		local h1 = {}
+		for k, v in pairs( entries[1] ) do
+			h1[k] = v
+		end
+
+		h1.complete = false
+		h1.bytes_sent = 0
+
+		stats.log( h1 )
+		local s2 = stats.compute()
+		assert.is_equal(1, s2.hits)
+		assert.is_equal(1, s2.addresses)
+		assert.is_equal(1, s2.agents)
+		assert.is_true(float_equals(0.000305, s2.cpu))
+		assert.is_equal(1809, s2.bytes_generated)
+		assert.is_equal(0, s2.bytes_sent)
+		assert.is_equal(13, s2.delay)
+		assert.is_equal(1, s2.active)
+
+		assert.is_number(s2.memory_usage)
+		assert.is_number(s2.cpu_total)
+
+		h1.complete = true
+		h1.bytes_sent = h1.bytes_generated
+		local s3 = stats.compute()
+		assert.is_equal(1, s3.hits)
+		assert.is_equal(1, s3.addresses)
+		assert.is_equal(1, s3.agents)
+		assert.is_true(float_equals(0.000305, s3.cpu))
+		assert.is_equal(1809, s3.bytes_generated)
+		assert.is_equal(1809, s3.bytes_sent)
+		assert.is_equal(13, s3.delay)
+		assert.is_equal(0, s3.active)
 
 	end)
 

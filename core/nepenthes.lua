@@ -161,11 +161,11 @@ app:get "/(.*)" {
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
 			silo = web.HTTP_X_PREFIX or 'default',
-			bytes = #page,
+			bytes_generated = #page,
 			bytes_sent = 0,
 			when = cqueues.monotime(),
 			response = 200,
-			delay = wait,
+			delay = 0,
 			cpu = time_spent
 		}
 

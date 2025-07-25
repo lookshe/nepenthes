@@ -1,5 +1,6 @@
 #!/usr/bin/env lua5.4
 
+local cqueues = require 'cqueues'
 local auxlib = require 'cqueues.auxlib'
 local corewait = require 'daemonparts.corewait'
 local rand = require 'openssl.rand'
@@ -153,6 +154,8 @@ function _M.delay_iterator( s, log_entry, pattern )
 	-- works as expected, and the log entry gets marked 'complete'
 	-- no matter what happens in the end.
 	--
+	local start_time = cqueues.monotime()
+
 	local iter = coroutine.create(function()
 		local sl <close> = log_entry
 
@@ -168,6 +171,7 @@ function _M.delay_iterator( s, log_entry, pattern )
 			local ret = s:sub(1, block.bytes)
 			s = s:sub(block.bytes + 1, #s)
 			sl.bytes_sent = sl.bytes_sent + #ret
+			sl.delay = cqueues.monotime() - start_time
 			corewait.poll(block.delay)
 
 			if #s > 0 then
