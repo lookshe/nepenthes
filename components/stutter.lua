@@ -188,7 +188,8 @@ function _M.delay_iterator( s, log_entry, pattern )
 	--
 	-- Iterator wrapper so Microdyne knows what to do with it.
 	-- Also use cqueues.auxlib.resume to avoid the 'nested coroutine'
-	-- problem
+	-- problem - otherwise it would be simpler to just call
+	-- coroutine.wrap().
 	--
 	return function()
 
@@ -199,6 +200,7 @@ function _M.delay_iterator( s, log_entry, pattern )
 		local ret, out = auxlib.resume( iter )
 
 		if not ret then
+			coroutine.close( iter )
 			error(out)
 		end
 
