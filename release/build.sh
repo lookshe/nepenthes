@@ -5,7 +5,7 @@ PROJECT=nepenthes
 DEPENDS=`cat <<EOF
 	perihelion
 	sqltable
-	daemonparts-1.4
+	daemonparts 1.4-1
 	lustache
 	dkjson
 	basexx
