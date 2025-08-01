@@ -5,7 +5,6 @@ PROJECT=nepenthes
 DEPENDS=`cat <<EOF
 	perihelion
 	sqltable
-	daemonparts 1.4-1
 	lustache
 	dkjson
 	basexx
@@ -37,13 +36,15 @@ fi
 
 cd $scratch
 
-#svn export https://svn.zadzmo.org/repo/$PROJECT/head ./$PROJECT-$version || exit 1
 svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$version ./$PROJECT-$version || exit 1
 
 for dependency in $DEPENDS; do
 	echo $dependency
 	luarocks-5.4 --tree ./$PROJECT-$version/external install --deps-mode none --no-doc $dependency || exit 1
 done
+
+luarocks-5.4 --tree ./$PROJECT-$version/external install --deps-mode none --no-doc daemonparts 1.4-1 || exit 1
+
 
 tar -cvf $PROJECT-$version.tar $PROJECT-$version/ || exit 1
 gzip $PROJECT-$version.tar || exit 1
