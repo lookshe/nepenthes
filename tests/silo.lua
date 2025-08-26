@@ -9,6 +9,15 @@ local config = require 'components.config'
 local silo = require 'components.silo'
 
 
+--
+-- Monkey patch this to make it identical from test run to test run.
+--
+local seed = require 'components.seed'
+seed.get = function()
+	return 'ec708cffc8c154521ced80639449576ff8bd356060eeb20aecfc76e45ec80bbc'
+end
+
+
 require 'busted.runner'()
 describe("Silo/Request Builder Module", function()
 
@@ -32,6 +41,7 @@ describe("Silo/Request Builder Module", function()
 		}
 
 		silo.setup()
+		assert.is_equal(1, silo.count())
 
 		local request1 = silo.new_request(
 			'default',
@@ -96,6 +106,7 @@ describe("Silo/Request Builder Module", function()
 		}
 
 		silo.setup()
+		assert.is_equal(2, silo.count())
 
 		local request1 = silo.new_request(
 			'default',
@@ -171,6 +182,7 @@ describe("Silo/Request Builder Module", function()
 		}
 
 		silo.setup()
+		assert.is_equal(2, silo.count())
 
 		local request1 = silo.new_request(
 			'default',
@@ -243,6 +255,108 @@ describe("Silo/Request Builder Module", function()
 		assert.is_error(function()
 			silo.setup()
 		end)
+
+	end)
+
+
+	it("Has a functional Markov babbler #request", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default'
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/catastrophic'
+		)
+
+		assert.is_table(req.vars)
+		assert.is_nil(req.vars.title)
+		assert.is_nil(req.vars.header)
+		assert.is_nil(req.vars.content)
+
+		req:load_markov()
+
+		assert.is_table(req.vars)
+		assert.is_string(req.vars.title)
+		assert.is_equal('has either a discrete index set (often', req.vars.title)
+		assert.is_string(req.vars.header)
+		assert.is_equal('the state of the Russian mathematician Andrey', req.vars.header)
+		assert.is_string(req.vars.content)
+		assert.is_match('^full history%. In other words, conditional on the state of affairs now%.', req.vars.content)
+		assert.is_equal(859, #(req.vars.content))
+
+	end)
+
+	it("Generates list of given URLs in a page #request", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default'
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/catastrophic'
+		)
+
+		local urls = req:urllist()
+
+		assert.is_table( urls )
+		assert.is_equal( 8, #urls )
+
+		assert.is_equal('/catalogers/Wise', urls[1].link)
+		assert.is_equal('/rewinds/Paracelsus/tendinitis', urls[2].link)
+		assert.is_equal('/Victorville/estrangement/tapioca/catastrophic/inapt', urls[3].link)
+		assert.is_equal('/photon/Shea/isolationists/exit', urls[4].link)
+		assert.is_equal('/succinctness/Houyhnhnm/muckraked', urls[5].link)
+		assert.is_equal('/catalogers/unmarked/begs/daybreak/ruminations', urls[6].link)
+		assert.is_equal('/servant', urls[7].link)
+		assert.is_equal('/Huff/ruminations/chilis', urls[8].link)
+
+	end)
+
+
+	it("Renders the template #request", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default'
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/catastrophic'
+		)
+
+		req:load_markov()
+		local out = req:render()
+		local wait = req:send_delay()
+
+		assert.is_string(out)
+		assert.is_match('^%<%!DOCTYPE html%>', out)
+		assert.is_match('In other words, conditional on the state of affairs now', out)
+		assert.is_number(wait)
+		assert.is_equal(8, wait)
 
 	end)
 

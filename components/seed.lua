@@ -44,9 +44,14 @@ function _M.get()
 		local contents = f:read( 32 )
 		f:close()
 
+		--
+		-- Very difficult to trigger
+		--
+		-- luacov: disable
 		if #contents == 0 then
 			return nil
 		end
+		-- luacov: enable
 
 		return basexx.to_hex(contents)
 	end
