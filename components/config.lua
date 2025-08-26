@@ -13,7 +13,9 @@ return cp.prepare {
 	http_host = '::1',
 	http_port = 8893,
 	unix_socket = cp.default_nil('string'),
-	templates = './templates',
+	templates = cp.array {
+		'./templates'
+	},
 	nochdir = false,
 	daemonize = false,
 	pidfile = cp.default_nil('string'), -- ./pidfile',
