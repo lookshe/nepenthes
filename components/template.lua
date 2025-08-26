@@ -2,6 +2,7 @@
 
 local lustache = require 'lustache'
 local yaml = require 'tinyyaml'
+local unix = require 'unix'
 
 local cl = require 'daemonparts.config_loader'
 
@@ -68,19 +69,33 @@ local _M = {}
 ---
 -- Pull a template code from disk.
 --
-function _M.load( path )
+function _M.load( template_name )
 
 	local ret = {
 		body = '',
 		data = template_schema()
 	}
 
-	local template_path = string.format(
-		"%s/%s.lmt",
-			config.templates,
-			path
-	)
+	local template_path
+	local is_file = false
 
+	for i, possible_path in ipairs( config.templates ) do	-- luacheck: ignore 213
+		template_path = string.format(
+			"%s/%s.lmt",
+			possible_path,
+			template_name
+		)
+
+		local test = unix.stat( template_path )
+		if test then
+			is_file = unix.S_ISREG( test.mode )
+			break
+		end
+	end
+
+	if not is_file then
+		error(string.format('Template %s not found', template_name))
+	end
 
 	local template_file <close> = assert(io.open(template_path, "r"))
 

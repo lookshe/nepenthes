@@ -5,17 +5,16 @@
 http_host: '::'
 http_port: 8893
 templates: './templates'
-words: '/usr/share/dict/words'
-
-forget_time: 86400
-forget_hits: 10
-
+log_level: debug
 persist_stats: './statsfile.json'
 seed_file: './seed.txt'
 
-markov_corpus: './mishmash.txt'
-markov_min: 70
-markov_max: 220
 
-min_wait: 6
-max_wait: 30
+silos:
+  - name: default
+    wordlist: '/usr/share/dict/words'
+    corpus: './mishmash.txt'
+    
+  - name: fark
+    wordlist: './fark.txt'
+    corpus: './mishmash.txt'
