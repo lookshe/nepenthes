@@ -1,20 +1,56 @@
 #!/usr/bin/env lua5.4
 
+--
+-- Normalize the leading slash on a URI to simplify further logic.
+--
+local function normalize( uri )
+	if uri then
+		if uri == '/' then
+			uri = ""
+		end
+
+		if uri:sub(1, 1) == '/' then
+			uri = uri:sub(2, -1)
+		end
+
+		if uri ~= '' then
+			return uri
+		end
+	end
+end
+
+
 local _methods = {}
 
-
-function _methods.create( this, rng )
+---
+-- Create a new URL using the given psuedo-random number generator.
+-- Use requested prefix if available; otherwise, default.
+--
+function _methods.create( this, rng, requested_prefix )
 
 	local size = rng:between( 5, 1 )
 	local parts = {}
+	local prefix
 
+
+	requested_prefix = normalize( requested_prefix )
 
 	for i = 1, size do
 		parts[ i ] = this.wordlist.choose( rng )
 	end
 
-	if this.prefix then
-		table.insert(parts, 1, this.prefix)
+	for i, available_prefix in ipairs(this.prefixlist) do
+		if i == 1 then
+			prefix = available_prefix
+		end
+
+		if requested_prefix == available_prefix then
+			prefix = available_prefix
+		end
+	end
+
+	if prefix then
+		table.insert(parts, 1, prefix)
 	end
 
 	return '/' .. table.concat(parts, '/')
@@ -40,16 +76,21 @@ function _methods.check( this, url )
 	local count = 1
 
 	for word in url:gmatch('/([^/]+)') do
-		if count == 1 and this.prefix then
-			if word ~= this.prefix then
-				is_bogon = true
-				break
+		local found = false
+
+		if count == 1 and #(this.prefixlist) >= 0 then
+
+			for i, prefix in ipairs(this.prefixlist) do	-- luacheck: ignore 213
+				if prefix == word then
+					found = true
+				end
 			end
-		else
-			if not this.wordlist.lookup( word ) then
-				is_bogon = true
-				break
-			end
+
+		end
+
+		if (not this.wordlist.lookup( word )) and (not found) then
+			is_bogon = true
+			break
 		end
 
 		count = count + 1
@@ -60,32 +101,27 @@ function _methods.check( this, url )
 end
 
 
+
 local _M = {}
 
-function _M.new( wordlist, prefix )
+function _M.new( wordlist, prefixlist )
 
 	assert(wordlist, "Wordlist not provided")
 
-	--
-	-- Normalize the leading slash to simplify the rest of this module.
-	--
-	if prefix then
-		if prefix == '/' then
-			prefix = ""
-		end
 
-		if prefix:sub(1, 1) == '/' then
-			prefix = prefix:sub(2, -1)
-		end
-
-		if prefix == '' then
-			prefix = nil
+	local clean_prefixes = {}
+	if type(prefixlist) == 'table' then
+		for i, prefix in ipairs(prefixlist) do	-- luacheck: ignore 213
+			local cleaned_prefix = normalize( prefix )
+			if cleaned_prefix then
+				clean_prefixes[ #clean_prefixes + 1 ] = cleaned_prefix
+			end
 		end
 	end
 
 	local ret = {
 		wordlist = wordlist,
-		prefix = prefix
+		prefixlist = clean_prefixes
 	}
 
 	return setmetatable(
