@@ -101,7 +101,6 @@ end
 app:head "/(.*)" {
 	function( web )
 
-		--local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
 		local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
 		if req:is_bogon() then
 			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
