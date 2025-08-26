@@ -28,6 +28,9 @@ local app
 local app_f = assert(loadfile( arg[1] ))
 config( arg[2] )
 
+if config.log_level then
+	output.filter( config.log_level )
+end
 
 local function header_cleanup( var )
 	return 'HTTP_' .. var:upper():gsub("%-", '_')
@@ -131,6 +134,7 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	))
 end
 
+local cq <close> = corewait.new()
 local server
 
 local function startup()
@@ -150,7 +154,7 @@ local function startup()
 		port = math.floor(config.http_port),
 		onstream = http_responder,
 		tls = false,
-		cq = corewait.cq()
+		cq = cq.cq
 	}
 
 	if config.unix_socket then
@@ -162,8 +166,8 @@ local function startup()
 
 	server = assert(http_server.listen(args))
 
-	corewait.cq():wrap(function()
-		corewait.poll()
+	cq:wrap(function()
+		cq:poll()
 		output.info("Stop Signal Recieved")
 		server:close()
 
@@ -172,7 +176,7 @@ local function startup()
 		end
 	end)
 
-	corewait.start_signal_handler()
+	cq:enable_signal_stop()
 	assert(server:listen())
 
 end
@@ -180,6 +184,7 @@ end
 if config.daemonize then
 	daemonize.go( startup )
 	output.switch('syslog', 'user', arg[1])
+	output.filter( config.log_level )
 else
 	output.info("Remaining in foreground")
 	startup()
@@ -187,7 +192,7 @@ end
 
 output.notice("Startup HTTP:", config.http_host, config.http_port)
 
-for err in corewait.cq():errors() do
+for err in cq:errors() do
 	output.error(err)
 end
 

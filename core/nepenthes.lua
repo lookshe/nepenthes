@@ -7,38 +7,23 @@ local perihelion = require 'perihelion'
 local output = require 'daemonparts.output'
 local corewait = require 'daemonparts.corewait'
 
-local config = require 'components.config'
 local stats = require 'components.stats'
 local stutter = require 'components.stutter'
-local markov = require 'components.markov'
-local request = require 'components.request'
+local silo = require 'components.silo'
 
 
-
---
--- Load Dictionary
---
---local wl = wordlist.new( config.words )
-
---
--- Train Markov corpus
---
-local mk = markov.new()
-mk:train_file( config.markov_corpus )
-
-
-
+silo.setup()
 
 local app = perihelion.new()
 
-app:get "/stats/markov" {
-	function( web )
-		web.headers['Content-type'] = 'application/json'
-		return web:ok(
-			json.encode( mk:stats() )
-		)
-	end
-}
+--app:get "/stats/markov" {
+	--function( web )
+		--web.headers['Content-type'] = 'application/json'
+		--return web:ok(
+			--json.encode( mk:stats() )
+		--)
+	--end
+--}
 
 --app:get "/stats/words" {
 	--function( web )
@@ -85,18 +70,22 @@ local function checkpoint( times, name )
 	}
 end
 
-local function log_checkpoints( times, send_delay )
+local function log_checkpoints( times, send_delay, logged_silo )
 
 	local parts = {}
 
 	for i, cp in ipairs( times ) do	-- luacheck: ignore 213
 		if cp.name ~= 'start' then
-			parts[ #parts + 1 ] = string.format("%s: %f", cp.name, cp.at - times[1].at)
+			parts[ #parts + 1 ] = string.format('%s: %f', cp.name, cp.at - times[1].at)
 		end
 	end
 
 	if send_delay then
-		parts[ #parts + 1 ] = string.format("send_delay: %f", send_delay)
+		parts[ #parts + 1 ] = string.format('send_delay: %f', send_delay)
+	end
+
+	if logged_silo then
+		parts[ #parts + 1 ] = string.format('silo: %s', logged_silo)
 	end
 
 	output.info("req len: " .. table.concat( parts, ', ' ))
@@ -112,7 +101,8 @@ end
 app:head "/(.*)" {
 	function( web )
 
-		local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
+		--local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
+		local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
 		if req:is_bogon() then
 			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			corewait.poll( 5 )
@@ -134,7 +124,8 @@ app:get "/(.*)" {
 		local ts = {}
 		checkpoint( ts, 'start' )
 
-		local req = request.new( web.HTTP_X_PREFIX, web.PATH_INFO )
+		local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
+
 		if req:is_bogon() then
 			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			corewait.poll( 5 )
@@ -142,12 +133,18 @@ app:get "/(.*)" {
 		end
 
 		checkpoint( ts, 'preprocess' )
-		req:load_markov( mk )
+		req:load_markov()
 		checkpoint( ts, 'markov' )
 		local page = req:render()
 		local wait = req:send_delay()
 		checkpoint( ts, 'rendering' )
-		log_checkpoints( ts, wait )
+
+		local siloname
+		if silo.count() > 1 then
+			siloname = req.silo
+		end
+
+		log_checkpoints( ts, wait, siloname )
 
 		local time_spent = ts[ #ts ].at - ts[1].at
 
@@ -160,7 +157,7 @@ app:get "/(.*)" {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
-			silo = web.HTTP_X_PREFIX or 'default',
+			silo = req.silo,
 			bytes_generated = #page,
 			bytes_sent = 0,
 			when = cqueues.monotime(),
