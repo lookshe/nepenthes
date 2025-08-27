@@ -153,9 +153,9 @@ local function babbler( this, buf, rnd, size )
 		-- chain.
 		--
 		if cur == NOWORD then
-			-- luacov: enable
-			return new_chain()
 			-- luacov: disable
+			return new_chain()
+			-- luacov: enable
 		end
 
 		buf[ #buf + 1 ] = cur

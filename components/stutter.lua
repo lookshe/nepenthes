@@ -8,11 +8,11 @@ local rand = require 'openssl.rand'
 
 for i = 1, 5 do
 	if not rand.ready() then
+		-- luacov: disable
 		if i == 5 then
-			-- luacov: disable
 			error("Unable to seed")
-			-- luacov: enable
 		end
+		-- luacov: enable
 	end
 end
 
@@ -181,7 +181,6 @@ function _M.delay_iterator( s, log_entry, pattern )
 			end
 
 		until #s <= 0
-		return nil
 
 	end)
 
