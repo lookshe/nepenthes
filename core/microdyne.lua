@@ -134,10 +134,11 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	))
 end
 
-local cq <close> = corewait.new()
+local cq
 local server
 
 local function startup()
+	cq = corewait.new()
 
 	if config.nochdir then
 		unix.chdir(location)
@@ -192,8 +193,20 @@ end
 
 output.notice("Startup HTTP:", config.http_host, config.http_port)
 
+local last_err = cq:monotime()
+local err_count = 0
 for err in cq:errors() do
 	output.error(err)
+	
+	if last_err ~= cq:monotime() then
+		last_err = cq:monotime()
+		err_count = 0
+	else
+		err_count = err_count + 1
+		if err_count > 10 then
+			os.exit(10)
+		end
+	end
 end
 
 if config.unix_socket then
