@@ -201,7 +201,7 @@ local last_err = cq:monotime()
 local err_count = 0
 for err in cq:errors() do
 	output.error(err)
-	
+
 	if last_err ~= cq:monotime() then
 		last_err = cq:monotime()
 		err_count = 0
