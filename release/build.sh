@@ -14,19 +14,20 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-version=$1; shift
+export VERSION=$1; shift
 
 
 if [ \! -d $scratch ]; then
 	mkdir -p $scratch
 fi
 
+deps=`pwd`/depends.lua
 cd $scratch
-svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$version ./$PROJECT-$version || exit 1
+svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$VERSION ./$PROJECT-$VERSION || exit 1
 
-mkdir -p ./$PROJECT-$PROJECT_VERSION/external/license
+mkdir -p ./$PROJECT-$VERSION/external/license
 
-./$PROJECT-$PROJECT_VERSION/release/depends.lua | while read cmd; do
+$deps | while read cmd; do
 	$cmd || exit 1
 done
 
@@ -41,8 +42,8 @@ echo $cleanout
 
 for thing in $cleanout; do
 	echo "Cleaning $thing"
-	rm -rf ./$PROJECT-$PROJECT_VERSION/$thing
+	rm -rf ./$PROJECT-$VERSION/$thing
 done
 
-tar -cvf $PROJECT-$version.tar $PROJECT-$version/ || exit 1
-gzip $PROJECT-$version.tar || exit 1
+tar -cvf $PROJECT-$VERSION.tar $PROJECT-$VERSION/ || exit 1
+gzip $PROJECT-$VERSION.tar || exit 1

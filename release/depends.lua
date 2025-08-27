@@ -4,7 +4,7 @@ if not os.getenv('PROJECT') then
 	os.exit(1)
 end
 
-if not os.getenv('PROJECT_VERSION') then
+if not os.getenv('VERSION') then
 	os.exit(1)
 end
 
@@ -73,7 +73,7 @@ local function install ( depend )
 	print( string.format(
 		command,
 			os.getenv('PROJECT'),
-			os.getenv('PROJECT_VERSION'),
+			os.getenv('VERSION'),
 			depend.name,
 			version
 	))
@@ -86,7 +86,7 @@ local function license( depend )
 	print( string.format(
 		command,
 			os.getenv('PROJECT'),
-			os.getenv('PROJECT_VERSION'),
+			os.getenv('VERSION'),
 			depend.name,
 			depend.license
 	))
