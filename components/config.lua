@@ -21,10 +21,9 @@ return cp.prepare {
 	pidfile = cp.default_nil('string'), -- ./pidfile',
 	real_ip_header	= 'X-Forwarded-For',
 	silo_header = 'X-Silo',
-	persist_stats = cp.default_nil('string'), -- './statsfile.json',
 	seed_file = cp.default_nil('string'), -- './seed.txt',
-	stats_remember_time = 1800,
 	log_level = 'info',
+	stats_remember_time = 3600,
 
 	--markov = cp.default_nil {
 		--cp.array {
@@ -53,9 +52,9 @@ return cp.prepare {
 			markov_min = 10,
 			markov_max = 50,
 			default = false,
-			corpus = cp.default_nil('string'),
-			wordlist = cp.default_nil('string'),
-			prefixes = cp.lookup {
+			corpus = cp.not_nil('string'),
+			wordlist = cp.not_nil('string'),
+			prefixes = cp.array {
 				cp.default_nil('string')
 			}
 		}
