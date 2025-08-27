@@ -89,8 +89,11 @@ function _M.new_request( requested_silo, url )
 		s = silos[requested_silo]
 	end
 
+	local is_bogon, prefix = s.urlgenerator:check( url )
+
 	local ret = {
-		_is_bogon = s.urlgenerator:check( url ),
+		_is_bogon = is_bogon,
+		prefix = prefix,
 		silo = s.name,
 		wordlist = s.wordlist,
 		urlgenerator = s.urlgenerator,

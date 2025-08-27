@@ -116,6 +116,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request1)
 		assert.is_equal('default', request1.silo)
 		assert.is_false(request1:is_bogon())
+		assert.is_nil(request1.prefix)
 
 		local request2 = silo.new_request(
 			'default',
@@ -143,6 +144,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request4)
 		assert.is_equal('default', request4.silo)
 		assert.is_false(request4:is_bogon())
+		assert.is_nil(request4.prefix)
 
 
 		local request5 = silo.new_request(
@@ -153,6 +155,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request5)
 		assert.is_equal('some-other-silo', request5.silo)
 		assert.is_false(request5:is_bogon())
+		assert.is_equal('otherplace', request5.prefix)
 
 	end)
 
@@ -295,6 +298,7 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
+
 	it("Generates list of given URLs in a page #request", function()
 
 		config.silos = {
@@ -326,6 +330,99 @@ describe("Silo/Request Builder Module", function()
 		assert.is_equal('/catalogers/unmarked/begs/daybreak/ruminations', urls[6].link)
 		assert.is_equal('/servant', urls[7].link)
 		assert.is_equal('/Huff/ruminations/chilis', urls[8].link)
+
+	end)
+
+
+	it("Respects Prefixes generating URLs", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				prefixes = {
+					'/maze'
+				}
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/maze/catastrophic'
+		)
+
+		local urls = req:urllist()
+
+		assert.is_table( urls )
+		assert.is_equal( 9, #urls )
+
+		assert.is_equal('/maze/undisturbed/sedate/Paracelsus/crying', urls[1].link)
+		assert.is_equal('/maze/shadowboxing/counties/staccatos/graphically', urls[2].link)
+		assert.is_equal('/maze/improvable/Huff/Leicester/poling', urls[3].link)
+		assert.is_equal('/maze/servant/shadowboxing', urls[4].link)
+		assert.is_equal('/maze/Huff/daybreak', urls[5].link)
+		assert.is_equal('/maze/Pygmies', urls[6].link)
+		assert.is_equal('/maze/sibyl/graphically/dearth/nutritious', urls[7].link)
+		assert.is_equal('/maze/varied/teachable/Houyhnhnm/staccatos/bosom', urls[8].link)
+		assert.is_equal('/maze/bassos/graphically/catastrophic/poling/Leicester', urls[9].link)
+
+	end)
+
+
+	it("Respects Prefixes generating URLs when multiple prefixes are present #prefix", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				prefixes = {
+					'/otherplace',
+					'/maze',
+					'/demo'
+				}
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/maze/catastrophic'
+		)
+
+		assert.is_false(req:is_bogon())
+		local urls = req:urllist()
+
+		assert.is_table( urls )
+		assert.is_equal( 9, #urls )
+
+		assert.is_equal('/maze/undisturbed/sedate/Paracelsus/crying', urls[1].link)
+		assert.is_equal('/maze/shadowboxing/counties/staccatos/graphically', urls[2].link)
+		assert.is_equal('/maze/improvable/Huff/Leicester/poling', urls[3].link)
+
+		local req2 = silo.new_request(
+			'default',
+			'/otherplace/sedate/graphically'
+		)
+
+		assert.is_false(req2:is_bogon())
+		local urls2 = req2:urllist()
+
+		assert.is_table( urls2 )
+		assert.is_equal( 6, #urls2 )
+
+		assert.is_equal('/otherplace/Leicester/veranda/crankcase/lousiness/yourself', urls2[1].link)
+		assert.is_equal('/otherplace/festoon/mortarboards/ballpark', urls2[2].link)
+		assert.is_equal('/otherplace/fright/ruminations/mortifying/boasting/stones', urls2[3].link)
+		assert.is_equal('/otherplace/Pygmies', urls2[4].link)
+		assert.is_equal('/otherplace/graphically/Khalid/teachable', urls2[5].link)
+		assert.is_equal('/otherplace/varied/encyclical/objective/staccatos', urls2[6].link)
 
 	end)
 

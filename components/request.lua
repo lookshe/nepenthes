@@ -1,20 +1,6 @@
 #!/usr/bin/env lua5.4
 
 local config = require 'components.config'
---local seed = require 'components.seed'
---local wordlist = require 'components.wordlist'
---local rng_factory = require 'components.rng'
---local urlgen = require 'components.urlgen'
---local template = require 'components.template'
---local markov = require 'components.markov'
-
-
-
---local wl = wordlist.new( config.words )
---local instance_seed = seed.get()
-
---local mk = markov.new()
---mk:train_file( config.markov_corpus )
 
 
 local _methods = {}
@@ -27,7 +13,7 @@ end
 
 function _methods.urllist( this )
 
-	assert( not this._is_bogon, 'Unable to load URLs: bogon request' )
+	assert( (not this._is_bogon), 'Unable to load URLs: bogon request' )
 
 	local ret = {}
 	local count = #(this.template.data.links)
@@ -42,7 +28,7 @@ function _methods.urllist( this )
 	for i = 1, count do
 		ret[ i ] = {
 			description = this.wordlist.choose( this.rng ),
-			link = this.urlgenerator:create( this.rng )
+			link = this.urlgenerator:create( this.rng, this.prefix )
 		}
 	end
 
@@ -52,7 +38,7 @@ end
 
 function _methods.load_markov( this )
 
-	assert( not this._is_bogon, 'Unable to load markov: bogon request' )
+	assert( (not this._is_bogon), 'Unable to load markov: bogon request' )
 
 	-- Markov time
 	for i, v in ipairs( this.template.data.markov ) do	-- luacheck: ignore 213
@@ -71,10 +57,9 @@ end
 
 function _methods.render( this )
 
-	assert( not this._is_bogon, 'Unable to render: bogon request' )
+	assert( (not this._is_bogon), 'Unable to render: bogon request' )
 
 	local links = this:urllist()
-	--local vars = {}
 
 	-- Named links
 	for i, v in ipairs( this.template.data.links ) do	-- luacheck: ignore 213
@@ -93,19 +78,6 @@ end
 local _M = {}
 
 function _M.new( silodata )
-
-	--local ret = {
-		--ug = urlgen.new( wl, prefix ),
-		--template = template.load( 'default' ),
-		--url = url,
-		--vars = {}
-	--}
-
-	--ret._is_bogon = ret.ug:check( url )
-
-	--if not ret.is_bogon then
-		--ret.rnd = rng_factory.new( url )
-	--end
 
 	return setmetatable( silodata, { __index = _methods } )
 
