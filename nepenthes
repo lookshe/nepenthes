@@ -1,8 +1,10 @@
 #!/bin/sh
 
-if [ -z "$NDIR" ]; then
-	NDIR=`pwd`
+if [ -z "$LUA_APP_LOCATION" ]; then
+	LUA_APP_LOCATION=`pwd`
 fi
+
+export LUA_APP_LOCATION
 
 if [ -z "$1" ]; then
 	echo "Specify config file"
@@ -12,18 +14,11 @@ fi
 config=$1
 shift
 
-if [ -f "$1" ]; then
-	boot=`printf "-e dofile('%s')" "$1"`
-else
-	boot=''
-fi
-
 if [ -z "ULIMIT_FILES" ]; then
 	ulimit -n $ULIMIT_FILES
 fi
 
 exec /usr/bin/env lua5.4		\
-	$boot						\
-	$NDIR/core/microdyne.lua	\
-	$NDIR/core/nepenthes.lua	\
+	$LUA_APP_LOCATION/core/microdyne.lua	\
+	$LUA_APP_LOCATION/core/nepenthes.lua	\
 	$config

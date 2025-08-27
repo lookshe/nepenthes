@@ -1,20 +1,6 @@
 #!/bin/sh
 
-PROJECT=nepenthes
-
-DEPENDS=`cat <<EOF
-	perihelion
-	sqltable
-	daemonparts
-	lustache
-	dkjson
-	basexx
-	binaryheap
-	fifo
-	lpeg_patterns
-	http
-	api7-lua-tinyyaml
-EOF`
+export PROJECT=nepenthes
 
 if [ -z "$1" ]; then
 	echo "Provide scratch directory"
@@ -36,13 +22,26 @@ if [ \! -d $scratch ]; then
 fi
 
 cd $scratch
-
-#svn export https://svn.zadzmo.org/repo/$PROJECT/head ./$PROJECT-$version || exit 1
 svn export https://svn.zadzmo.org/repo/$PROJECT/tags/$version ./$PROJECT-$version || exit 1
 
-for dependency in $DEPENDS; do
-	echo $dependency
-	luarocks-5.4 --tree ./$PROJECT-$version/external install --deps-mode none --no-doc $dependency || exit 1
+mkdir -p ./$PROJECT-$PROJECT_VERSION/external/license
+
+./$PROJECT-$PROJECT_VERSION/release/depends.lua | while read cmd; do
+	$cmd || exit 1
+done
+
+cleanout="
+	.luacov
+	tests
+	release
+	run-tests.sh
+"
+
+echo $cleanout
+
+for thing in $cleanout; do
+	echo "Cleaning $thing"
+	rm -rf ./$PROJECT-$PROJECT_VERSION/$thing
 done
 
 tar -cvf $PROJECT-$version.tar $PROJECT-$version/ || exit 1
