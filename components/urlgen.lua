@@ -74,29 +74,35 @@ function _methods.check( this, url )
 
 	local is_bogon = false
 	local count = 1
+	local found_prefix
 
 	for word in url:gmatch('/([^/]+)') do
-		local found = false
 
 		if count == 1 and #(this.prefixlist) >= 0 then
-
 			for i, prefix in ipairs(this.prefixlist) do	-- luacheck: ignore 213
 				if prefix == word then
-					found = true
+					found_prefix = prefix
 				end
+			end
+
+			if not found_prefix then
+				if not this.wordlist.lookup( word ) then
+					return true
+				end
+			end
+		else
+
+			if not this.wordlist.lookup( word ) then
+				return true
 			end
 
 		end
 
-		if (not this.wordlist.lookup( word )) and (not found) then
-			is_bogon = true
-			break
-		end
-
 		count = count + 1
+
 	end
 
-	return is_bogon
+	return is_bogon, found_prefix
 
 end
 
