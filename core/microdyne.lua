@@ -1,5 +1,9 @@
 #!/usr/bin/env lua5.4
 
+if os.getenv('LUA_APP_BOOTSTRAP') then
+	dofile(os.getenv('LUA_APP_BOOTSTRAP'))
+end
+
 pcall(require, "luarocks.loader")
 
 local http_server = require 'http.server'

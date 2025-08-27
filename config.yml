@@ -4,7 +4,8 @@
 ---
 http_host: '::'
 http_port: 8893
-templates: './templates'
+templates: 
+  - './templates'
 log_level: debug
 persist_stats: './statsfile.json'
 seed_file: './seed.txt'
