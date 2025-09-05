@@ -24,6 +24,8 @@ return cp.prepare {
 	seed_file = cp.default_nil('string'), -- './seed.txt',
 	log_level = 'info',
 	stats_remember_time = 3600,
+	min_wait = 5,
+	max_wait = 10,
 
 	--markov = cp.default_nil {
 		--cp.array {

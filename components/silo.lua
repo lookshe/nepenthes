@@ -50,7 +50,9 @@ function _M.setup()
 			wordlist = wordlists[ siloconfig.wordlist ],
 			template = template.load( siloconfig.template ),
 			markov = corpuses[ siloconfig.corpus ],
-			name = siloconfig.name
+			name = siloconfig.name,
+			min_wait = siloconfig.min_wait,
+			max_wait = siloconfig.max_wait
 		}
 
 		if siloconfig.default then
@@ -99,6 +101,8 @@ function _M.new_request( requested_silo, url )
 		urlgenerator = s.urlgenerator,
 		template = s.template,
 		markov = s.markov,
+		min_wait = s.min_wait,
+		max_wait = s.max_wait,
 		url = url,
 		vars = {}
 	}
