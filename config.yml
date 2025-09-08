@@ -7,7 +7,6 @@ http_port: 8893
 templates: 
   - './templates'
 log_level: debug
-persist_stats: './statsfile.json'
 seed_file: './seed.txt'
 
 
@@ -15,7 +14,8 @@ silos:
   - name: default
     wordlist: '/usr/share/dict/words'
     corpus: './mishmash.txt'
-    
-  - name: fark
-    wordlist: './fark.txt'
-    corpus: './mishmash.txt'
+    min_wait: 10
+    max_wait: 65
+    prefixes:
+      - /maze
+      - /otherplace
