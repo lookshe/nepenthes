@@ -5,7 +5,7 @@ local _M = {}
 
 function _M.new( file )
 
-	local f <close> = assert( io.open( file ), "r" )
+	local f <close> = assert( io.open( file, "r" ) )
 
 	local dict = {}
 	local dict_lookup = {}
