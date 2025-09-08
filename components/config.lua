@@ -46,13 +46,13 @@ return cp.prepare {
 	silos = cp.array {
 		{
 			name = 'default',
-			markov = 'default',
-			urlgen = 'default',
+			--markov = 'default',
+			--urlgen = 'default',
 			template = 'default',
 			min_wait = 5,
 			max_wait = 10,
-			markov_min = 10,
-			markov_max = 50,
+			--markov_min = 10,
+			--markov_max = 50,
 			default = false,
 			corpus = cp.not_nil('string'),
 			wordlist = cp.not_nil('string'),
