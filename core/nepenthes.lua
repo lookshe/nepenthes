@@ -16,38 +16,39 @@ silo.setup()
 
 local app = perihelion.new()
 
---app:get "/stats/markov" {
-	--function( web )
-		--web.headers['Content-type'] = 'application/json'
-		--return web:ok(
-			--json.encode( mk:stats() )
-		--)
-	--end
---}
 
---app:get "/stats/words" {
-	--function( web )
-		--web.headers['Content-type'] = 'application/json'
-		--return web:ok(
-			--json.encode( { count = wl.count() } )
-		--)
-	--end
---}
+app:get "/stats/silo/(%S+)/addresses" {
+	function ( web, silo_filter )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.address_list( silo_filter ) )
+		)
+	end
+}
+
+app:get "/stats/silo/(%S+)/agents" {
+	function ( web, silo_filter )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.agent_list( silo_filter ) )
+		)
+	end
+}
+
+app:get "/stats/silo/(%S+)" {
+	function( web, silo_filter )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.compute( silo_filter ) )
+		)
+	end
+}
 
 app:get "/stats" {
 	function ( web )
 		web.headers['Content-type'] = 'application/json'
 		return web:ok(
 			json.encode( stats.compute() )
-		)
-	end
-}
-
-app:get "/stats/addresses" {
-	function ( web )
-		web.headers['Content-type'] = 'application/json'
-		return web:ok(
-			json.encode( stats.address_list() )
 		)
 	end
 }
@@ -60,7 +61,6 @@ app:get "/stats/agents" {
 		)
 	end
 }
-
 
 
 local function checkpoint( times, name )

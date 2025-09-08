@@ -57,7 +57,7 @@ local entries = {
 		address = '114.119.132.202',
 		agent = "Mozilla/5.0 (Linux; Android 7.0;) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)",
 		uri = '/maze/unchafed/stolewise',
-		silo = 'default',
+		silo = 'first',
 		when = os.time() - 7,
 		bytes_generated = 1887,
 		bytes_sent = 1887,
@@ -70,7 +70,7 @@ local entries = {
 		address = '5.255.231.147',
 		agent = "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
 		uri = '/maze/boobook/bandhu',
-		silo = 'default',
+		silo = 'second',
 		when = os.time() - 6,
 		bytes_generated = 1805,
 		bytes_sent = 1805,
@@ -84,7 +84,7 @@ local entries = {
 		agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:2.0.1) Gecko/20110606 Firefox/4.0.1",
 		uri = '/maze/estamene/cacodylic/miskeep',
 		when = os.time() - 5,
-		silo = 'default',
+		silo = 'first',
 		bytes_generated = 1550,
 		bytes_sent = 1550,
 		response = 200,
@@ -283,7 +283,7 @@ describe("Hit Counting/Statistics Module", function()
 	it("Drops old hits from the rolling buffer", function()
 
 		stats.clear()
-		local s1 = stats:compute()
+		local s1 = stats.compute()
 		assert.is_equal( 0, s1.hits )
 
 		config.stats_remember_time = 1
@@ -298,7 +298,7 @@ describe("Hit Counting/Statistics Module", function()
 			hit.when = cqueues.monotime()
 			stats.log( hit )
 			cqueues.sleep(0.1)
-			local sv = stats:compute()
+			local sv = stats.compute()
 			assert.is_true( 10 >= sv.hits )
 		end
 
@@ -430,10 +430,6 @@ describe("Hit Counting/Statistics Module", function()
 
 	end)
 
-	it("Seperates by silo", function()
-		pending("Not implemented")
-	end)
-
 
 	it("Tracks Active Connections", function()
 
@@ -488,6 +484,97 @@ describe("Hit Counting/Statistics Module", function()
 		local sf = stats.compute()
 		assert.is_equal( 0, sf.active )
 		assert.is_true( did_run )
+
+	end)
+
+
+	it("Seperates by silo", function()
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			stats.log( hit )
+		end
+
+		local s1 = stats.compute()
+		assert.is_equal(6, s1.hits)
+		assert.is_equal(6, s1.addresses)
+		assert.is_equal(6, s1.agents)
+		assert.is_true(float_equals(0.001838, s1.cpu))
+		assert.is_equal(10135, s1.bytes_sent)
+		assert.is_equal(63, s1.delay)
+
+		assert.is_number(s1.memory_usage)
+		assert.is_number(s1.cpu_total)
+
+		local list1 = stats.address_list()
+		assert.is_table(list1)
+		assert.is_equal( 1, list1['146.174.187.165'] )
+		assert.is_equal( 1, list1['5.255.231.147'] )
+		assert.is_equal( 1, list1['202.76.160.166'] )
+		assert.is_equal( 1, list1['44.205.74.196'] )
+		assert.is_equal( 1, list1['114.119.132.202'] )
+		assert.is_equal( 1, list1['146.174.188.199'] )
+
+		local agents1 = stats.agent_list()
+		local count1 = 0
+		for k, v in pairs(agents1) do	-- luacheck: ignore 213
+			assert.is_equal(1, v)
+			count1 = count1 + 1
+		end
+		assert.is_equal(6, count1)
+
+		local s2 = stats.compute( 'none' )
+		assert.is_equal(0, s2.hits)
+		assert.is_equal(0, s2.addresses)
+		assert.is_equal(0, s2.agents)
+		assert.is_equal(0, s2.cpu)
+		assert.is_equal(0, s2.bytes_sent)
+		assert.is_equal(0, s2.delay)
+
+		local list2 = stats.address_list( 'none' )
+		assert.is_table(list2)
+		assert.is_nil( list2['146.174.187.165'] )
+		assert.is_nil( list2['5.255.231.147'] )
+		assert.is_nil( list2['202.76.160.166'] )
+		assert.is_nil( list2['44.205.74.196'] )
+		assert.is_nil( list2['114.119.132.202'] )
+		assert.is_nil( list2['146.174.188.199'] )
+
+		local agents2 = stats.agent_list( 'none' )
+		local count2 = 0
+		for k, v in pairs(agents2) do	-- luacheck: ignore 213
+		-- does not execute if test passes.
+		-- luacov: disable
+			assert.is_equal(1, v)
+			count2 = count2 + 1
+		-- luacov: enable
+		end
+		assert.is_equal(0, count2)
+
+		local s3 = stats.compute( 'first' )
+		assert.is_equal(2, s3.hits)
+		assert.is_equal(2, s3.addresses)
+		assert.is_equal(2, s3.agents)
+		assert.is_true(float_equals(0.000541, s3.cpu))
+		assert.is_equal(3437, s3.bytes_sent)
+		assert.is_equal(17, s3.delay)
+
+		local list3 = stats.address_list( 'first' )
+		assert.is_table(list3)
+		assert.is_equal( 1, list3['146.174.187.165'] )
+		assert.is_nil( list3['5.255.231.147'] )
+		assert.is_nil( list3['202.76.160.166'] )
+		assert.is_nil( list3['44.205.74.196'] )
+		assert.is_equal( 1, list3['114.119.132.202'] )
+		assert.is_nil( list3['146.174.188.199'] )
+
+		local agents3 = stats.agent_list( 'first' )
+		local count3 = 0
+		for k, v in pairs(agents3) do	-- luacheck: ignore 213
+			assert.is_equal(1, v)
+			count3 = count3 + 1
+		end
+		assert.is_equal(2, count3)
 
 	end)
 
