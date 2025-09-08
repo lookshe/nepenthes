@@ -14,14 +14,10 @@ link_array:
    max_count: 8
    depth_min: 1
    depth_max: 5
-   description_min: 1
-   description_max: 5
 links:
  - name: footer_link
    depth_min: 1
    depth_max: 5
-   description_min: 1
-   description_max: 5
 ...
 <!DOCTYPE html>
 <html>

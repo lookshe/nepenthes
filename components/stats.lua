@@ -10,6 +10,8 @@ local _M = {}
 
 local buf = fifo()
 local start = os.time()
+local tick = os.time()
+local tick_count = 0
 
 function _M.clear()
 	buf = fifo()
@@ -35,6 +37,14 @@ function _M.log( val )
 	assert(type(val.delay) == 'number')
 	assert(type(val.cpu) == 'number')
 
+	if os.time() == tick then
+		tick_count = tick_count + 1
+	else
+		tick = os.time()
+		tick_count = 1
+	end
+
+	val.id = string.format('%s.%s', tick, tick_count)
 	buf:push( val )
 
 	local expired = cqueues.monotime() - config.stats_remember_time
@@ -184,5 +194,30 @@ function _M.agent_list( silo )
 
 end
 
+
+function _M.buffer( from )
+
+	local ret = {}
+	local include = true
+
+	if from then
+		include = false
+	end
+
+	for i = 1, #buf do
+		local v = buf:peek(i)
+
+		if include then
+			ret[ #ret + 1 ] = v
+		else
+			if v.id == from then
+				include = true
+			end
+		end
+	end
+
+	return ret
+
+end
 
 return _M

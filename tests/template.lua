@@ -39,8 +39,8 @@ describe("Templating Module", function()
 
 		assert.is_equal(1, x.data.links[1].depth_min)
 		assert.is_equal(5, x.data.links[1].depth_max)
-		assert.is_equal(1, x.data.links[1].description_min)
-		assert.is_equal(5, x.data.links[1].description_max)
+		--assert.is_equal(1, x.data.links[1].description_min)
+		--assert.is_equal(5, x.data.links[1].description_max)
 
 	end)
 
@@ -83,8 +83,8 @@ describe("Templating Module", function()
 
 		assert.is_equal(1, x.data.links[1].depth_min)
 		assert.is_equal(5, x.data.links[1].depth_max)
-		assert.is_equal(1, x.data.links[1].description_min)
-		assert.is_equal(5, x.data.links[1].description_max)
+		--assert.is_equal(1, x.data.links[1].description_min)
+		--assert.is_equal(5, x.data.links[1].description_max)
 
 	end)
 
@@ -165,8 +165,8 @@ describe("Templating Module", function()
 
 		assert.is_equal(1, x.data.links[1].depth_min)
 		assert.is_equal(5, x.data.links[1].depth_max)
-		assert.is_equal(1, x.data.links[1].description_min)
-		assert.is_equal(5, x.data.links[1].description_max)
+		--assert.is_equal(1, x.data.links[1].description_min)
+		--assert.is_equal(5, x.data.links[1].description_max)
 
 		--
 		-- Side Location
@@ -192,8 +192,8 @@ describe("Templating Module", function()
 
 		assert.is_equal(10, y.data.links[1].depth_min)
 		assert.is_equal(15, y.data.links[1].depth_max)
-		assert.is_equal(10, y.data.links[1].description_min)
-		assert.is_equal(55, y.data.links[1].description_max)
+		--assert.is_equal(10, y.data.links[1].description_min)
+		--assert.is_equal(55, y.data.links[1].description_max)
 
 	end)
 

@@ -37,8 +37,8 @@ local function template_schema()
 			max_count = 8,
 			depth_min = 1,
 			depth_max = 5,
-			description_min = 1,
-			description_max = 5
+			--description_min = 1,
+			--description_max = 5
 		}),
 
 		links = cl.array {
@@ -46,8 +46,8 @@ local function template_schema()
 				name = 'footer_link',
 				depth_min = 1,
 				depth_max = 5,
-				description_min = 1,
-				description_max = 5
+				--description_min = 1,
+				--description_max = 5
 			}
 		}
 	}

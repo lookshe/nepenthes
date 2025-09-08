@@ -43,6 +43,32 @@ app:get "/stats/silo/(%S+)" {
 		)
 	end
 }
+app:get "/stats/agents" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.agent_list() )
+		)
+	end
+}
+
+app:get "/stats/buffer/from/(%d+%.%d+)" {
+	function ( web, id )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.buffer( id ) )
+		)
+	end
+}
+
+app:get "/stats/buffer" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.buffer() )
+		)
+	end
+}
 
 app:get "/stats" {
 	function ( web )
@@ -53,14 +79,6 @@ app:get "/stats" {
 	end
 }
 
-app:get "/stats/agents" {
-	function ( web )
-		web.headers['Content-type'] = 'application/json'
-		return web:ok(
-			json.encode( stats.agent_list() )
-		)
-	end
-}
 
 
 local function checkpoint( times, name )
