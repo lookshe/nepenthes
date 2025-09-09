@@ -19,9 +19,8 @@ function _M.get()
 		local contents
 		pcall(function()
 
-			local f = assert( io.open( config.seed_file, 'r' ))
+			local f <close> = assert( io.open( config.seed_file, 'r' ))
 			contents = f:read("*all")
-			f:close()
 
 		end)
 
@@ -40,9 +39,8 @@ function _M.get()
 	-- We let this crash out, as it's really needed
 	--
 	local function get_random()
-		local f = assert( io.open( '/dev/random', 'r' ))
+		local f <close> = assert( io.open( '/dev/random', 'r' ))
 		local contents = f:read( 32 )
-		f:close()
 
 		--
 		-- Very difficult to trigger
@@ -64,9 +62,8 @@ function _M.get()
 	local function save_file( contents )
 		return pcall(function()
 
-			local f = assert( io.open( config.seed_file, 'w+' ))
+			local f <close> = assert( io.open( config.seed_file, 'w+' ))
 			f:write( contents )
-			f:close()
 
 		end)
 	end
