@@ -43,11 +43,21 @@ app:get "/stats/silo/(%S+)" {
 		)
 	end
 }
+
 app:get "/stats/agents" {
 	function ( web )
 		web.headers['Content-type'] = 'application/json'
 		return web:ok(
 			json.encode( stats.agent_list() )
+		)
+	end
+}
+
+app:get "/stats/addresses" {
+	function ( web )
+		web.headers['Content-type'] = 'application/json'
+		return web:ok(
+			json.encode( stats.address_list() )
 		)
 	end
 }
