@@ -338,7 +338,7 @@ curl http://localhost:8893/stats/addresses | jq
 }
 ```
 
-Want to see the raw data? There's and endpoint for that too.
+Want to see the raw data? There's an endpoint for that too.
 
 ```sh
 curl http://localhost:8893/stats/buffer | jq
