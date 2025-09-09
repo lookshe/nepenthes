@@ -1,8 +1,6 @@
 #!/usr/bin/env lua5.3
 
 local fifo = require 'fifo'
-local cqueues = require 'cqueues' -- for monotime()
-
 local config = require 'components.config'
 
 local _M = {}
@@ -47,10 +45,12 @@ function _M.log( val )
 	val.id = string.format('%s.%s', tick, tick_count)
 	buf:push( val )
 
-	local expired = cqueues.monotime() - config.stats_remember_time
+	local expired = os.time() - config.stats_remember_time
 
-	while buf:peek().when <= expired do
-		buf:pop()
+	if #buf > 0 then
+		while buf:peek().when <= expired do
+			buf:pop()
+		end
 	end
 
 end

@@ -245,11 +245,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s1.memory_usage)
 		assert.is_number(s1.cpu_total)
 
-		local h1 = {}
-		for k, v in pairs( entries[1] ) do
-			h1[k] = v
-		end
-
+		local h1 = copy( entries[1] )
 		h1.complete = false
 		h1.bytes_sent = 0
 
@@ -282,6 +278,31 @@ describe("Hit Counting/Statistics Module", function()
 	end)
 
 
+	it("Doesn't crash when it's only unfinished entries", function()
+
+		stats.clear()
+		for i, v in ipairs( entries ) do	-- luacheck: ignore 213
+			local entry_copy = copy( v )
+			entry_copy.complete = false
+			entry_copy.delay = 0
+			stats.log( entry_copy )
+		end
+
+		local sc = stats.compute()
+		assert.is_equal(6, sc.hits)
+		assert.is_equal(6, sc.addresses)
+		assert.is_equal(6, sc.agents)
+		assert.is_true(float_equals(0.001838, sc.cpu))
+		assert.is_equal(10135, sc.bytes_sent)
+		assert.is_equal(0, sc.delay)
+		assert.is_equal(6, sc.active)
+
+		assert.is_number(sc.memory_usage)
+		assert.is_number(sc.cpu_total)
+
+	end)
+
+
 	it("Drops old hits from the rolling buffer", function()
 
 		stats.clear()
@@ -297,7 +318,7 @@ describe("Hit Counting/Statistics Module", function()
 		--
 		for i = 1, 30 do	-- luacheck: ignore 213
 			local hit = copy( entries[2] )
-			hit.when = cqueues.monotime()
+			hit.when = os.time()
 			stats.log( hit )
 			cqueues.sleep(0.1)
 			local sv = stats.compute()
