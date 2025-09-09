@@ -177,7 +177,7 @@ app:get "/(.*)" {
 			silo = req.silo,
 			bytes_generated = #page,
 			bytes_sent = 0,
-			when = cqueues.monotime(),
+			when = os.time(),
 			response = 200,
 			delay = 0,
 			cpu = time_spent
