@@ -190,22 +190,34 @@ function _M.delay_iterator( s, log_entry, pattern )
 	-- problem - otherwise it would be simpler to just call
 	-- coroutine.wrap().
 	--
-	return function()
+	-- Because to-be-closed values in a coroutine aren't closed on
+	-- error, we also need to leverage the garbage collector to
+	-- clean up. :(
+	--
+	return setmetatable({},
+	{
+		__call = function()
 
-		if coroutine.status( iter ) == 'dead' then
-			return nil
+			if coroutine.status( iter ) == 'dead' then
+				coroutine.close( iter )
+				return nil
+			end
+
+			local ret, out = auxlib.resume( iter )
+
+			if not ret then
+				coroutine.close( iter )
+				error(out)
+			end
+
+			return out
+
+		end,
+
+		__gc = function()
+				coroutine.close( iter )
 		end
-
-		local ret, out = auxlib.resume( iter )
-
-		if not ret then
-			coroutine.close( iter )
-			error(out)
-		end
-
-		return out
-
-	end
+	})
 
 end
 
