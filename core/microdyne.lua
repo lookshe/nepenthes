@@ -142,7 +142,7 @@ local cq
 local server
 
 local function startup()
-	cq = corewait.new()
+	cq = corewait.single()
 
 	if config.nochdir then
 		unix.chdir(location)
