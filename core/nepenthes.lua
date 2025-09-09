@@ -121,6 +121,28 @@ local function log_checkpoints( times, send_delay, logged_silo )
 end
 
 
+local function log_bogon( web, req )
+
+	local logged <close> = stats.build_entry {
+		address = web.REMOTE_ADDR,
+		uri = web.PATH_INFO,
+		agent = web.HTTP_X_USER_AGENT,
+		silo = req.silo,
+		bytes_generated = 0,
+		bytes_sent = 0,
+		when = os.time(),
+		response = 404,
+		delay = 5,
+		planned_delay = 5,
+		cpu = 0,
+		complete = true
+	}
+
+	stats.log( logged )
+
+end
+
+
 ---
 -- Some crawlers HEAD every url before GET. Since it will always result
 -- in a document (request has already cleared the bogon check during
@@ -133,6 +155,7 @@ app:head "/(.*)" {
 		if req:is_bogon() then
 			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			corewait.poll( 5 )
+			log_bogon( web, req )
 			return web:notfound("Nothing exists at this URL")
 		end
 
@@ -156,6 +179,7 @@ app:get "/(.*)" {
 		if req:is_bogon() then
 			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 			corewait.poll( 5 )
+			log_bogon( web, req )
 			return web:notfound("Nothing exists at this URL")
 		end
 
@@ -190,6 +214,7 @@ app:get "/(.*)" {
 			when = os.time(),
 			response = 200,
 			delay = 0,
+			planned_delay = wait,
 			cpu = time_spent
 		}
 
