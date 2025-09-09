@@ -522,6 +522,8 @@ backwards compatible, the minor number changes. If the user or
 administrator needs to change anything after or part of the upgrade, the
 major number changes and the minor number resets to zero.
 
+[Legacy 1.x Documentation](https://zadzmo.org/code/nepenthes/version-1-documentation.md)
+
 - v1.0:
    - Initial release
 
