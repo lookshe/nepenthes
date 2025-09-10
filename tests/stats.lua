@@ -13,12 +13,14 @@ local stats = require 'components.stats'
 -- Real hits from a Nepenthes 1.2 instance - except delay and CPU,
 -- those were made up as they were not in access_log.
 --
+local buf_time = os.time()
+
 local entries = {
 	{
 		address = '202.76.160.166',
 		agent = "Mozilla/5.0 (Windows; U; Windows NT 6.1; ca; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3 (.NET CLR 3.5.30729)",
 		uri = '/maze/digynian/phellem/Adelbert/jug/bemat',
-		when = os.time() - 10,
+		when = buf_time - 10,
 		silo = 'default',
 		bytes_generated = 1809,
 		bytes_sent = 1809,
@@ -31,7 +33,7 @@ local entries = {
 		address = '146.174.188.199',
 		agent = "Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Ubuntu/10.10 Chromium/10.0.648.133 Chrome/10.0.648.133 Safari/534.16",
 		uri = '/maze/refectory/punnology/resorb/zoosphere',
-		when = os.time() - 9,
+		when = buf_time - 9,
 		silo = 'default',
 		bytes_generated = 1569,
 		bytes_sent = 1569,
@@ -44,7 +46,7 @@ local entries = {
 		address = '44.205.74.196',
 		agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot) Chrome/119.0.6045.214 Safari/537.36",
 		uri = '/maze/yacht/herringbone',
-		when = os.time() - 8,
+		when = buf_time - 8,
 		silo = 'default',
 		bytes_generated = 1515,
 		bytes_sent = 1515,
@@ -57,8 +59,8 @@ local entries = {
 		address = '114.119.132.202',
 		agent = "Mozilla/5.0 (Linux; Android 7.0;) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)",
 		uri = '/maze/unchafed/stolewise',
-		silo = 'default',
-		when = os.time() - 7,
+		silo = 'first',
+		when = buf_time - 7,
 		bytes_generated = 1887,
 		bytes_sent = 1887,
 		response = 200,
@@ -70,8 +72,8 @@ local entries = {
 		address = '5.255.231.147',
 		agent = "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
 		uri = '/maze/boobook/bandhu',
-		silo = 'default',
-		when = os.time() - 6,
+		silo = 'second',
+		when = buf_time - 6,
 		bytes_generated = 1805,
 		bytes_sent = 1805,
 		response = 200,
@@ -83,8 +85,8 @@ local entries = {
 		address = '146.174.187.165',
 		agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:2.0.1) Gecko/20110606 Firefox/4.0.1",
 		uri = '/maze/estamene/cacodylic/miskeep',
-		when = os.time() - 5,
-		silo = 'default',
+		when = buf_time - 5,
+		silo = 'first',
 		bytes_generated = 1550,
 		bytes_sent = 1550,
 		response = 200,
@@ -243,11 +245,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s1.memory_usage)
 		assert.is_number(s1.cpu_total)
 
-		local h1 = {}
-		for k, v in pairs( entries[1] ) do
-			h1[k] = v
-		end
-
+		local h1 = copy( entries[1] )
 		h1.complete = false
 		h1.bytes_sent = 0
 
@@ -280,10 +278,35 @@ describe("Hit Counting/Statistics Module", function()
 	end)
 
 
+	it("Doesn't crash when it's only unfinished entries", function()
+
+		stats.clear()
+		for i, v in ipairs( entries ) do	-- luacheck: ignore 213
+			local entry_copy = copy( v )
+			entry_copy.complete = false
+			entry_copy.delay = 0
+			stats.log( entry_copy )
+		end
+
+		local sc = stats.compute()
+		assert.is_equal(6, sc.hits)
+		assert.is_equal(6, sc.addresses)
+		assert.is_equal(6, sc.agents)
+		assert.is_true(float_equals(0.001838, sc.cpu))
+		assert.is_equal(10135, sc.bytes_sent)
+		assert.is_equal(0, sc.delay)
+		assert.is_equal(6, sc.active)
+
+		assert.is_number(sc.memory_usage)
+		assert.is_number(sc.cpu_total)
+
+	end)
+
+
 	it("Drops old hits from the rolling buffer", function()
 
 		stats.clear()
-		local s1 = stats:compute()
+		local s1 = stats.compute()
 		assert.is_equal( 0, s1.hits )
 
 		config.stats_remember_time = 1
@@ -295,10 +318,10 @@ describe("Hit Counting/Statistics Module", function()
 		--
 		for i = 1, 30 do	-- luacheck: ignore 213
 			local hit = copy( entries[2] )
-			hit.when = cqueues.monotime()
+			hit.when = os.time()
 			stats.log( hit )
 			cqueues.sleep(0.1)
-			local sv = stats:compute()
+			local sv = stats.compute()
 			assert.is_true( 10 >= sv.hits )
 		end
 
@@ -430,10 +453,6 @@ describe("Hit Counting/Statistics Module", function()
 
 	end)
 
-	it("Seperates by silo", function()
-		pending("Not implemented")
-	end)
-
 
 	it("Tracks Active Connections", function()
 
@@ -488,6 +507,157 @@ describe("Hit Counting/Statistics Module", function()
 		local sf = stats.compute()
 		assert.is_equal( 0, sf.active )
 		assert.is_true( did_run )
+
+	end)
+
+
+	it("Seperates by silo", function()
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			stats.log( hit )
+		end
+
+		local s1 = stats.compute()
+		assert.is_equal(6, s1.hits)
+		assert.is_equal(6, s1.addresses)
+		assert.is_equal(6, s1.agents)
+		assert.is_true(float_equals(0.001838, s1.cpu))
+		assert.is_equal(10135, s1.bytes_sent)
+		assert.is_equal(63, s1.delay)
+
+		assert.is_number(s1.memory_usage)
+		assert.is_number(s1.cpu_total)
+
+		local list1 = stats.address_list()
+		assert.is_table(list1)
+		assert.is_equal( 1, list1['146.174.187.165'] )
+		assert.is_equal( 1, list1['5.255.231.147'] )
+		assert.is_equal( 1, list1['202.76.160.166'] )
+		assert.is_equal( 1, list1['44.205.74.196'] )
+		assert.is_equal( 1, list1['114.119.132.202'] )
+		assert.is_equal( 1, list1['146.174.188.199'] )
+
+		local agents1 = stats.agent_list()
+		local count1 = 0
+		for k, v in pairs(agents1) do	-- luacheck: ignore 213
+			assert.is_equal(1, v)
+			count1 = count1 + 1
+		end
+		assert.is_equal(6, count1)
+
+		local s2 = stats.compute( 'none' )
+		assert.is_equal(0, s2.hits)
+		assert.is_equal(0, s2.addresses)
+		assert.is_equal(0, s2.agents)
+		assert.is_equal(0, s2.cpu)
+		assert.is_equal(0, s2.bytes_sent)
+		assert.is_equal(0, s2.delay)
+
+		local list2 = stats.address_list( 'none' )
+		assert.is_table(list2)
+		assert.is_nil( list2['146.174.187.165'] )
+		assert.is_nil( list2['5.255.231.147'] )
+		assert.is_nil( list2['202.76.160.166'] )
+		assert.is_nil( list2['44.205.74.196'] )
+		assert.is_nil( list2['114.119.132.202'] )
+		assert.is_nil( list2['146.174.188.199'] )
+
+		local agents2 = stats.agent_list( 'none' )
+		local count2 = 0
+		for k, v in pairs(agents2) do	-- luacheck: ignore 213
+		-- does not execute if test passes.
+		-- luacov: disable
+			assert.is_equal(1, v)
+			count2 = count2 + 1
+		-- luacov: enable
+		end
+		assert.is_equal(0, count2)
+
+		local s3 = stats.compute( 'first' )
+		assert.is_equal(2, s3.hits)
+		assert.is_equal(2, s3.addresses)
+		assert.is_equal(2, s3.agents)
+		assert.is_true(float_equals(0.000541, s3.cpu))
+		assert.is_equal(3437, s3.bytes_sent)
+		assert.is_equal(17, s3.delay)
+
+		local list3 = stats.address_list( 'first' )
+		assert.is_table(list3)
+		assert.is_equal( 1, list3['146.174.187.165'] )
+		assert.is_nil( list3['5.255.231.147'] )
+		assert.is_nil( list3['202.76.160.166'] )
+		assert.is_nil( list3['44.205.74.196'] )
+		assert.is_equal( 1, list3['114.119.132.202'] )
+		assert.is_nil( list3['146.174.188.199'] )
+
+		local agents3 = stats.agent_list( 'first' )
+		local count3 = 0
+		for k, v in pairs(agents3) do	-- luacheck: ignore 213
+			assert.is_equal(1, v)
+			count3 = count3 + 1
+		end
+		assert.is_equal(2, count3)
+
+	end)
+
+
+	it("Dumps the buffer", function()
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			stats.log( hit )
+		end
+
+		local ret = stats.buffer()
+
+		assert.is_table(ret)
+		assert.is_equal( 6, #ret )
+		assert.is_equal( '202.76.160.166', ret[1].address )
+		assert.is_equal( '146.174.188.199', ret[2].address )
+		assert.is_not_equal( ret[1].id, ret[2].id )
+		assert.is_equal( '44.205.74.196', ret[3].address )
+		assert.is_not_equal( ret[1].id, ret[3].id )
+		assert.is_not_equal( ret[2].id, ret[3].id )
+		assert.is_equal( '114.119.132.202', ret[4].address )
+		assert.is_not_equal( ret[1].id, ret[4].id )
+		assert.is_not_equal( ret[2].id, ret[4].id )
+		assert.is_not_equal( ret[3].id, ret[4].id )
+		assert.is_equal( '5.255.231.147', ret[5].address )
+		assert.is_not_equal( ret[1].id, ret[5].id )
+		assert.is_not_equal( ret[2].id, ret[5].id )
+		assert.is_not_equal( ret[3].id, ret[5].id )
+		assert.is_not_equal( ret[4].id, ret[5].id )
+		assert.is_equal( '146.174.187.165', ret[6].address )
+		assert.is_not_equal( ret[1].id, ret[6].id )
+		assert.is_not_equal( ret[2].id, ret[6].id )
+		assert.is_not_equal( ret[3].id, ret[6].id )
+		assert.is_not_equal( ret[4].id, ret[6].id )
+		assert.is_not_equal( ret[5].id, ret[6].id )
+
+	end)
+
+
+	it("Dumps the buffer - beyond a point in time", function()
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			stats.log( hit )
+		end
+
+		local check = stats.buffer()
+		local from = check[3].id
+
+		local ret = stats.buffer( from )
+
+		assert.is_table(ret)
+		assert.is_equal( 3, #ret )
+		assert.is_equal( '114.119.132.202', ret[1].address )
+		assert.is_equal( '5.255.231.147', ret[2].address )
+		assert.is_not_equal( ret[1].id, ret[2].id )
+		assert.is_equal( '146.174.187.165', ret[3].address )
+		assert.is_not_equal( ret[1].id, ret[3].id )
+		assert.is_not_equal( ret[2].id, ret[3].id )
 
 	end)
 
