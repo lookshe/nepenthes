@@ -87,6 +87,7 @@ function _M.compute( silo )
 		memory_usage = collectgarbage( "count" ) * 1024,
 		delay = 0,
 		active = 0,
+		bogons = 0,
 		uptime = os.time() - start
 	}
 
@@ -107,6 +108,10 @@ function _M.compute( silo )
 		end
 
 		ret.hits = ret.hits + 1
+
+		if v.response == 404 then
+			ret.bogons = ret.bogons + 1
+		end
 
 		if not seen_addresses[ v.address ] then
 			seen_addresses[ v.address ] = true
