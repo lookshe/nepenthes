@@ -31,10 +31,13 @@ $deps | while read cmd; do
 	$cmd || exit 1
 done
 
+cp ./$PROJECT-$VERSION/website/index.md ./$PROJECT-$VERSION/READEME.md
+
 cleanout="
 	.luacov
 	tests
 	release
+	website
 	run-tests.sh
 "
 
