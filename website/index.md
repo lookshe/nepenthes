@@ -17,15 +17,15 @@ accelerating model collapse.
 
 [You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/nepenthes-demo)
 
-WARNING
-=======
+***WARNING***
+-------------
 
 THIS IS DELIBERATELY MALICIOUS SOFTWARE INTENDED TO CAUSE HARMFUL
 ACTIVITY. DO NOT DEPLOY IF YOU AREN'T FULLY COMFORTABLE WITH WHAT YOU
 ARE DOING.
 
-ANOTHER WARNING
-===============
+***ANOTHER WARNING***
+---------------------
 
 LLM scrapers are relentless and brutal. You may be able to keep them at
 bay with this software; but it works by providing them with a
@@ -38,8 +38,8 @@ to misconfigure in a way that can take your server offline. This is
 especially true if some of the agressive, less well behaved crawlers
 find your instance.
 
-YET ANOTHER WARNING
-===================
+***YET ANOTHER WARNING***
+-------------------------
 
 There is not currently a way to differentiate between web crawlers that
 are indexing sites for search purposes, vs crawlers that are training
@@ -47,7 +47,7 @@ AI models. ANY SITE THIS SOFTWARE IS APPLIED TO WILL LIKELY DISAPPEAR
 FROM ALL SEARCH RESULTS.
 
 So why should I run this, then?
-===============================
+-------------------------------
 
 So that, as I said to
 [Ars Technica](https://arstechnica.com/tech-policy/2025/01/ai-haters-build-tarpits-to-trap-and-trick-ai-scrapers-that-ignore-robots-txt/),
@@ -63,7 +63,7 @@ Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
 Latest Version
 --------------
 
-[Nepenthes 2.0](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.0.tar.gz)
+[Nepenthes 2.1](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.1.tar.gz)
 
 [Docker Image](https://zadzmo.org/downloads/nepenthes/docker)
 
@@ -463,56 +463,104 @@ Configuration File Reference
 
 All possible directives in config.yaml:
 
- - http_host : sets the host that Nepenthes will listen on; default is
-	localhost only.
- - http_port : sets the listening port number; default 8893
- - unix_socket: sets a path to a unix domain socket to listen on.
-	Default is nil.	If specified, will override http_host and http_port,
-	and only listen on Unix domain sockets.
- - nochdir: If true, do not change directory after daemonization.
-	Default is false. Normally only used for development/debugging as it
-	allows for relative paths in the configuration,	but is bad practice
-	(daemons should, in fact, chdir to '/' after forking.
- - templates: Paths to the template files. This should include the
-	'/templates' directory inside your Nepenthes installation, and any
-	other directories that contain templates you want to use.
- - detach: If true, Nepenthes will fork into the background and redirect
-	logging output to Syslog.
- - log_level: Log message filtering; same priorties as syslog. Defaults
-	to 'info'.
- - pidfile: Path to drop a pid file after daemonization. If empty, no
-	pid file is created.
- - real_ip_header: Changes the name of the X-Forwarded-For header that
-	communicates the actual client IP address for statistics gathering.
- - silo_header: Changes the name of the X-Silo header that controls silo
-	assignment.
- - seed_file: Specifies location of persistent unique instance
-	identifier.	This allows two instances with the same corpus to have
-	different looking tarpits. If not specified, the seed will not
-	persist, causing pages to change if Nepenthes is restarted.
- - stats_remember_time: Sets how long entries remain in the rolling
-	stats buffer, in seconds. Defaults to 3600 (one hour.)
- - min_wait: Default minimum delay time if not specified in a silo
-	configuration
- - max_wait: Default maximum delay time if not specified in a silo
-	configuration.
- - silos:
-   - name: Name of the silo, which is matched against the X-Silo header.
-   - template: Template file to use in this silo. Default is 'default',
-	included in the Nepenthes distribution.
-   - min_wait: Optional. Minimum delay time in this silo
-   - max_wait: Optional. Maximum delay time in this silo
-   - default: If set to 'true', marks this as the default silo.
-   - corpus: Path to a text file containing the markov corpus for training.
-   - wordlist: Path to a dictionary file for URL generation, eg,
-	/usr/share/dict/words
-   - prefixes: A list of URL prefixes that are valid for this silo.
-   - zero_delay: Optional. Overrides 'min_wait' and 'max_wait' for this
-     silo, short circuits the entirely of the delay code, and shoves as
-     much data at whatever unfortunate client as fast as they can take
-     it. May cause bandwidth overages.
+ - #### http_host
+   Sets the host that Nepenthes will listen on; default is localhost only.
+   
+ - #### http_port
+   Sets the listening port number; default 8893
+   
+ - #### unix_socket
+   Sets a path to a unix domain socket to listen on. Default is nil. If
+   specified, will override http_host and http_port, and only listen on
+   Unix domain sockets.
+   
+ - #### nochdir
+	If true, do not change directory after daemonization. Default is
+	false. Normally only used for development/debugging as it allows for
+	relative paths in the configuration, but is bad practice (daemons
+	should, in fact, chdir to '/' after forking.
+	
+ - #### templates
+	Paths to the template files. This should include the '/templates'
+	directory inside your Nepenthes installation, and any other
+	directories that contain templates you want to use.
+	
+ - #### detach
+	If true, Nepenthes will fork into the background and redirect
+	logging output to Syslog. Default is false.
 
-
+ - #### log_level
+	Log message filtering; This uses the same priorties as syslog.
+	Defaults to 'info'.
+	
+ - #### pidfile
+	Path to drop a pid file after daemonization. If left unset, no pid
+	file is created.
+	
+ - #### real_ip_header
+	Changes the name of the X-Forwarded-For header that	communicates
+	the actual client IP address for statistics gathering.
+	
+ - #### silo_header
+	Changes the name of the X-Silo header that controls silo assignment.
+	
+ - #### seed_file
+	Specifies location of persistent unique instance identifier. This
+	allows two instances with the same corpus to have different looking
+	tarpits. If not specified, the seed will not persist, causing pages
+	to change if Nepenthes is restarted.
+	
+ - #### stats_remember_time
+	Sets how long entries remain in the rolling	stats buffer, in
+	seconds. Defaults to 3600 (one hour.)
+	
+ - #### min_wait
+	Default minimum delay time if not specified in a silo configuration.
+	
+ - #### max_wait
+	Default maximum delay time if not specified in a silo configuration.
+	
+ - #### silos
+ 	Each silo takes the following configuration options:
+ 	 
+   - #### name
+		Name of the silo, which is matched against the X-Silo header.
+		Required to be set.
+		
+   - #### template
+   		Template file to use in this silo. Default is 'default',
+   		included in the Nepenthes distribution.
+   		
+   - #### min_wait
+  		Optional. Minimum delay time in this silo.
+  		
+   - #### max_wait
+   		Optional. Maximum delay time in this silo.
+   		
+   - #### default
+   		Boolean value. If set to 'true', marks this as the default silo.
+   		
+   - #### corpus
+   		Path to a text file containing the markov corpus for training.
+   		Required to be set.
+   		
+   - #### wordlist
+   		Path to a dictionary file for URL generation, eg, 
+   		'/usr/share/dict/words' will work on most systems.
+   		Required to be set.
+   		
+   - #### prefixes
+   		A list of URL prefixes that are valid for this silo. Optional.
+   		If not set, all pages generated in this silo will have links
+   		pointing to the top level of the website.
+   		
+   - #### zero_delay
+   		Optional. Overrides 'min_wait' and 'max_wait' for this silo,
+   		short circuits the entirely of the delay code, and shoves the
+     	generated page at whatever unfortunate client as fast as they
+     	can take it. Use with caution! Some crawlers move fast with very
+     	high concurrency, so this could cause high CPU load on your
+     	server and/or use significant bandwidth.
 
 
 License Info
