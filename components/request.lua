@@ -1,20 +1,6 @@
 #!/usr/bin/env lua5.4
 
 local config = require 'components.config'
---local seed = require 'components.seed'
-local wordlist = require 'components.wordlist'
-local rng_factory = require 'components.rng'
-local urlgen = require 'components.urlgen'
-local template = require 'components.template'
---local markov = require 'components.markov'
-
-
-
-local wl = wordlist.new( config.words )
---local instance_seed = seed.get()
-
---local mk = markov.new()
---mk:train_file( config.markov_corpus )
 
 
 local _methods = {}
@@ -27,13 +13,13 @@ end
 
 function _methods.urllist( this )
 
-	assert( not this._is_bogon, 'Unable to load URLs: bogon request' )
+	assert( (not this._is_bogon), 'Unable to load URLs: bogon request' )
 
 	local ret = {}
 	local count = #(this.template.data.links)
 
 	if this.template.data.link_array then
-		count = count + this.rnd:between(
+		count = count + this.rng:between(
 			this.template.data.link_array.max_count,
 			this.template.data.link_array.min_count
 		)
@@ -41,8 +27,8 @@ function _methods.urllist( this )
 
 	for i = 1, count do
 		ret[ i ] = {
-			description = wl.choose( this.rnd ),
-			link = this.ug:create( this.rnd )
+			description = this.wordlist.choose( this.rng ),
+			link = this.urlgenerator:create( this.rng, this.prefix )
 		}
 	end
 
@@ -50,13 +36,13 @@ function _methods.urllist( this )
 
 end
 
-function _methods.load_markov( this, markov )
+function _methods.load_markov( this )
 
-	assert( not this._is_bogon, 'Unable to load markov: bogon request' )
+	assert( (not this._is_bogon), 'Unable to load markov: bogon request' )
 
 	-- Markov time
 	for i, v in ipairs( this.template.data.markov ) do	-- luacheck: ignore 213
-		this.vars[v.name] = markov:babble( this.rnd, v.min, v.max )
+		this.vars[v.name] = this.markov:babble( this.rng, v.min, v.max )
 	end
 
 end
@@ -64,17 +50,23 @@ end
 
 function _methods.send_delay( this )
 
-	return this.rnd:between(config.max_wait or 10, config.min_wait or 1)
+	if this.zero_delay then
+		return 0
+	end
+
+	return this.rng:between(
+		this.max_wait or config.max_wait,
+		this.min_wait or config.min_wait
+	)
 
 end
 
 
 function _methods.render( this )
 
-	assert( not this._is_bogon, 'Unable to render: bogon request' )
+	assert( (not this._is_bogon), 'Unable to render: bogon request' )
 
 	local links = this:urllist()
-	--local vars = {}
 
 	-- Named links
 	for i, v in ipairs( this.template.data.links ) do	-- luacheck: ignore 213
@@ -92,22 +84,9 @@ end
 
 local _M = {}
 
-function _M.new( prefix, url )
+function _M.new( silodata )
 
-	local ret = {
-		ug = urlgen.new( wl, prefix ),
-		template = template.load( 'default' ),
-		url = url,
-		vars = {}
-	}
-
-	ret._is_bogon = ret.ug:check( url )
-
-	if not ret.is_bogon then
-		ret.rnd = rng_factory.new( url )
-	end
-
-	return setmetatable( ret, { __index = _methods } )
+	return setmetatable( silodata, { __index = _methods } )
 
 end
 
