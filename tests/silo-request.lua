@@ -457,4 +457,36 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
+
+	it("Can have a zero-delay silo", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				zero_delay = true
+			}
+		}
+
+		silo.setup()
+		local req = silo.new_request(
+			'default',
+			'/catastrophic'
+		)
+
+		assert.is_true(req.zero_delay)
+		req:load_markov()
+		local out = req:render()
+		local wait = req:send_delay()
+
+		assert.is_string(out)
+		assert.is_match('^%<%!DOCTYPE html%>', out)
+		assert.is_match('In other words, conditional on the state of affairs now', out)
+		assert.is_number(wait)
+		assert.is_equal(0, wait)
+
+	end)
+
 end)

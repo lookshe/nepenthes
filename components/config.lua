@@ -51,6 +51,7 @@ return cp.prepare {
 			template = 'default',
 			min_wait = 5,
 			max_wait = 10,
+			zero_delay = false,
 			--markov_min = 10,
 			--markov_max = 50,
 			default = false,

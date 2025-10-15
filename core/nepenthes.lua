@@ -220,6 +220,14 @@ app:get "/(.*)" {
 
 		stats.log( logged )
 
+		if req.zero_delay then
+			return '200 OK', web.headers, function()
+				local ret = page
+				page = nil
+				return ret
+			end
+		end
+
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return '200 OK', web.headers, stutter.delay_iterator (
 				page, logged,

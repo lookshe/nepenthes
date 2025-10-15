@@ -31,7 +31,7 @@ $deps | while read cmd; do
 	$cmd || exit 1
 done
 
-cp ./$PROJECT-$VERSION/website/index.md ./$PROJECT-$VERSION/READEME.md
+cp ./$PROJECT-$VERSION/website/index.md ./$PROJECT-$VERSION/README.md
 
 cleanout="
 	.luacov

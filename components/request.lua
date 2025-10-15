@@ -50,7 +50,14 @@ end
 
 function _methods.send_delay( this )
 
-	return this.rng:between(this.max_wait or config.max_wait, this.min_wait or config.min_wait)
+	if this.zero_delay then
+		return 0
+	end
+
+	return this.rng:between(
+		this.max_wait or config.max_wait,
+		this.min_wait or config.min_wait
+	)
 
 end
 

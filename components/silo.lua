@@ -52,7 +52,8 @@ function _M.setup()
 			markov = corpuses[ siloconfig.corpus ],
 			name = siloconfig.name,
 			min_wait = siloconfig.min_wait,
-			max_wait = siloconfig.max_wait
+			max_wait = siloconfig.max_wait,
+			zero_delay = siloconfig.zero_delay
 		}
 
 		if siloconfig.default then
@@ -103,6 +104,7 @@ function _M.new_request( requested_silo, url )
 		markov = s.markov,
 		min_wait = s.min_wait,
 		max_wait = s.max_wait,
+		zero_delay = s.zero_delay,
 		url = url,
 		vars = {}
 	}

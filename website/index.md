@@ -507,6 +507,10 @@ All possible directives in config.yaml:
    - wordlist: Path to a dictionary file for URL generation, eg,
 	/usr/share/dict/words
    - prefixes: A list of URL prefixes that are valid for this silo.
+   - zero_delay: Optional. Overrides 'min_wait' and 'max_wait' for this
+     silo, short circuits the entirely of the delay code, and shoves as
+     much data at whatever unfortunate client as fast as they can take
+     it. May cause bandwidth overages.
 
 
 
@@ -532,25 +536,39 @@ major number changes and the minor number resets to zero.
 
 [Legacy 1.x Documentation](https://zadzmo.org/code/nepenthes/version-1-documentation.md)
 
-- v1.0:
-   - Initial release
+- #### v1.0:
+  Initial release
 
-- v1.1:
-	- Clearer licensing
-	- Small performance improvements
-	- Clearer logging
-	- Corpus reset
-	- Evasion countermeasures
-	- Corpus Statistics report endpoint
-	- Unix domain socket support
+- #### v1.1:
+  Clearer licensing
+  
+  Small performance improvements
+  
+  Clearer logging
+  
+  Corpus reset
+  
+  Evasion countermeasures
+  
+  Corpus Statistics report endpoint
+  
+  Unix domain socket support
 
-- v1.2:
-	- Bugfix in Bogon filter for UTF8 characters
-	- Fix rare crash with stacktrace
+- #### v1.2:
+  Bugfix in Bogon filter for UTF8 characters
+  
+  Fix rare crash with stacktrace
 
-- v2.0:
-    - Total overhaul/refactor
-    - In-memory corpus
-    - Silos
-    - Rolling Stats buffer
-    - Expandable templates
+- #### v2.0:
+  Total overhaul/refactor
+  
+  In-memory corpus
+  
+  Silos
+  
+  Rolling Stats buffer
+  
+  Expandable templates
+    
+- #### v2.1:
+  New Feature: Zero Delay Mode
