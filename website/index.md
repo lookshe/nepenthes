@@ -84,7 +84,7 @@ compose.yml can be found at the
 
 
 For Manual installation, you'll need to install Lua. Nepenthes makes use
-of the <close> feature, so Lua 5.4 is required. OpenSSL is also needed
+of the to-close feature, so Lua 5.4 is required. OpenSSL is also needed
 for cryptographic functions.
 
 The following Lua modules need to be installed - if they are all present
