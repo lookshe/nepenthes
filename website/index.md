@@ -637,3 +637,10 @@ major number changes and the minor number resets to zero.
 
 - #### v2.1:
   New Feature: Zero Delay Mode
+  
+- #### v2.2:
+  New features:
+  
+  markov_array template option
+  
+  hits_total, etc metrics added to statistics
