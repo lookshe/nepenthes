@@ -216,27 +216,34 @@ Lustache template. The
 [default template](https://svn.zadzmo.org/repo/nepenthes/head/templates/default.lmt)
 would be a good reference to look.
 
-The 'markov', 'link_array', and 'link' sections in the YAML portion are
-used to define variables that are passed to the templating engine.
+The 'markov', 'markov_array', 'link', and 'link_array' sections in the 
+YAML portion are used to define variables that are passed to the 
+templating engine. All are optional, but not having any would result in
+a purely static document for every request.
 
 - markov: Fills a variable with markov babble.
   - name: Variable name passed to the template.
   - min: Minimum number of 'tokens' - words, essentially - of markov slop to generate.
   - max: Maximum number of tokens
 
+- markov_array: Like link_array, creates a random number of markov babble paragraphs.
+  - name: Name of array variable passed to the template
+  - min_count: Minimum number of paragraphs to generate, by default 2
+  - max_count: Maximum number of paragraphs to generate, by default 5
+  - markov_min: Minimum tokens per paragraph
+  - markov_max: Maximum number of tokens per paragraph
 
+- link: Creates a single named link.
+  - name: Variable name passed to the template.
+  - depth_min: The smallest number of words to put into the URL
+  - depth_max: The largest number of words to put into the URL
+  
 - link_array: Creates a variable sized array of links.
   - min_count: Size of the smallest list of links to generate
   - max_count: Maximum number of links in the array
   - depth_min: The number smallest of words (from the given wordlist) to put into a URL,
   				ie, '/toque/Messianism/narrowly' has a depth of three.
   - depth_max: The largest number of words
-
-
-- link: Creates a single named link.
-  - name: Variable name passed to the template.
-  - depth_min: The smallest number of words to put into the URL
-  - depth_max: The largest number of words to put into the URL
 
 
 The second portion of the template file is a Lustache template; you

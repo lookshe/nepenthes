@@ -25,7 +25,7 @@ describe("Templating Module", function()
 
 		assert.is_table(x.data)
 		local count = 0
-		for k in pairs(x.data) do	-- luacheck: ignore 213
+		for k, v in pairs(x.data) do	-- luacheck: ignore 213
 			count = count + 1
 		end
 		assert.is_equal(2, count)
