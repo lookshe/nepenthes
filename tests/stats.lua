@@ -661,4 +661,46 @@ describe("Hit Counting/Statistics Module", function()
 
 	end)
 
+
+	it("Save Total since-start statistics", function()
+
+		stats.clear()
+		local s1 = stats.compute()
+		assert.is_equal( 0, s1.hits )
+
+		config.stats_remember_time = 1
+
+		--
+		-- This is very similar to proving stats buffer drops old
+		-- information - except we are looking at the totals differing
+		-- from the realtime.
+		--
+		local expected_sent = 0
+		local expected_generated = 0
+
+		for i = 1, 30 do	-- luacheck: ignore 213
+			local hit = copy( entries[2] )
+			hit.when = os.time()
+			stats.log( hit )
+
+			expected_sent = expected_sent + hit.bytes_sent
+			expected_generated = expected_generated + hit.bytes_generated
+
+			cqueues.sleep(0.1)
+			local sv = stats.compute()
+
+			assert.is_true( 10 >= sv.hits )
+			assert.is_equal( i, sv.hits_total )
+			assert.is_equal( expected_sent, sv.bytes_sent_total )
+			assert.is_equal( expected_generated, sv.bytes_generated_total )
+
+			if i > 10 then
+				assert.is_true( expected_sent > sv.bytes_sent )
+				assert.is_true( expected_generated > sv.bytes_generated )
+			end
+
+		end
+
+	end)
+
 end)
