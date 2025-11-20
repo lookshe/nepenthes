@@ -6,10 +6,10 @@ This was tested with Nepenthes 2.3 on a fresh install of Alpine 3.22.2.
 ### prereqs
 
 lua5.4-dev, luarocks5.4 are needed to get lunix to install from 
-Luarocks. 
+Luarocks. build-base is needed for some shared libraries during linking.
 
 ```shell
-apk add lua5.4 lua5.4-dev luarocks5.4
+apk add lua5.4 lua5.4-dev luarocks5.4 build-base
 apk add lua5.4-ossl lua5.4-lpeg lua5.4-cqueues lua5.4-lzlib
 luarocks-5.4 install lunix
 ```
@@ -29,7 +29,7 @@ in this case that's the nepenthes user home directory.
 
 ```shell
 useradd -m nepenthes
-cd ~/nepenthes
+cd ~nepenthes/
 curl -o ./nepenthes-latest.tar.gz -L https://zadzmo.org/downloads/nepenthes/latest
 tar --strip-components 1 -xvzf nepenthes-latest.tar.gz
 ```
