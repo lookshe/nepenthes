@@ -81,7 +81,10 @@ You can use Docker, or install manually. The latest Dockerfile and
 compose.yml can be found at the
 [Download Manager.](https://zadzmo.org/downloads/nepenthes/docker/latest)
 
-
+Generic install instructions follow. For more specific ones, See
+[Alpine](https://zadzmo.org/code/nepenthes/install-alpine),
+[Debian](https://zadzmo.org/code/nepenthes/install-debian),
+[FreeBSD](https://zadzmo.org/code/nepenthes/install-freebsd)
 
 For Manual installation, you'll need to install Lua. Nepenthes makes use
 of the to-close feature, so Lua 5.4 is required. OpenSSL is also needed
