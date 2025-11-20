@@ -63,7 +63,7 @@ Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
 Latest Version
 --------------
 
-[Nepenthes 2.2](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.2.tar.gz)
+[Nepenthes 2.3](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.3.tar.gz)
 
 [Docker Image](https://zadzmo.org/downloads/nepenthes/docker)
 
@@ -644,3 +644,6 @@ major number changes and the minor number resets to zero.
   markov_array template option
   
   hits_total, etc metrics added to statistics
+  
+- #### v2.3:
+  Bugfix: Bootstrap often failing during manual installation
