@@ -45,6 +45,7 @@ return cp.prepare {
 
 	silos = cp.array {
 		{
+			bogon_filter = true,
 			name = 'default',
 			--markov = 'default',
 			--urlgen = 'default',

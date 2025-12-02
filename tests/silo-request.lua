@@ -489,4 +489,58 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
+
+	it("Can disable the bogon filter", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				bogon_filter = false
+			}
+		}
+
+		silo.setup()
+		assert.is_equal(1, silo.count())
+
+		local request1 = silo.new_request(
+			'default',
+			'/fluttering/festoon'
+		)
+
+		assert.is_table(request1)
+		assert.is_equal('default', request1.silo)
+		assert.is_false(request1:is_bogon())
+
+		local request2 = silo.new_request(
+			'default',
+			'/not-within-the-word-list/festoon'
+		)
+
+		assert.is_table(request2)
+		assert.is_equal('default', request2.silo)
+		assert.is_false(request2:is_bogon())
+
+		local request3 = silo.new_request(
+			'some-other-silo',
+			'/not-within-the-word-list/festoon'
+		)
+
+		assert.is_table(request3)
+		assert.is_equal('default', request3.silo)
+		assert.is_false(request3:is_bogon())
+
+		local request4 = silo.new_request(
+			'some-not-configured-silo',
+			'/fluttering/festoon'
+		)
+
+		assert.is_table(request4)
+		assert.is_equal('default', request4.silo)
+		assert.is_false(request4:is_bogon())
+
+	end)
+
 end)

@@ -44,6 +44,12 @@ function _M.setup()
 			output.debug( "Trained Markov Corpus:", siloconfig.wordlist )
 		end
 
+		if siloconfig.bogon_filter == nil then
+			-- should never fire in real world as config_loader sets
+			-- a default, but
+			siloconfig.bogon_filter = true
+		end
+
 		output.debug("Configure silo:", siloconfig.name)
 		silos[ siloconfig.name ] = {
 			urlgenerator = urlgen.new( wordlists[ siloconfig.wordlist ], siloconfig.prefixes ),
@@ -53,7 +59,8 @@ function _M.setup()
 			name = siloconfig.name,
 			min_wait = siloconfig.min_wait,
 			max_wait = siloconfig.max_wait,
-			zero_delay = siloconfig.zero_delay
+			zero_delay = siloconfig.zero_delay,
+			bogon_filter = siloconfig.bogon_filter
 		}
 
 		if siloconfig.default then
@@ -93,6 +100,10 @@ function _M.new_request( requested_silo, url )
 	end
 
 	local is_bogon, prefix = s.urlgenerator:check( url )
+
+	if (not s.bogon_filter) then
+		is_bogon = false
+	end
 
 	local ret = {
 		_is_bogon = is_bogon,
