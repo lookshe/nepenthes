@@ -40,9 +40,10 @@ pick something more appropriate for your needs in /usr/share/dict.
 
 ### Launch
 
+Become the Nepenthes user, and run.
+
 ```shell
 su - nepenthes
 ./nepenthes ./config.yml
 ```
 
-Become the Nepenthes user, and run.
