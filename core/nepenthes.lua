@@ -185,6 +185,7 @@ app:get "/(.*)" {
 
 		checkpoint( ts, 'preprocess' )
 		req:load_markov()
+		req:set_booleans()
 		checkpoint( ts, 'markov' )
 		local page = req:render()
 		local wait = req:send_delay()
@@ -219,16 +220,21 @@ app:get "/(.*)" {
 		}
 
 		stats.log( logged )
+		web.headers['content-type'] = 'text/html; charset=UTF-8'
 
 		if req.zero_delay then
 			return '200 OK', web.headers, function()
+				if not page then
+					logged.complete = true
+					return nil
+				end
+
 				local ret = page
 				page = nil
 				return ret
 			end
 		end
 
-		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return '200 OK', web.headers, stutter.delay_iterator (
 				page, logged,
 				stutter.generate_pattern( wait, #page )

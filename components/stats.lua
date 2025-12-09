@@ -80,11 +80,7 @@ function _M.build_entry( x )
 	end
 
 	ret.complete = false
-	return setmetatable( ret, {
-		__close = function()
-			ret.complete = true
-		end
-	})
+	return ret
 
 end
 

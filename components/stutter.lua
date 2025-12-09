@@ -1,7 +1,6 @@
 #!/usr/bin/env lua5.4
 
 local cqueues = require 'cqueues'
-local auxlib = require 'cqueues.auxlib'
 local corewait = require 'daemonparts.corewait'
 local rand = require 'openssl.rand'
 
@@ -156,68 +155,29 @@ function _M.delay_iterator( s, log_entry, pattern )
 	--
 	local start_time = cqueues.monotime()
 
-	local iter = coroutine.create(function()
-		local sl <close> = log_entry
-
-		repeat
-
-			local block = table.remove(pattern, 1)
-
-			if not block then
-				sl.bytes_sent = sl.bytes_sent + #s
-				return s
-			end
-
-			local ret = s:sub(1, block.bytes)
-			s = s:sub(block.bytes + 1, #s)
-			sl.bytes_sent = sl.bytes_sent + #ret
-			sl.delay = cqueues.monotime() - start_time
-			corewait.poll(block.delay)
-
-			if #s > 0 then
-				coroutine.yield( ret )
-			else
-				return ret
-			end
-
-		until #s <= 0
-
-	end)
-
-	--
-	-- Iterator wrapper so Microdyne knows what to do with it.
-	-- Also use cqueues.auxlib.resume to avoid the 'nested coroutine'
-	-- problem - otherwise it would be simpler to just call
-	-- coroutine.wrap().
-	--
-	-- Because to-be-closed values in a coroutine aren't closed on
-	-- error, we also need to leverage the garbage collector to
-	-- clean up. :(
-	--
-	return setmetatable({},
-	{
-		__call = function()
-
-			if coroutine.status( iter ) == 'dead' then
-				coroutine.close( iter )
-				return nil
-			end
-
-			local ret, out = auxlib.resume( iter )
-
-			if not ret then
-				coroutine.close( iter )
-				error(out)
-			end
-
-			return out
-
-		end,
-
-		__gc = function()
-				coroutine.close( iter )
+	return function()
+		if #s <= 0 then
+			log_entry.complete = true
+			return nil
 		end
-	})
+
+		local block = table.remove(pattern, 1)
+
+		if not block then
+			log_entry.bytes_sent = log_entry.bytes_sent + #s
+			local ret = s
+			s = ""
+			return ret
+		end
+
+		local ret = s:sub(1, block.bytes)
+		s = s:sub(block.bytes + 1, #s)
+		log_entry.bytes_sent = log_entry.bytes_sent + #ret
+		log_entry.delay = cqueues.monotime() - start_time
+		corewait.poll(block.delay)
+
+		return ret
+	end
 
 end
 
