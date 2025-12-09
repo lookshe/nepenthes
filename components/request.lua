@@ -67,6 +67,24 @@ function _methods.load_markov( this )
 end
 
 
+function _methods.set_booleans( this )
+
+	assert( (not this._is_bogon), 'Unable to generate booleans: bogon request' )
+
+	if not this.template.data.booleans then
+		return
+	end
+
+	for i, bool in ipairs( this.template.data.booleans ) do	-- luacheck: ignore 213
+		local val = this.rng:between( 100, 1 )
+		if val <= bool.probability then
+			this.vars[ bool.name ] = true
+		end
+	end
+
+end
+
+
 function _methods.send_delay( this )
 
 	if this.zero_delay then

@@ -61,7 +61,17 @@ local function template_schema()
 			depth_max = 5,
 			--description_min = 1,
 			--description_max = 5
-		})
+		}),
+
+
+		booleans = cl.default_nil (
+			cl.array {
+				{
+					name = cl.not_nil('string'),
+					probability = 0
+				}
+			}
+		)
 	}
 end
 
