@@ -87,12 +87,25 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		end
 	end
 
-	request.input = stream:get_body_as_file()
 
 	--
 	-- Call WSAPI application here
 	--
-	local rawstatus, wsapi_headers, iter = app.run( request )
+	local function run_request()
+		-- tight scope closes the file descriptor used by the body
+		-- as fast as possible.
+		local input_stream <close> = stream:get_body_as_file()
+		request.input = input_stream
+		return app.run( request )
+	end
+
+	local res, rawstatus, wsapi_headers, iter = pcall(run_request)
+	if not res then
+		output.error("Request failed:", request.REQUEST_METHOD, path, rawstatus)
+		-- lua-http will return 503 in this case
+		error("Internal failure")
+	end
+
 
 	-- XXX: This is an ugly way to do this, would be better to fix
 	-- Perihelion maybe? I think that it's a successor project problem.
