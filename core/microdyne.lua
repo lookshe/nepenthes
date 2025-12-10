@@ -1,5 +1,9 @@
 #!/usr/bin/env lua5.4
 
+if os.getenv('LUA_APP_BOOTSTRAP') then
+	dofile(os.getenv('LUA_APP_BOOTSTRAP'))
+end
+
 pcall(require, "luarocks.loader")
 
 local http_server = require 'http.server'
@@ -28,6 +32,9 @@ local app
 local app_f = assert(loadfile( arg[1] ))
 config( arg[2] )
 
+if config.log_level then
+	output.filter( config.log_level )
+end
 
 local function header_cleanup( var )
 	return 'HTTP_' .. var:upper():gsub("%-", '_')
@@ -80,12 +87,25 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		end
 	end
 
-	request.input = stream:get_body_as_file()
 
 	--
 	-- Call WSAPI application here
 	--
-	local rawstatus, wsapi_headers, iter = app.run( request )
+	local function run_request()
+		-- tight scope closes the file descriptor used by the body
+		-- as fast as possible.
+		local input_stream <close> = stream:get_body_as_file()
+		request.input = input_stream
+		return app.run( request )
+	end
+
+	local res, rawstatus, wsapi_headers, iter = pcall(run_request)
+	if not res then
+		output.error("Request failed:", request.REQUEST_METHOD, path, rawstatus)
+		-- lua-http will return 503 in this case
+		error("Internal failure")
+	end
+
 
 	-- XXX: This is an ugly way to do this, would be better to fix
 	-- Perihelion maybe? I think that it's a successor project problem.
@@ -131,9 +151,11 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	))
 end
 
+local cq
 local server
 
 local function startup()
+	cq = corewait.single()
 
 	if config.nochdir then
 		unix.chdir(location)
@@ -150,7 +172,7 @@ local function startup()
 		port = math.floor(config.http_port),
 		onstream = http_responder,
 		tls = false,
-		cq = corewait.cq()
+		cq = cq.cq
 	}
 
 	if config.unix_socket then
@@ -162,8 +184,8 @@ local function startup()
 
 	server = assert(http_server.listen(args))
 
-	corewait.cq():wrap(function()
-		corewait.poll()
+	cq:wrap(function()
+		cq:poll()
 		output.info("Stop Signal Recieved")
 		server:close()
 
@@ -172,7 +194,7 @@ local function startup()
 		end
 	end)
 
-	corewait.start_signal_handler()
+	cq:enable_signal_stop()
 	assert(server:listen())
 
 end
@@ -180,6 +202,7 @@ end
 if config.daemonize then
 	daemonize.go( startup )
 	output.switch('syslog', 'user', arg[1])
+	output.filter( config.log_level )
 else
 	output.info("Remaining in foreground")
 	startup()
@@ -187,8 +210,20 @@ end
 
 output.notice("Startup HTTP:", config.http_host, config.http_port)
 
-for err in corewait.cq():errors() do
+local last_err = cq:monotime()
+local err_count = 0
+for err in cq:errors() do
 	output.error(err)
+
+	if last_err ~= cq:monotime() then
+		last_err = cq:monotime()
+		err_count = 0
+	else
+		err_count = err_count + 1
+		if err_count > 10 then
+			os.exit(10)
+		end
+	end
 end
 
 if config.unix_socket then

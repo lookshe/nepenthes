@@ -101,7 +101,7 @@ describe("Send-Request-Output Module", function()
 
 		assert.is_equal( 'stuvwxyz', x() )
 		assert.is_equal( sl.bytes, sl.bytes_sent )
-		assert.is_true( sl.complete )
+		assert.is_false( sl.complete )
 
 		assert.is_nil( x() )
 
@@ -144,7 +144,7 @@ describe("Send-Request-Output Module", function()
 
 		assert.is_equal( 'mnopqrstuvwxyz', x() )
 		assert.is_equal( sl.bytes, sl.bytes_sent )
-		assert.is_true( sl.complete )
+		assert.is_false( sl.complete )
 
 		assert.is_nil( x() )
 
@@ -183,7 +183,7 @@ describe("Send-Request-Output Module", function()
 
 		assert.is_equal( 'z', x() )
 		assert.is_equal( sl.bytes, sl.bytes_sent )
-		assert.is_true( sl.complete )
+		assert.is_false( sl.complete )
 
 		assert.is_nil( x() )
 		assert.is_equal( sl.bytes, sl.bytes_sent )
