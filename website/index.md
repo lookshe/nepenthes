@@ -33,10 +33,10 @@ neverending stream of exactly what they are looking for. YOU ARE LIKELY
 TO EXPERIENCE SIGNIFICANT CONTINUOUS CPU LOAD.
 
 Great effort has been taken to make Nepenthes more performant and use
-the bare minimum of system resources, but it is still trivially easy
-to misconfigure in a way that can take your server offline. This is
-especially true if some of the agressive, less well behaved crawlers
-find your instance.
+the bare minimum of system resources, but it is still trivially easy to
+misconfigure in a way that can take your server offline. This is
+especially true if some of the very aggressive, less well behaved
+crawlers find your instance.
 
 ***YET ANOTHER WARNING***
 -------------------------
@@ -63,7 +63,7 @@ Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
 Latest Version
 --------------
 
-[Nepenthes 2.3](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.3.tar.gz)
+[Nepenthes 2.4](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.4.tar.gz)
 
 [Docker Image](https://zadzmo.org/downloads/nepenthes/docker)
 
@@ -110,12 +110,13 @@ Let's assume the user's home directory is also your install directory.
 useradd -m nepenthes
 ```
 
-Unpack the tarball:
+Download and unpack the tarball:
 
 ```sh
-cd scratch/
-tar -xvzf nepenthes-2.2.tar.gz
-cp -r nepenthes-2.2/* /home/nepenthes/
+cd ~nepenthes/
+wget https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.3.tar.gz
+tar -xvzf nepenthes-2.3.tar.gz
+cp -r nepenthes-2.3/* /home/nepenthes/
 ```
 
 Tweak config.yml as you prefer (see below for documentation.) Then you're
@@ -148,8 +149,8 @@ location /maze/ {
 ```
 
 
-The X-Forwarded-For header is technically optional, but will make your
-statistics largely useless.
+The X-Forwarded-For header is technically optional, but not setting this
+header will make your statistics significantly less useful.
 
 The proxy_buffering directive is important. LLM crawlers typically
 disconnect if not given a response within a few seconds; Nepenthes
@@ -185,7 +186,7 @@ silos:
       - /maze
 ```
 
-Most of the values should be self-explainatory. The 'silos' directive
+Most of the values should be self-explanatory. The 'silos' directive
 is not optional (more on that later), however only one needs to be
 defined.
 
@@ -219,10 +220,15 @@ Lustache template. The
 [default template](https://svn.zadzmo.org/repo/nepenthes/head/templates/default.lmt)
 would be a good reference to look.
 
-The 'markov', 'markov_array', 'link', and 'link_array' sections in the 
-YAML portion are used to define variables that are passed to the 
+The 'markov', 'markov_array', 'link', and 'link_array' sections in the
+YAML portion are used to define variables that are passed to the
 templating engine. All are optional, but not having any would result in
 a purely static document for every request.
+
+Booleans allow for templates to have optional parts, randomly included 
+or not at the requested probability. For example, setting a boolean 
+'second_paragraph' to '15' will include the given text on 15% of 
+generated pages.
 
 - markov: Fills a variable with markov babble.
   - name: Variable name passed to the template.
@@ -240,13 +246,17 @@ a purely static document for every request.
   - name: Variable name passed to the template.
   - depth_min: The smallest number of words to put into the URL
   - depth_max: The largest number of words to put into the URL
-  
+
 - link_array: Creates a variable sized array of links.
   - min_count: Size of the smallest list of links to generate
   - max_count: Maximum number of links in the array
   - depth_min: The number smallest of words (from the given wordlist) to put into a URL,
   				ie, '/toque/Messianism/narrowly' has a depth of three.
   - depth_max: The largest number of words
+
+- booleans: Creates probabilistic flags. None are enabled by default.
+  - name: Name of boolean var to be passed to template
+  - probability: Number, 0 to 100. Zero means 'never' and 100 means 'always.
 
 
 The second portion of the template file is a Lustache template; you
@@ -582,6 +592,18 @@ All possible directives in config.yaml:
      	high concurrency, so this could cause high CPU load on your
      	server and/or use significant bandwidth.
 
+   - #### bogon_filter
+   		Optional. Defaults to 'true' if omitted - which is the only
+   		behavior for Nepenthes 1.1 to 2.3.
+
+		If true, Nepenthes will check if the request can be generated
+		by the given silo. If the silo never can, a 404 is returned.
+
+		Usually 'true' is the correct setting, as filtering Bogon URLs
+		makes it harder to programmatically detect a tarpit. However in
+		rare or particularly creative use cases, it could be helpful to
+		turn the filter off.
+
 
 License Info
 ------------
@@ -640,13 +662,24 @@ major number changes and the minor number resets to zero.
 
 - #### v2.1:
   New Feature: Zero Delay Mode
-  
+
 - #### v2.2:
   New features:
-  
+
   markov_array template option
-  
+
   hits_total, etc metrics added to statistics
-  
+
 - #### v2.3:
   Bugfix: Bootstrap often failing during manual installation
+
+- #### v2.4:
+  Futher improvement in Bootstrapping
+
+  Fix file descriptor leak bottlenecking maximum connections
+
+  Fix inaccurate stats when running in zero_delay mode
+
+  Per-silo ability to disable the bogon filter
+  
+  Template booleans
