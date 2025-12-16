@@ -59,8 +59,11 @@ function _M.setup()
 			name = siloconfig.name,
 			min_wait = siloconfig.min_wait,
 			max_wait = siloconfig.max_wait,
+			header_min_wait = siloconfig.header_min_wait,
+			header_max_wait = siloconfig.header_max_wait,
 			zero_delay = siloconfig.zero_delay,
-			bogon_filter = siloconfig.bogon_filter
+			bogon_filter = siloconfig.bogon_filter,
+			redirect_rate = siloconfig.redirect_rate
 		}
 
 		if siloconfig.default then
@@ -115,14 +118,15 @@ function _M.new_request( requested_silo, url )
 		markov = s.markov,
 		min_wait = s.min_wait,
 		max_wait = s.max_wait,
+		header_min_wait = s.header_min_wait,
+		header_max_wait = s.header_max_wait,
 		zero_delay = s.zero_delay,
+		redirect_rate = s.redirect_rate,
 		url = url,
 		vars = {}
 	}
 
-	if not ret._is_bogon then
-		ret.rng = rng_factory.new( url )
-	end
+	ret.rng = rng_factory.new( url )
 
 	return request.new( ret )
 

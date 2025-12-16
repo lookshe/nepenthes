@@ -10,6 +10,25 @@ function _methods.is_bogon( this )
 
 end
 
+function _methods.is_redirect( this )
+
+	local val = this.rng:between( 100, 1 )
+	if val <= this.redirect_rate then
+		return true, this.urlgenerator:create( this.rng, this.prefix )
+	end
+
+	return false
+
+end
+
+
+function _methods.header_wait( this )
+
+	return this.rng:between( this.header_max_wait, this.header_min_wait )
+
+end
+
+
 function _methods.urllist( this )
 
 	assert( (not this._is_bogon), 'Unable to load URLs: bogon request' )

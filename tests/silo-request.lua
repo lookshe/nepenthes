@@ -543,4 +543,117 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
+
+	it("Occasionally redirects instead", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				redirect_rate = 15
+			}
+		}
+
+		silo.setup()
+		assert.is_equal(1, silo.count())
+
+		--
+		-- RNG is 12, lower than 15
+		--
+		local request1 = silo.new_request(
+			'default',
+			'/fluttering/festoon'
+		)
+
+		assert.is_table(request1)
+		assert.is_equal('default', request1.silo)
+		local redirect1, location1 = request1:is_redirect()
+		assert.is_equal('/Mandeville', location1)
+		assert.is_true(redirect1)
+
+
+		--
+		-- RNG is 20, higher than 15
+		--
+		local request2 = silo.new_request(
+			'default',
+			'/Mandeville'
+		)
+
+		assert.is_table(request2)
+		assert.is_equal('default', request2.silo)
+		local redirect2, location2 = request2:is_redirect()
+		assert.is_nil(location2)
+		assert.is_false(redirect2)
+
+		--
+		-- RNG is 9, lower
+		--
+		local request3 = silo.new_request(
+			'default',
+			'/photon'
+		)
+
+		assert.is_table(request3)
+		assert.is_equal('default', request3.silo)
+		local redirect3, location3 = request3:is_redirect()
+		assert.is_equal('/chaplain/chilis/thudding', location3)
+		assert.is_true(redirect3)
+
+
+		--
+		-- RNG is 93, higher
+		--
+		local request4 = silo.new_request(
+			'default',
+			'/chaplain/chilis/thudding'
+		)
+
+		assert.is_table(request4)
+		assert.is_equal('default', request4.silo)
+		local redirect4, location4 = request4:is_redirect()
+		assert.is_nil( location4 )
+		assert.is_false( redirect4 )
+
+	end)
+
+
+	it("Has variable header-delay rate #delay", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				header_min_wait = 5,
+				header_max_wait = 10
+			}
+		}
+
+		silo.setup()
+		assert.is_equal(1, silo.count())
+
+		local request1 = silo.new_request(
+			'default',
+			'/fluttering/festoon'
+		)
+
+		assert.is_table(request1)
+		assert.is_equal('default', request1.silo)
+		assert.is_equal(6, request1:header_wait())
+
+		local request2 = silo.new_request(
+			'default',
+			'/chaplain/chilis/thudding'
+		)
+
+		assert.is_table(request2)
+		assert.is_equal('default', request2.silo)
+		assert.is_equal(5, request2:header_wait())
+
+	end)
+
 end)

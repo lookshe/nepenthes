@@ -121,9 +121,9 @@ local function log_checkpoints( times, send_delay, logged_silo )
 end
 
 
-local function log_bogon( web, req )
+local function log_misc_hit( web, req, code, delay )
 
-	local logged <close> = stats.build_entry {
+	local logged = stats.build_entry {
 		address = web.REMOTE_ADDR,
 		uri = web.PATH_INFO,
 		agent = web.HTTP_X_USER_AGENT,
@@ -131,14 +131,59 @@ local function log_bogon( web, req )
 		bytes_generated = 0,
 		bytes_sent = 0,
 		when = os.time(),
-		response = 404,
-		delay = 5,
-		planned_delay = 5,
+		response = code,
+		delay = delay,
+		planned_delay = delay,
 		cpu = 0,
 		complete = true
 	}
 
 	stats.log( logged )
+
+end
+
+local function log_bogon( web, req, delay )
+	log_misc_hit( web, req, 404, delay )
+end
+
+local function log_redirect( web, req, delay )
+	log_misc_hit( web, req, 302, delay )
+end
+
+local function log_head( web, req, delay )
+	log_misc_hit( web, req, 200, delay )
+end
+
+
+---
+-- Common code for both HEAD and GET requests.
+--
+local function request_preprocess( web )
+
+	local ts = {}
+	checkpoint( ts, 'start' )
+
+	local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
+	if req:is_bogon() then
+		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+		local pause = req:header_wait()
+		corewait.poll( pause )
+		log_bogon( web, req, pause )
+		return web:notfound("Nothing exists at this URL")
+	end
+
+	local is_redirect, location = req:is_redirect()
+	if is_redirect then
+		local pause = req:header_wait()
+		corewait.poll( pause )
+		log_redirect( web, req, pause )
+		return web:redirect( location )
+	end
+
+	return {
+		ts  = ts,
+		req = req
+	}
 
 end
 
@@ -149,19 +194,15 @@ end
 -- setup), don't do anything.
 --
 app:head "/(.*)" {
+	request_preprocess,
 	function( web )
+		local req = web.vars.req
 
-		local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
-		if req:is_bogon() then
-			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-			corewait.poll( 5 )
-			log_bogon( web, req )
-			return web:notfound("Nothing exists at this URL")
-		end
-
+		local pause = req:header_wait()
+		corewait.poll( pause )
+		log_head( web, req, pause )
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 		return web:ok("")
-
 	end
 }
 
@@ -169,19 +210,11 @@ app:head "/(.*)" {
 -- Actual tarpitting happens here.
 --
 app:get "/(.*)" {
+	request_preprocess,
 	function( web )
 
-		local ts = {}
-		checkpoint( ts, 'start' )
-
-		local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
-
-		if req:is_bogon() then
-			output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
-			corewait.poll( 5 )
-			log_bogon( web, req )
-			return web:notfound("Nothing exists at this URL")
-		end
+		local req = web.vars.req
+		local ts = web.vars.ts
 
 		checkpoint( ts, 'preprocess' )
 		req:load_markov()
@@ -199,12 +232,6 @@ app:get "/(.*)" {
 		log_checkpoints( ts, wait, siloname )
 
 		local time_spent = ts[ #ts ].at - ts[1].at
-
-		--
-		-- Somewhat "magic": Utilize to-be-closed variable to log that
-		-- the request has completed when this function terminates,
-		-- regardless of how this function terminated.
-		--
 		local logged = stats.build_entry {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
