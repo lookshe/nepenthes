@@ -27,36 +27,16 @@ return cp.prepare {
 	min_wait = 5,
 	max_wait = 10,
 
-	--markov = cp.default_nil {
-		--cp.array {
-			--name = 'default',
-			--type = 'classic',
-			--corpus = cp.not_nil('string')
-		--}
-	--},
-
-	--urlgen = cp.default_nil {
-		--cp.array {
-			--name = 'default',
-			--type = 'classic',
-			--wordlist = cp.not_nil('string')
-		--}
-	--},
-
 	silos = cp.array {
 		{
 			bogon_filter = true,
 			name = 'default',
-			--markov = 'default',
-			--urlgen = 'default',
 			template = 'default',
 			min_wait = 5,
 			max_wait = 10,
 			header_min_wait = 5,
 			header_max_wait = 30,
 			zero_delay = false,
-			--markov_min = 10,
-			--markov_max = 50,
 			default = false,
 			redirect_rate = 0,
 			corpus = cp.not_nil('string'),

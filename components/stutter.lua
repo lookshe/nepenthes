@@ -148,16 +148,11 @@ end
 
 function _M.delay_iterator( s, log_entry, pattern )
 
-	--
-	-- Use a coroutine as the actual iterator. This way <close>
-	-- works as expected, and the log entry gets marked 'complete'
-	-- no matter what happens in the end.
-	--
 	local start_time = cqueues.monotime()
 
 	return function()
 		if #s <= 0 then
-			log_entry.complete = true
+			log_entry:mark_complete()
 			return nil
 		end
 
@@ -172,8 +167,12 @@ function _M.delay_iterator( s, log_entry, pattern )
 
 		local ret = s:sub(1, block.bytes)
 		s = s:sub(block.bytes + 1, #s)
-		log_entry.bytes_sent = log_entry.bytes_sent + #ret
-		log_entry.delay = cqueues.monotime() - start_time
+
+		local now = cqueues.monotime()
+		local wait_time = now - start_time
+		start_time = now
+
+		log_entry:record( #ret, wait_time )
 		corewait.poll(block.delay)
 
 		return ret

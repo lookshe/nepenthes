@@ -23,11 +23,9 @@ local entries = {
 		when = buf_time - 10,
 		silo = 'default',
 		bytes_generated = 1809,
-		bytes_sent = 1809,
 		response = 200,
-		delay = 13,
+		planned_delay = 13,
 		cpu = 0.000305,
-		complete = true
 	},
 	{
 		address = '146.174.188.199',
@@ -36,11 +34,9 @@ local entries = {
 		when = buf_time - 9,
 		silo = 'default',
 		bytes_generated = 1569,
-		bytes_sent = 1569,
 		response = 200,
-		delay = 20,
+		planned_delay = 20,
 		cpu = 0.000219,
-		complete = true
 	},
 	{
 		address = '44.205.74.196',
@@ -49,11 +45,9 @@ local entries = {
 		when = buf_time - 8,
 		silo = 'default',
 		bytes_generated = 1515,
-		bytes_sent = 1515,
 		response = 200,
-		delay = 5,
+		planned_delay = 5,
 		cpu = 0.000372,
-		complete = true
 	},
 	{
 		address = '114.119.132.202',
@@ -62,11 +56,9 @@ local entries = {
 		silo = 'first',
 		when = buf_time - 7,
 		bytes_generated = 1887,
-		bytes_sent = 1887,
 		response = 200,
-		delay = 11,
+		planned_delay = 11,
 		cpu = 0.000248,
-		complete = true
 	},
 	{
 		address = '5.255.231.147',
@@ -75,11 +67,9 @@ local entries = {
 		silo = 'second',
 		when = buf_time - 6,
 		bytes_generated = 1805,
-		bytes_sent = 1805,
 		response = 200,
-		delay = 8,
+		planned_delay = 8,
 		cpu = 0.000401,
-		complete = true
 	},
 	{
 		address = '146.174.187.165',
@@ -88,11 +78,9 @@ local entries = {
 		when = buf_time - 5,
 		silo = 'first',
 		bytes_generated = 1550,
-		bytes_sent = 1550,
 		response = 200,
-		delay = 6,
+		planned_delay = 6,
 		cpu = 0.000293,
-		complete = true
 	}
 }
 
@@ -153,7 +141,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s1.memory_usage)
 		assert.is_number(s1.cpu_total)
 
-		stats.log( entries[1] )
+		local e1 = stats.new_entry( entries[1] )
+		e1:record( 1809, 13 )
+		e1:mark_complete()
+
 		local s2 = stats.compute()
 		assert.is_equal(1, s2.hits)
 		assert.is_equal(1, s2.addresses)
@@ -165,7 +156,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s2.memory_usage)
 		assert.is_number(s2.cpu_total)
 
-		stats.log( entries[2] )
+		local e2 = stats.new_entry( entries[2] )
+		e2:record( 1569, 20 )
+		e2:mark_complete()
+
 		local s3 = stats.compute()
 		assert.is_equal(2, s3.hits)
 		assert.is_equal(2, s3.addresses)
@@ -177,7 +171,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s3.memory_usage)
 		assert.is_number(s3.cpu_total)
 
-		stats.log( entries[3] )
+		local e3 = stats.new_entry( entries[3] )
+		e3:record( 1515, 5 )
+		e3:mark_complete()
+
 		local s4 = stats.compute()
 		assert.is_equal(3, s4.hits)
 		assert.is_equal(3, s4.addresses)
@@ -189,7 +186,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s4.memory_usage)
 		assert.is_number(s4.cpu_total)
 
-		stats.log( entries[4] )
+		local e4 = stats.new_entry( entries[4] )
+		e4:record( 1887, 11 )
+		e4:mark_complete()
+
 		local s5 = stats.compute()
 		assert.is_equal(4, s5.hits)
 		assert.is_equal(4, s5.addresses)
@@ -201,7 +201,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s5.memory_usage)
 		assert.is_number(s5.cpu_total)
 
-		stats.log( entries[5] )
+		local e5 = stats.new_entry( entries[5] )
+		e5:record( 1805, 8 )
+		e5:mark_complete()
+
 		local s6 = stats.compute()
 		assert.is_equal(5, s6.hits)
 		assert.is_equal(5, s6.addresses)
@@ -213,7 +216,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s6.memory_usage)
 		assert.is_number(s6.cpu_total)
 
-		stats.log( entries[6] )
+		local e6 = stats.new_entry( entries[6] )
+		e6:record( 1550, 6 )
+		e6:mark_complete()
+
 		local s7 = stats.compute()
 		assert.is_equal(6, s7.hits)
 		assert.is_equal(6, s7.addresses)
@@ -245,11 +251,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_number(s1.memory_usage)
 		assert.is_number(s1.cpu_total)
 
-		local h1 = copy( entries[1] )
-		h1.complete = false
-		h1.bytes_sent = 0
-
-		stats.log( h1 )
+		local h1 = stats.new_entry( entries[1] )
 		local s2 = stats.compute()
 		assert.is_equal(1, s2.hits)
 		assert.is_equal(1, s2.addresses)
@@ -257,14 +259,15 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.000305, s2.cpu))
 		assert.is_equal(1809, s2.bytes_generated)
 		assert.is_equal(0, s2.bytes_sent)
-		assert.is_equal(13, s2.delay)
+		assert.is_equal(0, s2.delay)
 		assert.is_equal(1, s2.active)
 
 		assert.is_number(s2.memory_usage)
 		assert.is_number(s2.cpu_total)
 
-		h1.complete = true
-		h1.bytes_sent = h1.bytes_generated
+		h1:record( 1809, 13 )
+		h1:mark_complete()
+
 		local s3 = stats.compute()
 		assert.is_equal(1, s3.hits)
 		assert.is_equal(1, s3.addresses)
@@ -282,10 +285,8 @@ describe("Hit Counting/Statistics Module", function()
 
 		stats.clear()
 		for i, v in ipairs( entries ) do	-- luacheck: ignore 213
-			local entry_copy = copy( v )
-			entry_copy.complete = false
-			entry_copy.delay = 0
-			stats.log( entry_copy )
+			local h1 = stats.new_entry( v )
+			h1:record( math.floor(v.bytes_generated / 2), 1 )
 		end
 
 		local sc = stats.compute()
@@ -293,8 +294,8 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_equal(6, sc.addresses)
 		assert.is_equal(6, sc.agents)
 		assert.is_true(float_equals(0.001838, sc.cpu))
-		assert.is_equal(10135, sc.bytes_sent)
-		assert.is_equal(0, sc.delay)
+		assert.is_equal(5065, sc.bytes_sent)
+		assert.is_equal(6, sc.delay)
 		assert.is_equal(6, sc.active)
 
 		assert.is_number(sc.memory_usage)
@@ -319,7 +320,7 @@ describe("Hit Counting/Statistics Module", function()
 		for i = 1, 30 do	-- luacheck: ignore 213
 			local hit = copy( entries[2] )
 			hit.when = os.time()
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 			cqueues.sleep(0.1)
 			local sv = stats.compute()
 			assert.is_true( 10 >= sv.hits )
@@ -354,7 +355,7 @@ describe("Hit Counting/Statistics Module", function()
 		for i = 30, 1, -1 do
 			local hit = copy( entries[2] )
 			hit.when = hit.when - i
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local s2 = stats.compute()
@@ -366,7 +367,7 @@ describe("Hit Counting/Statistics Module", function()
 			local hit = copy( entries[2] )
 			hit.address = '1.2.3.4'
 			hit.when = hit.when - i
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local s3 = stats.compute()
@@ -417,7 +418,7 @@ describe("Hit Counting/Statistics Module", function()
 		for i = 30, 1, -1 do
 			local hit = copy( entries[2] )
 			hit.when = hit.when - i
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local s2 = stats.compute()
@@ -429,7 +430,7 @@ describe("Hit Counting/Statistics Module", function()
 			local hit = copy( entries[2] )
 			hit.agent = entries[3].agent
 			hit.when = hit.when - i
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local s3 = stats.compute()
@@ -456,23 +457,17 @@ describe("Hit Counting/Statistics Module", function()
 
 	it("Tracks Active Connections", function()
 
-		local e = {}
-		for k, v in pairs( entries[1] ) do
-			e[k] = v
-		end
-
-		e.complete = false
 		stats.clear()
 
 		local s1 = stats.compute()
 		assert.is_equal( 0, s1.active )
 
-		stats.log(e)
+		local h1 = stats.new_entry( entries[1] )
 
 		local s2 = stats.compute()
 		assert.is_equal( 1, s2.active )
 
-		e.complete = true
+		h1:mark_complete()
 
 		local s3 = stats.compute()
 		assert.is_equal( 0, s3.active )
@@ -480,42 +475,13 @@ describe("Hit Counting/Statistics Module", function()
 	end)
 
 
-	--it("Automatically clears an active entry", function()
-
-		--local did_run = false
-		--stats.clear()
-		--local sb = stats.compute()
-		--assert.is_equal( 0, sb.active )
-
-		--local function run()
-
-			--local e <close> = stats.build_entry( entries[1] )
-			--local s1 = stats.compute()
-			--assert.is_equal( 0, s1.active )
-
-			--stats.log(e)
-
-			--local s2 = stats.compute()
-			--assert.is_equal( 1, s2.active )
-
-			--did_run = true
-
-		--end
-
-		--run()
-
-		--local sf = stats.compute()
-		--assert.is_equal( 0, sf.active )
-		--assert.is_true( did_run )
-
-	--end)
-
-
 	it("Seperates by silo", function()
 
 		stats.clear()
 		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
-			stats.log( hit )
+			local h1 = stats.new_entry( hit )
+			h1:record( hit.bytes_generated, hit.planned_delay )
+			h1:mark_complete()
 		end
 
 		local s1 = stats.compute()
@@ -606,7 +572,7 @@ describe("Hit Counting/Statistics Module", function()
 
 		stats.clear()
 		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local ret = stats.buffer()
@@ -642,7 +608,7 @@ describe("Hit Counting/Statistics Module", function()
 
 		stats.clear()
 		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
-			stats.log( hit )
+			stats.new_entry( hit ):mark_complete()
 		end
 
 		local check = stats.buffer()
@@ -681,10 +647,13 @@ describe("Hit Counting/Statistics Module", function()
 		for i = 1, 30 do	-- luacheck: ignore 213
 			local hit = copy( entries[2] )
 			hit.when = os.time()
-			stats.log( hit )
+			local h1 = stats.new_entry( hit )
+			h1:record( 1569, 20 )
+			h1:mark_complete()
 
-			expected_sent = expected_sent + hit.bytes_sent
-			expected_generated = expected_generated + hit.bytes_generated
+
+			expected_sent = expected_sent + h1.bytes_sent
+			expected_generated = expected_generated + h1.bytes_generated
 
 			cqueues.sleep(0.1)
 			local sv = stats.compute()

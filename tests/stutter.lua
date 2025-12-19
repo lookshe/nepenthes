@@ -77,7 +77,8 @@ describe("Send-Request-Output Module", function()
 	it("Stutters with correct len/size", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local sl = stats.build_entry {
+		local sl = stats.new_entry {
+			address = '127.0.0.4',
 			bytes = #s,
 			bytes_sent = 0
 		}
@@ -116,7 +117,8 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - underruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local sl = stats.build_entry {
+		local sl = stats.new_entry {
+			address = '127.0.0.4',
 			bytes = #s,
 			bytes_sent = 0
 		}
@@ -159,7 +161,8 @@ describe("Send-Request-Output Module", function()
 	it("Stutters - overruns okay", function()
 
 		local s = 'abcdefghijklmnopqrstuvwxyz'
-		local sl = stats.build_entry {
+		local sl = stats.new_entry {
+			address = '127.0.0.4',
 			bytes = #s,
 			bytes_sent = 0
 		}

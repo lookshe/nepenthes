@@ -3,6 +3,20 @@
 local fifo = require 'fifo'
 local config = require 'components.config'
 
+
+local _entry_methods = {}
+
+function _entry_methods.record( this, bytes, delay )
+	this.bytes_sent = this.bytes_sent + bytes
+	this.delay = this.delay + delay
+end
+
+function _entry_methods.mark_complete( this )
+	this.complete = true
+end
+
+
+
 local _M = {}
 
 
@@ -18,15 +32,7 @@ local totals = {
 	delay = 0
 }
 
-function _M.clear()
-	for k in pairs(totals) do
-		totals[k] = 0
-	end
-
-	buf = fifo()
-end
-
-function _M.log( val )
+local function add_to_log( val )
 
 	--
 	-- Schema Check
@@ -72,18 +78,42 @@ function _M.log( val )
 end
 
 
-function _M.build_entry( x )
+function _M.clear()
+	for k in pairs(totals) do
+		totals[k] = 0
+	end
 
-	local ret = {}
+	buf = fifo()
+end
+
+
+function _M.new_entry( x )
+
+	local ret = {
+		uri = '/',
+		silo = 'default',
+		agent = '',
+		when = os.time(),
+		bytes_generated = 0,
+		cpu = 0,
+		response = 200
+	}
+
 	for k, v in pairs(x) do
 		ret[k] = v
 	end
 
 	ret.complete = false
-	return ret
+	ret.delay = 0
+	ret.bytes_sent = 0
+
+	add_to_log( ret )
+
+	return setmetatable(ret, {
+		__index = _entry_methods
+	})
 
 end
-
 
 
 function _M.compute( silo )

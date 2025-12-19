@@ -123,22 +123,21 @@ end
 
 local function log_misc_hit( web, req, code, delay )
 
-	local logged = stats.build_entry {
+	local logged = stats.new_entry {
 		address = web.REMOTE_ADDR,
 		uri = web.PATH_INFO,
 		agent = web.HTTP_X_USER_AGENT,
 		silo = req.silo,
 		bytes_generated = 0,
-		bytes_sent = 0,
 		when = os.time(),
 		response = code,
-		delay = delay,
 		planned_delay = delay,
 		cpu = 0,
 		complete = true
 	}
 
-	stats.log( logged )
+	logged:record( 0, delay )
+	logged:mark_complete()
 
 end
 
@@ -164,6 +163,7 @@ local function request_preprocess( web )
 	checkpoint( ts, 'start' )
 
 	local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
+
 	if req:is_bogon() then
 		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 		local pause = req:header_wait()
@@ -232,32 +232,30 @@ app:get "/(.*)" {
 		log_checkpoints( ts, wait, siloname )
 
 		local time_spent = ts[ #ts ].at - ts[1].at
-		local logged = stats.build_entry {
+		local logged = stats.new_entry {
 			address = web.REMOTE_ADDR,
 			uri = web.PATH_INFO,
 			agent = web.HTTP_X_USER_AGENT,
 			silo = req.silo,
 			bytes_generated = #page,
-			bytes_sent = 0,
 			when = os.time(),
 			response = 200,
-			delay = 0,
 			planned_delay = wait,
 			cpu = time_spent
 		}
 
-		stats.log( logged )
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 
 		if req.zero_delay then
 			return '200 OK', web.headers, function()
 				if not page then
-					logged.complete = true
+					logged:mark_complete()
 					return nil
 				end
 
 				local ret = page
 				page = nil
+				logged:record( #page, 0 )
 				return ret
 			end
 		end
