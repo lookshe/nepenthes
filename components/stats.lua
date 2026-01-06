@@ -169,6 +169,11 @@ function _M.compute( silo )
 			ret.agents = ret.agents + 1
 		end
 
+		-- failsafe to ensure cleanup
+		if v.planned_delay + v.when < os.time() then
+			v:mark_complete()
+		end
+
 		if not v.complete then
 			ret.active = ret.active + 1
 		end
@@ -262,6 +267,11 @@ function _M.buffer( from )
 
 	for i = 1, #buf do
 		local v = buf:peek(i)
+
+		-- failsafe to ensure cleanup
+		if v.planned_delay + v.when < os.time() then
+			v:mark_complete()
+		end
 
 		if include then
 			ret[ #ret + 1 ] = v

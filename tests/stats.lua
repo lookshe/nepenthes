@@ -13,14 +13,11 @@ local stats = require 'components.stats'
 -- Real hits from a Nepenthes 1.2 instance - except delay and CPU,
 -- those were made up as they were not in access_log.
 --
-local buf_time = os.time()
-
 local entries = {
 	{
 		address = '202.76.160.166',
 		agent = "Mozilla/5.0 (Windows; U; Windows NT 6.1; ca; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3 (.NET CLR 3.5.30729)",
 		uri = '/maze/digynian/phellem/Adelbert/jug/bemat',
-		when = buf_time - 10,
 		silo = 'default',
 		bytes_generated = 1809,
 		response = 200,
@@ -31,7 +28,6 @@ local entries = {
 		address = '146.174.188.199',
 		agent = "Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.16 (KHTML, like Gecko) Ubuntu/10.10 Chromium/10.0.648.133 Chrome/10.0.648.133 Safari/534.16",
 		uri = '/maze/refectory/punnology/resorb/zoosphere',
-		when = buf_time - 9,
 		silo = 'default',
 		bytes_generated = 1569,
 		response = 200,
@@ -42,7 +38,6 @@ local entries = {
 		address = '44.205.74.196',
 		agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot) Chrome/119.0.6045.214 Safari/537.36",
 		uri = '/maze/yacht/herringbone',
-		when = buf_time - 8,
 		silo = 'default',
 		bytes_generated = 1515,
 		response = 200,
@@ -54,7 +49,6 @@ local entries = {
 		agent = "Mozilla/5.0 (Linux; Android 7.0;) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36 (compatible; PetalBot;+https://webmaster.petalsearch.com/site/petalbot)",
 		uri = '/maze/unchafed/stolewise',
 		silo = 'first',
-		when = buf_time - 7,
 		bytes_generated = 1887,
 		response = 200,
 		planned_delay = 11,
@@ -65,7 +59,6 @@ local entries = {
 		agent = "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
 		uri = '/maze/boobook/bandhu',
 		silo = 'second',
-		when = buf_time - 6,
 		bytes_generated = 1805,
 		response = 200,
 		planned_delay = 8,
@@ -75,7 +68,6 @@ local entries = {
 		address = '146.174.187.165',
 		agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:2.0.1) Gecko/20110606 Firefox/4.0.1",
 		uri = '/maze/estamene/cacodylic/miskeep',
-		when = buf_time - 5,
 		silo = 'first',
 		bytes_generated = 1550,
 		response = 200,
@@ -352,10 +344,8 @@ describe("Hit Counting/Statistics Module", function()
 		--
 		-- Generate "traffic"
 		--
-		for i = 30, 1, -1 do
-			local hit = copy( entries[2] )
-			hit.when = hit.when - i
-			stats.new_entry( hit ):mark_complete()
+		for _ = 30, 1, -1 do
+			stats.new_entry( entries[2] ):mark_complete()
 		end
 
 		local s2 = stats.compute()
@@ -363,11 +353,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_equal( 1, s2.agents )
 		assert.is_equal( 1, s2.addresses )
 
-		for i = 30, 1, -1 do
-			local hit = copy( entries[2] )
-			hit.address = '1.2.3.4'
-			hit.when = hit.when - i
-			stats.new_entry( hit ):mark_complete()
+		for _ = 30, 1, -1 do
+			local s = stats.new_entry( entries[2] )
+			s.address = '1.2.3.4'
+			s:mark_complete()
 		end
 
 		local s3 = stats.compute()
@@ -415,10 +404,8 @@ describe("Hit Counting/Statistics Module", function()
 		--
 		-- Generate "traffic"
 		--
-		for i = 30, 1, -1 do
-			local hit = copy( entries[2] )
-			hit.when = hit.when - i
-			stats.new_entry( hit ):mark_complete()
+		for _ = 30, 1, -1 do
+			stats.new_entry( entries[2] ):mark_complete()
 		end
 
 		local s2 = stats.compute()
@@ -426,11 +413,10 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_equal( 1, s2.agents )
 		assert.is_equal( 1, s2.addresses )
 
-		for i = 30, 1, -1 do
-			local hit = copy( entries[2] )
-			hit.agent = entries[3].agent
-			hit.when = hit.when - i
-			stats.new_entry( hit ):mark_complete()
+		for _ = 30, 1, -1 do
+			local s = stats.new_entry( entries[2] )
+			s.agent = entries[3].agent
+			s:mark_complete()
 		end
 
 		local s3 = stats.compute()
@@ -600,6 +586,90 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_not_equal( ret[3].id, ret[6].id )
 		assert.is_not_equal( ret[4].id, ret[6].id )
 		assert.is_not_equal( ret[5].id, ret[6].id )
+
+	end)
+
+
+	it("Fixes implausibly inaccurate 'actives' - aggregation", function()
+
+		stats.clear()
+		local n
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			local new_hit = stats.new_entry( hit )
+			if i ~= 3 then
+				new_hit:mark_complete()
+			else
+				n = new_hit
+			end
+		end
+
+		local s1 = stats.compute()
+		assert.is_equal(6, s1.hits)
+		assert.is_equal(1, s1.active)
+
+
+		-- delay should be five; which means if the record was logged
+		-- 120 seconds ago, at 115 seconds ago it's obviously stale and
+		-- an error prevented marking it completed.
+		n.when = n.when - 120
+
+		local s2 = stats.compute()
+		assert.is_equal(6, s2.hits)
+		assert.is_equal(0, s2.active)
+
+	end)
+
+
+	it("Fixes implausibly inaccurate 'actives' - buffer dump", function()
+
+		stats.clear()
+		local n
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			local new_hit = stats.new_entry( hit )
+			if i ~= 3 then
+				new_hit:mark_complete()
+			else
+				n = new_hit
+			end
+		end
+
+		local ret = stats.buffer()
+		assert.is_table(ret)
+		assert.is_equal( 6, #ret )
+		assert.is_equal( '202.76.160.166', ret[1].address )
+		assert.is_true( ret[1].complete )
+		assert.is_equal( '146.174.188.199', ret[2].address )
+		assert.is_true( ret[2].complete )
+		assert.is_equal( '44.205.74.196', ret[3].address )
+		assert.is_false( ret[3].complete )
+		assert.is_equal( '114.119.132.202', ret[4].address )
+		assert.is_true( ret[4].complete )
+		assert.is_equal( '5.255.231.147', ret[5].address )
+		assert.is_true( ret[5].complete )
+		assert.is_equal( '146.174.187.165', ret[6].address )
+		assert.is_true( ret[6].complete )
+
+
+		-- delay should be five; which means if the record was logged
+		-- 120 seconds ago, at 115 seconds ago it's obviously stale and
+		-- an error prevented marking it completed.
+		n.when = n.when - 120
+
+		local ret2 = stats.buffer()
+		assert.is_table(ret2)
+		assert.is_equal( 6, #ret2 )
+		assert.is_equal( '202.76.160.166', ret2[1].address )
+		assert.is_true( ret2[1].complete )
+		assert.is_equal( '146.174.188.199', ret2[2].address )
+		assert.is_true( ret2[2].complete )
+		assert.is_equal( '44.205.74.196', ret2[3].address )
+		assert.is_true( ret2[3].complete )
+		assert.is_equal( '114.119.132.202', ret2[4].address )
+		assert.is_true( ret2[4].complete )
+		assert.is_equal( '5.255.231.147', ret2[5].address )
+		assert.is_true( ret2[5].complete )
+		assert.is_equal( '146.174.187.165', ret2[6].address )
+		assert.is_true( ret2[6].complete )
 
 	end)
 
