@@ -698,6 +698,36 @@ describe("Hit Counting/Statistics Module", function()
 	end)
 
 
+	it("Dumps the entire buffer if the start point is in the past", function()
+
+		local first
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			local st = stats.new_entry(hit)
+
+			if not first then
+				first = st.when
+			end
+
+			st:mark_complete()
+		end
+
+		local from = tostring(first - 200) .. '.1'
+		local check = stats.buffer( from )
+
+		assert.is_table(check)
+		assert.is_equal( 6, #check )
+		assert.is_equal( '202.76.160.166', check[1].address )
+		assert.is_equal( '146.174.188.199', check[2].address )
+		assert.is_equal( '44.205.74.196', check[3].address )
+		assert.is_equal( '114.119.132.202', check[4].address )
+		assert.is_equal( '5.255.231.147', check[5].address )
+		assert.is_equal( '146.174.187.165', check[6].address )
+
+	end)
+
+
 	it("Save Total since-start statistics", function()
 
 		stats.clear()

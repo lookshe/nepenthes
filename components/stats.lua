@@ -273,6 +273,14 @@ function _M.buffer( from )
 			v:mark_complete()
 		end
 
+		-- special case: buffer has completely turned over since the
+		-- requested start point, or maybe nepenthes was restarted.
+		if from then
+			if i == 1 and tonumber( from ) < tonumber( v.id ) then
+				include = true
+			end
+		end
+
 		if include then
 			ret[ #ret + 1 ] = v
 		else
