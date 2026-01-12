@@ -67,6 +67,13 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		HTTP_COOKIE = req_headers:get('cookie')
 	}
 
+	local closable_request <close> = setmetatable( request, { __close = function()
+			if request.statistic_log then
+				request.statistic_log:mark_complete()
+			end
+		end
+	})
+
 	-- XXX: I'm sorry
 	request[ header_cleanup('X_USER_AGENT') ] = req_headers:get('user-agent')
 
@@ -95,13 +102,13 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 		-- tight scope closes the file descriptor used by the body
 		-- as fast as possible.
 		local input_stream <close> = stream:get_body_as_file()
-		request.input = input_stream
-		return app.run( request )
+		closable_request.input = input_stream
+		return app.run( closable_request )
 	end
 
 	local res, rawstatus, wsapi_headers, iter = pcall(run_request)
 	if not res then
-		output.error("Request failed:", request.REQUEST_METHOD, path, rawstatus)
+		output.error("Request failed:", closable_request.REQUEST_METHOD, path, rawstatus)
 		-- lua-http will return 503 in this case
 		error("Internal failure")
 	end
@@ -144,9 +151,9 @@ local function http_responder( server, stream )	-- luacheck: ignore 212
 	stream:write_chunk("", true)
 
 	output.info(string.format("Web: %s [%s %s] %s",
-		request.REMOTE_ADDR,
-		request.REQUEST_METHOD,
-		request.PATH_INFO,
+		closable_request.REMOTE_ADDR,
+		closable_request.REQUEST_METHOD,
+		closable_request.PATH_INFO,
 		rawstatus
 	))
 end

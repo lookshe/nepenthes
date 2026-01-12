@@ -674,7 +674,7 @@ describe("Hit Counting/Statistics Module", function()
 	end)
 
 
-	it("Dumps the buffer - beyond a point in time", function()
+	it("Dumps the buffer - from a point in time", function()
 
 		stats.clear()
 		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
@@ -769,6 +769,27 @@ describe("Hit Counting/Statistics Module", function()
 			end
 
 		end
+
+	end)
+
+
+	it("Never sends incomplete entries if requested", function()
+
+		stats.clear()
+		for i, hit in ipairs( entries ) do	-- luacheck: ignore 213
+			local new_hit = stats.new_entry( hit )
+			if i ~= 3 then
+				new_hit:mark_complete()
+			end
+		end
+
+		local ret = stats.buffer( '100.1', true )
+		assert.is_table(ret)
+		assert.is_equal( 2, #ret )
+		assert.is_equal( '202.76.160.166', ret[1].address )
+		assert.is_true( ret[1].complete )
+		assert.is_equal( '146.174.188.199', ret[2].address )
+		assert.is_true( ret[2].complete )
 
 	end)
 

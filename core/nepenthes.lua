@@ -65,8 +65,14 @@ app:get "/stats/addresses" {
 app:get "/stats/buffer/from/(%d+%.%d+)" {
 	function ( web, id )
 		web.headers['Content-type'] = 'application/json'
+
+		local stop_if_incomplete = false
+		if web.HTTP_X_STOP_IF_INCOMPLETE then
+			stop_if_incomplete = true
+		end
+
 		return web:ok(
-			json.encode( stats.buffer( id ) )
+			json.encode( stats.buffer( id, stop_if_incomplete ) )
 		)
 	end
 }
@@ -74,8 +80,14 @@ app:get "/stats/buffer/from/(%d+%.%d+)" {
 app:get "/stats/buffer" {
 	function ( web )
 		web.headers['Content-type'] = 'application/json'
+
+		local stop_if_incomplete = false
+		if web.HTTP_X_STOP_IF_INCOMPLETE then
+			stop_if_incomplete = true
+		end
+
 		return web:ok(
-			json.encode( stats.buffer() )
+			json.encode( stats.buffer( nil, stop_if_incomplete ) )
 		)
 	end
 }
@@ -244,6 +256,7 @@ app:get "/(.*)" {
 			cpu = time_spent
 		}
 
+		web.statistic_log = logged
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 
 		if req.zero_delay then

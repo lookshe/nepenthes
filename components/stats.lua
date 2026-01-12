@@ -110,7 +110,10 @@ function _M.new_entry( x )
 	add_to_log( ret )
 
 	return setmetatable(ret, {
-		__index = _entry_methods
+		__index = _entry_methods,
+		__gc = function()
+			ret:mark_complete()
+		end
 	})
 
 end
@@ -256,7 +259,7 @@ function _M.agent_list( silo )
 end
 
 
-function _M.buffer( from )
+function _M.buffer( from, stop_if_incomplete )
 
 	local ret = {}
 	local include = true
@@ -271,6 +274,12 @@ function _M.buffer( from )
 		-- failsafe to ensure cleanup
 		if v.planned_delay + v.when < os.time() then
 			v:mark_complete()
+		end
+
+		if stop_if_incomplete then
+			if not v.complete then
+				return ret
+			end
 		end
 
 		-- special case: buffer has completely turned over since the
