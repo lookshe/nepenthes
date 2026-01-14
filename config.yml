@@ -14,8 +14,10 @@ silos:
   - name: default
     wordlist: '/usr/share/dict/words'
     corpus: './mishmash.txt'
-    min_wait: 10
-    max_wait: 65
+    template: 'booleans'
+    min_wait: 1
+    max_wait: 100
+    
     prefixes:
       - /maze
       - /otherplace
