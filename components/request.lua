@@ -1,7 +1,5 @@
 #!/usr/bin/env lua5.4
 
-local config = require 'components.config'
-
 local _methods = {}
 
 function _methods.is_bogon( this )
@@ -111,8 +109,8 @@ function _methods.send_delay( this )
 	end
 
 	return this.rng:between(
-		this.max_wait or config.max_wait,
-		this.min_wait or config.min_wait
+		this.max_wait,
+		this.min_wait
 	)
 
 end
