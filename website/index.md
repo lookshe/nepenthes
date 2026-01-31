@@ -63,7 +63,7 @@ Further questions? I made a [FAQ](/code/nepenthes/FAQ.md) page.
 Latest Version
 --------------
 
-[Nepenthes 2.5](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.5.tar.gz)
+[Nepenthes 2.6](https://zadzmo.org/downloads/nepenthes/file/nepenthes-2.6.tar.gz)
 
 [Docker Image](https://zadzmo.org/downloads/nepenthes/docker)
 
@@ -712,3 +712,6 @@ major number changes and the minor number resets to zero.
   More stats accuracy fixes
   
   Stats buffer transmit bugfixes/improvements
+  
+- #### v2.6:
+  Small bug fix with min/max wait handling and defaults
