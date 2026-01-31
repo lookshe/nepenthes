@@ -262,6 +262,79 @@ describe("Silo/Request Builder Module", function()
 	end)
 
 
+	it("Silos inherit min/max wait when not set", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default'
+			}
+		}
+
+		silo.setup()
+
+		local req0 = silo.new_request(
+			'default',
+			'/maze/catastrophic'
+		)
+
+		assert.is_equal( 5, req0.min_wait )
+		assert.is_equal( 10, req0.max_wait )
+
+
+		config_loader.reset( config )
+
+		-- non-default values
+		config.min_wait = 22
+		config.max_wait = 33
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				prefixes = {
+					'maze'
+				}
+			},
+			{
+				name = 'some-other-silo',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				min_wait = 12,
+				max_wait = 15,
+				prefixes = {
+					'otherplace'
+				}
+			}
+		}
+
+		silo.setup()
+
+		local req1 = silo.new_request(
+			'default',
+			'/maze/catastrophic'
+		)
+
+		assert.is_equal( 22, req1.min_wait )
+		assert.is_equal( 33, req1.max_wait )
+
+
+		local req2 = silo.new_request(
+			'some-other-silo',
+			'/otherplace/catastrophic'
+		)
+
+		assert.is_equal( 12, req2.min_wait )
+		assert.is_equal( 15, req2.max_wait )
+
+	end)
+
+
 	it("Has a functional Markov babbler #request", function()
 
 		config.silos = {
