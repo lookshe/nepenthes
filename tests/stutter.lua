@@ -70,6 +70,28 @@ describe("Send-Request-Output Module", function()
 
 	end)
 
+	it("Survives a delay time of zero", function()
+
+		--
+		-- This is an odd case causing divide-by-zero, and thus, 500
+		-- response code. Let's not do that
+		--
+		local pattern = stutter.generate_pattern( 0, 1024 )
+		assert.is_table(pattern)
+		assert.is_true(#pattern >= 1)
+
+		for _, packet in ipairs( pattern ) do
+			assert.is_table( packet )
+			assert.is_number( packet.delay )
+			assert.is_number( packet.bytes )
+
+			assert.is_true( packet.delay > 0 )
+			assert.is_true( packet.bytes > 0 )
+		end
+
+	end)
+
+
 	it("Generates different patterns", function()
 		pending("Not yet implemented")
 	end)
