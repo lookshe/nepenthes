@@ -133,39 +133,4 @@ function _M.new_request( requested_silo, url )
 end
 
 
----
--- Generate a list of URLs that are "shallow", by depth, to compute
--- how far into a tarpit a crawler is.
---
-function _M.generate_map( silo )
-
-	assert(type(silos) == 'table', 'Silo module not initialized')
-
-	local ret = {}
-	local count = 0
-
-	local function add_url( depth, url )
-
-		if depth < 4 then
-			local req = _M.new_request( silo, url )
-			local list = req:urllist()
-
-			for _, deeper_url in ipairs(list) do
-				--print(depth, deeper_url.link)
-				add_url( depth + 1, deeper_url.link )
-			end
-		end
-
-		ret[ url ] = depth
-		count = count + 1
-		return
-
-	end
-
-	add_url( 0, '/' )
-	return ret, count
-
-end
-
-
 return _M

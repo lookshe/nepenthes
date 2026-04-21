@@ -729,40 +729,4 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
-
-	it("Generates a depth #map", function()
-
-		config.silos = {
-			{
-				name = 'default',
-				corpus = './tests/share/wiki-markov.txt',
-				wordlist = './tests/share/words.txt',
-				template = 'default',
-				header_min_wait = 5,
-				header_max_wait = 10
-			}
-		}
-
-		silo.setup()
-		assert.is_equal(1, silo.count())
-
-		local map, count = silo.generate_map( 'default' )
-		assert.is_table( map )
-		assert.is_equal( 4118, count )
-
-		for url, depth in pairs( map ) do
-			assert.is_string( url )
-			assert.is_number( depth )
-			assert.is_true( depth >= 0 )
-			assert.is_true( depth < 5 )
-		end
-
-		-- some spot checks
-		assert.is_equal( 4, map['/paleontology/encrypts/internment/begs'] )
-		assert.is_equal( 0, map['/'] )
-		assert.is_equal( 4, map['/maim'] )
-		assert.is_equal( 2, map['/exoplanet/Wise/Paracelsus/changelings/insetting'] )
-
-	end)
-
 end)
