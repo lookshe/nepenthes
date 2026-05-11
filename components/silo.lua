@@ -51,16 +51,17 @@ function _M.setup()
 		end
 
 		output.debug("Configure silo:", siloconfig.name)
-		silos[ siloconfig.name ] = {
+
+		local new_silo = {
 			urlgenerator = urlgen.new( wordlists[ siloconfig.wordlist ], siloconfig.prefixes ),
 			wordlist = wordlists[ siloconfig.wordlist ],
 			template = template.load( siloconfig.template ),
 			markov = corpuses[ siloconfig.corpus ],
 			name = siloconfig.name,
-			min_wait = siloconfig.min_wait,
-			max_wait = siloconfig.max_wait,
-			header_min_wait = siloconfig.header_min_wait,
-			header_max_wait = siloconfig.header_max_wait,
+			min_wait = siloconfig.min_wait or config.min_wait,
+			max_wait = siloconfig.max_wait or config.max_wait,
+			header_min_wait = siloconfig.header_min_wait or config.header_min_wait,
+			header_max_wait = siloconfig.header_max_wait or config.header_max_wait,
 			zero_delay = siloconfig.zero_delay,
 			bogon_filter = siloconfig.bogon_filter,
 			redirect_rate = siloconfig.redirect_rate
@@ -71,8 +72,22 @@ function _M.setup()
 				error('Multiple default silos')
 			end
 
-			default_silo = silos[ siloconfig.name ]
+			default_silo = new_silo
 		end
+
+		assert(new_silo.min_wait >= 0, "Minimum delay time must be positive")
+		assert(new_silo.header_min_wait >= 0, "Minimum header delay time must be positive")
+
+		assert(
+			new_silo.max_wait >= new_silo.min_wait,
+			"Max delay time must be greater than minimum delay time"
+		)
+		assert(
+			new_silo.header_max_wait >= new_silo.header_min_wait,
+			"Max header delay time must be greater than minimum delay time"
+		)
+
+		silos[ siloconfig.name ] = new_silo
 
 	end
 

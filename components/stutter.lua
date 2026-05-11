@@ -50,16 +50,22 @@ local function split( delay, bytes )
 		} }
 	end
 
+	local function un_rnd( mx )
+		return rand.uniform(
+			math.floor( mx )
+		)
+	end
+
 	local left_bytes
 	if bytes == 2 then
 		left_bytes = 1
 	else
-		left_bytes = rand.uniform( bytes - 1 ) + 1
+		left_bytes = un_rnd( bytes - 1 ) + 1
 	end
 
 	local right_bytes = bytes - left_bytes
 
-	local left_delay = rand.uniform( delay - 1 ) + 1
+	local left_delay = un_rnd( delay - 1 ) + 1
 	local right_delay = delay - left_delay
 
 	local left = split( left_delay, left_bytes )
@@ -74,8 +80,12 @@ end
 --
 function _M.generate_pattern( delay, bytes )
 
-	assert(delay > 0)
 	assert(bytes > 0)
+
+	if delay <= 0 then
+		delay = 0.001
+	end
+
 
 	--
 	-- The original Nepenthes 1.x algorithm. Easily identified by
