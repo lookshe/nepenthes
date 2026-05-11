@@ -550,6 +550,18 @@ All possible directives in config.yaml:
  - #### max_wait
 	Default maximum delay time if not specified in a silo configuration.
 
+ - #### header_wait_min
+	Used for Redirects and HEAD requests, and also when the bogon
+	filter fires: how long to wait before sending the headers. Zero
+	tends to cause high CPU load on your server. Values above 60
+	tend to cause crawlers to disconnect before the response.
+
+	Defaults to 5. Before 2.5 this was hardwired to 5 seconds.
+	
+ - #### header_wait_max
+	Same as header_wait_min, except, maximum time to wait. The same
+	caveats apply. Defaults to 30 seconds.
+
  - #### silos
  	Each silo takes the following configuration options:
 
@@ -568,17 +580,10 @@ All possible directives in config.yaml:
    		Optional. Maximum delay time in this silo.
 
    - #### header_wait_min
-		Used for Redirects and HEAD requests, and also when the bogon
-		filter fires: how long to wait before sending the headers. Zero
-		tends to cause high CPU load on your server. Values above 60
-		tend to cause crawlers to disconnect before the response.
-
-		Optional, defaults to 5. Before 2.5 this was hardwired to 5
-		seconds.
+  		Optional. Minimum header delay time in this silo.
 
    - #### header_wait_max
-		Same as header_wait_min, except, maximum time to wait. The same
-		caveats apply. Defaults to 30 seconds.
+  		Optional. Maximum header delay time in this silo.
 
    - #### default
    		Boolean value. If set to 'true', marks this as the default silo.
@@ -715,3 +720,10 @@ major number changes and the minor number resets to zero.
   
 - #### v2.6:
   Small bug fix with min/max wait handling and defaults
+
+- #### v2.7:
+  Bug fixes in configuration: Wait times can now be set to zero without
+  causing occasional 500 responses.
+  
+  header_max_wait and header_min_wait now globals with optional silo
+  overrides.

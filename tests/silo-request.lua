@@ -729,4 +729,44 @@ describe("Silo/Request Builder Module", function()
 
 	end)
 
+
+	it("Prohibits a less-than-zero minimum delay in a silo", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				header_min_wait = -1,
+				header_max_wait = 10
+			}
+		}
+
+		assert.is_error(function()
+			silo.setup()
+		end)
+
+	end)
+
+
+	it("Prohibits a maximum less than the minimum", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				header_min_wait = 5,
+				header_max_wait = 4
+			}
+		}
+
+		assert.is_error(function()
+			silo.setup()
+		end)
+
+	end)
+
 end)

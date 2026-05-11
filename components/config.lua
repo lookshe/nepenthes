@@ -26,16 +26,18 @@ return cp.prepare {
 	stats_remember_time = 3600,
 	min_wait = 5,
 	max_wait = 10,
+	header_min_wait = 5,
+	header_max_wait = 30,
 
 	silos = cp.array {
 		{
 			bogon_filter = true,
 			name = 'default',
 			template = 'default',
-			min_wait = 5,
-			max_wait = 10,
-			header_min_wait = 5,
-			header_max_wait = 30,
+			min_wait = cp.default_nil('number'),
+			max_wait = cp.default_nil('number'),
+			header_min_wait = cp.default_nil('number'),
+			header_max_wait = cp.default_nil('number'),
 			zero_delay = false,
 			default = false,
 			redirect_rate = 0,
