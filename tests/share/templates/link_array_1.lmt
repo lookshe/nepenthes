@@ -1,0 +1,22 @@
+---
+markov:
+  - name: content
+    min: 15
+    max: 200
+link_array:
+  min_count: 1
+  max_count: 3
+  depth_min: 2
+  depth_max: 4
+...
+<!DOCTYPE html>
+<html>
+<body>
+{{ content }}
+<ul>
+{{# links }}
+	<li><a href="/{{ url }}">{{ content }}</a></li>
+{{/ links }}
+</ul>
+</body>
+</html>

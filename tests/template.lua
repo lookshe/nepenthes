@@ -197,4 +197,60 @@ describe("Templating Module", function()
 
 	end)
 
+	it("Rejects invalid template variable schema", function()
+
+		assert.is_error(function()
+			template.load( 'invalid_schema' )
+		end)
+
+	end)
+
+
+	it("Loads templates with varying options", function()
+
+		local no_array = template.load( 'withyaml' )
+
+		assert.is_table(no_array)
+		assert.is_true(no_array.is_valid)
+		assert.is_table(no_array.data)
+		assert.is_nil(no_array.data.link_array)
+
+
+		local x = template.load( 'link_array_1' )
+
+		assert.is_table(x)
+		assert.is_true(x.is_valid)
+		assert.is_table(x.data)
+		assert.is_table(x.data.link_array)
+		assert.is_equal( 1, x.data.link_array.min_count )
+		assert.is_equal( 3, x.data.link_array.max_count )
+		assert.is_equal( 2, x.data.link_array.depth_min )
+		assert.is_equal( 4, x.data.link_array.depth_max )
+
+
+		local y = template.load( 'link_array_2' )
+
+		assert.is_table(y)
+		assert.is_true(y.is_valid)
+		assert.is_table(y.data)
+		assert.is_table(y.data.link_array)
+		assert.is_equal( 4, y.data.link_array.min_count )
+		assert.is_equal( 8, y.data.link_array.max_count )
+		assert.is_equal( 9, y.data.link_array.depth_min )
+		assert.is_equal( 12, y.data.link_array.depth_max )
+
+
+		local z = template.load( 'link_array_3' )
+
+		assert.is_table(z)
+		assert.is_true(z.is_valid)
+		assert.is_table(z.data)
+		assert.is_table(z.data.link_array)
+		assert.is_equal( 2, z.data.link_array.min_count )
+		assert.is_equal( 8, z.data.link_array.max_count )
+		assert.is_equal( 1, z.data.link_array.depth_min )
+		assert.is_equal( 5, z.data.link_array.depth_max )
+
+	end)
+
 end)

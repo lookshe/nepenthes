@@ -54,13 +54,10 @@ local function template_schema()
 		},
 
 		link_array = cl.default_nil ({
-			name = 'links',
 			min_count = 5,
 			max_count = 8,
 			depth_min = 1,
-			depth_max = 5,
-			--description_min = 1,
-			--description_max = 5
+			depth_max = 5
 		}),
 
 
