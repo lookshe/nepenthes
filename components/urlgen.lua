@@ -1,5 +1,8 @@
 #!/usr/bin/env lua5.4
 
+local config = require 'components.config'
+
+
 --
 -- Normalize the leading slash on a URI to simplify further logic.
 --
@@ -28,7 +31,10 @@ local _methods = {}
 --
 function _methods.create( this, rng, requested_prefix )
 
-	local size = rng:between( 5, 1 )
+	local size = rng:between(
+		this.depth_max,
+		this.depth_min
+	)
 	local parts = {}
 	local prefix
 
@@ -107,6 +113,21 @@ function _methods.check( this, url )
 end
 
 
+---
+-- URL "Depth" settings - how many '/'s can be in the generated
+-- url, essentially. A new URL generator is initialized with the
+-- defaults as set in components/config.lua, and thus is overriden
+-- by the config file. Additionally these can be set at a silo or
+-- template level.
+--
+function _methods.depth_settings( this, new_max, new_min )
+
+	this.depth_max = new_max
+	this.depth_min = new_min
+
+end
+
+
 
 local _M = {}
 
@@ -127,7 +148,9 @@ function _M.new( wordlist, prefixlist )
 
 	local ret = {
 		wordlist = wordlist,
-		prefixlist = clean_prefixes
+		prefixlist = clean_prefixes,
+		depth_max = config.link_depth_max,
+		depth_min = config.link_depth_min
 	}
 
 	return setmetatable(

@@ -55,6 +55,9 @@ function _xorshiro.between( s, upper, lower )
 		error("Requested random value range invalid")
 	end
 
+	--
+	-- XXX: this does not give a uniform distribution.
+	--
 	return ((s:random() % (1 + upper - lower)) + lower)
 
 end

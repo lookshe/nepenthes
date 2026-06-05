@@ -195,4 +195,45 @@ describe("URL Generator Module", function()
 
 	end)
 
+	it("Has configurable #depth", function()
+
+		local ug = urlgen.new( wl )
+		local rng = rng_factory.new( '/just/some/whatever/url' )
+
+		local function count_depth( tested_url )
+
+			assert.is_true( tested_url:sub(1, 1) == '/' )
+			tested_url = tested_url:sub(2, #tested_url)
+
+			local ret = 0
+			for _ in tested_url:gmatch('([^/]+)') do
+				ret = ret + 1
+			end
+
+			return ret
+
+		end
+
+		ug:depth_settings( 5, 1 )
+		for _ = 1, 50 do
+			local url = ug:create( rng )
+			assert.is_true( count_depth( url ) <= 5 )
+			assert.is_true( count_depth( url ) >= 1 )
+		end
+
+		ug:depth_settings( 12, 10 )
+		for _ = 1, 50 do
+			local url = ug:create( rng )
+			assert.is_true( count_depth( url ) <= 12 )
+			assert.is_true( count_depth( url ) >= 10 )
+		end
+
+		ug:depth_settings( 8, 3 )
+		for _ = 1, 50 do
+			local url = ug:create( rng )
+			assert.is_true( count_depth( url ) <= 8 )
+			assert.is_true( count_depth( url ) >= 3 )
+		end
+	end)
+
 end)
