@@ -12,6 +12,13 @@ function _M.new( file )
 
 	for line in f:lines() do
 		if not line:match("%'") then
+			--
+			-- Gracefully cleanup CRLF terminated lines.
+			--
+			if line:sub( #line ):match('%s') then
+				line = line:sub(1, #line - 1)
+			end
+
 			dict[ #dict + 1 ] = line
 			dict_lookup[ line ] = true
 		end
@@ -21,7 +28,6 @@ function _M.new( file )
 		-- this is probably not a usable wordlist file.
 		error("Wordlist failed to load - check file type?")
 	end
-
 
 	return {
 		count = function()

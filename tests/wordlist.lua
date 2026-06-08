@@ -28,6 +28,33 @@ describe("Word List / Dictionary Module", function()
 		assert.is_true( wl.count() == 150 )
 	end)
 
+	it("Loads CRLF wordlists", function()
+		local pick
+
+		local fake_rng = {
+			between = function()
+				return pick
+			end
+		}
+
+		local wl2 = wordlist.new('./tests/share/slowa-abridged.txt')
+		assert.is_table(wl2)
+		assert.is_function(wl2.count)
+		assert.is_function(wl2.choose)
+		assert.is_function(wl2.lookup)
+		assert.is_true( wl2.count() == 300 )
+
+		pick = 5
+		assert.is_equal( 'ootekę', wl2.choose( fake_rng ) )
+
+		pick = 24
+		assert.is_equal( 'unaoczniłabym', wl2.choose( fake_rng ) )
+
+		pick = 199
+		assert.is_equal( 'odnosowijże', wl2.choose( fake_rng ) )
+
+	end)
+
 
 	it("Rejects missing file", function()
 		assert.is_error(function()
@@ -42,7 +69,7 @@ describe("Word List / Dictionary Module", function()
 	it("Verifies", function()
 
 		--
-		-- XXX: I'm assuming English/UTF-8
+		-- XXX: I'm assuming English/ASCII
 		--
 		assert.is_true( wl.lookup( 'demurs' ) )
 		assert.is_true( wl.lookup( 'shoring' ) )

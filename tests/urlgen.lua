@@ -19,10 +19,11 @@ local urlgen = require 'components.urlgen'
 require 'busted.runner'()
 describe("URL Generator Module", function()
 
-	local wl
+	local wl, wl2
 
 	setup(function()
 		wl = wordlist.new('./tests/share/words.txt')
+		wl2 = wordlist.new('./tests/share/slowa-abridged.txt')
 	end)
 
 
@@ -52,6 +53,48 @@ describe("URL Generator Module", function()
 		assert.is_true( ug:check('/defjwejfne4/3krnjk2/egnmi34t/erge8wjt4') )
 		assert.is_true( ug:check('/sibyl/but/wrong') )
 		assert.is_true( ug:check('/catalogers/drachma/death/posterity') )
+
+	end)
+
+
+	it("Correctly verifies URLs with UTF8", function()
+
+		local ug = urlgen.new( wl2 )
+
+		assert.is_false( ug:check('/naszklili') )
+		assert.is_false( ug:check('/niepryśniętymi/nieblanszowana') )
+		assert.is_false( ug:check('/bezrządem') )
+		assert.is_false( ug:check('/niechmielących/chłapnęlibyście/parabolizowali/przymówi/zakomentowałaś') )
+		assert.is_false( ug:check('/wymajoną/kozakowaniu/chytruskom/rozkojarz/supłaniu') )
+
+		assert.is_true( ug:check('/niedobywający/NOOOOOOPE/389yr283ur') )
+		assert.is_true( ug:check('/oblazłej/this/is/english') )
+		assert.is_true( ug:check('/u9f4n324unf4j3nt45/zarabiając') )
+
+	end)
+
+
+	it("Correctly generates URLs with UTF8", function()
+
+		local ug = urlgen.new( wl2 )
+		local rng = rng_factory.new( '/scałowujmyżyśmy' )
+
+		local gen = {
+			'/naszklili',
+			'/niepryśniętymi/nieblanszowana',
+			'/bezrządem',
+			'/niechmielących/chłapnęlibyście/parabolizowali/przymówi/zakomentowałaś',
+			'/wymajoną/kozakowaniu/chytruskom/rozkojarz/supłaniu'
+		}
+
+		for i = 1, 30 do
+			local new =  ug:create( rng )
+			assert.is_false( ug:check( new ) )
+
+			if gen[i] then
+				assert.is_equal( gen[i], new )
+			end
+		end
 
 	end)
 
