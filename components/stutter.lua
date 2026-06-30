@@ -191,4 +191,31 @@ function _M.delay_iterator( s, log_entry, pattern )
 end
 
 
+---
+-- Originally in core/nepenthes.lua, moved here to apply a test
+-- case as stuff in core/ by definition is untested code and should
+-- be minimized.
+--
+-- Seems odd to have "don't stutter" in stutter.lua but there's not
+-- really a good place for it to fit elsewhere.
+--
+function _M.zero_delay_iterator( s, log_entry )
+
+	return function()
+
+		if not s then
+			log_entry:mark_complete()
+			return nil
+		end
+
+		local ret = s
+		log_entry:record( #s, 0 )
+		s = nil
+		return ret
+
+	end
+
+end
+
+
 return _M

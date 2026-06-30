@@ -223,4 +223,34 @@ describe("Send-Request-Output Module", function()
 
 	end)
 
+
+	it("Runs with zero delay", function()
+
+		local s = 'abcdefghijklmnopqrstuvwxyz'
+		local sl = stats.new_entry {
+			address = '127.0.0.4',
+			bytes = #s,
+			bytes_sent = 0
+		}
+
+		local x = stutter.zero_delay_iterator( s, sl )
+		local start = cqueues.monotime()
+
+		assert.is_equal( s, x() )
+		assert.is_equal( #s, sl.bytes_sent )
+		assert.is_false( sl.complete )
+
+		assert.is_nil( x() )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
+		assert.is_nil( x() )
+
+		local stop = cqueues.monotime()
+		assert.is_true( (stop - start) <= 0.1 )
+		assert.is_equal( sl.bytes, sl.bytes_sent )
+		assert.is_true( sl.complete )
+
+	end)
+
 end)

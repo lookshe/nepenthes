@@ -260,17 +260,8 @@ app:get "/(.*)" {
 		web.headers['content-type'] = 'text/html; charset=UTF-8'
 
 		if req.zero_delay then
-			return '200 OK', web.headers, function()
-				if not page then
-					logged:mark_complete()
-					return nil
-				end
-
-				local ret = page
-				page = nil
-				logged:record( #page, 0 )
-				return ret
-			end
+			return '200 OK', web.headers,
+				stutter.zero_delay_iterator( page, logged )
 		end
 
 		return '200 OK', web.headers, stutter.delay_iterator (
