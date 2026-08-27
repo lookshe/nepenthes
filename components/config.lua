@@ -28,6 +28,8 @@ return cp.prepare {
 	max_wait = 10,
 	header_min_wait = 5,
 	header_max_wait = 30,
+	link_depth_min = 1,
+	link_depth_max = 5,
 
 	silos = cp.array {
 		{
@@ -38,6 +40,8 @@ return cp.prepare {
 			max_wait = cp.default_nil('number'),
 			header_min_wait = cp.default_nil('number'),
 			header_max_wait = cp.default_nil('number'),
+			link_depth_min = cp.default_nil('number'),
+			link_depth_max = cp.default_nil('number'),
 			zero_delay = false,
 			default = false,
 			redirect_rate = 0,

@@ -62,6 +62,8 @@ function _M.setup()
 			max_wait = siloconfig.max_wait or config.max_wait,
 			header_min_wait = siloconfig.header_min_wait or config.header_min_wait,
 			header_max_wait = siloconfig.header_max_wait or config.header_max_wait,
+			link_depth_min = siloconfig.link_depth_min or config.link_depth_min,
+			link_depth_max = siloconfig.link_depth_max or config.link_depth_max,
 			zero_delay = siloconfig.zero_delay,
 			bogon_filter = siloconfig.bogon_filter,
 			redirect_rate = siloconfig.redirect_rate
@@ -135,6 +137,8 @@ function _M.new_request( requested_silo, url )
 		max_wait = s.max_wait,
 		header_min_wait = s.header_min_wait,
 		header_max_wait = s.header_max_wait,
+		link_depth_min = s.link_depth_min,
+		link_depth_max = s.link_depth_max,
 		zero_delay = s.zero_delay,
 		redirect_rate = s.redirect_rate,
 		url = url,

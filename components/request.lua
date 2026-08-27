@@ -34,18 +34,32 @@ function _methods.urllist( this )
 	local ret = {}
 	local count = #(this.template.data.links or {})
 
-	if this.template.data.link_array then
-		count = count + this.rng:between(
-			this.template.data.link_array.max_count,
-			this.template.data.link_array.min_count
-		)
-	end
-
 	for i = 1, count do
+		this.urlgenerator:depth_settings( this.link_depth_max, this.link_depth_min )
+
 		ret[ i ] = {
 			description = this.wordlist.choose( this.rng ),
 			link = this.urlgenerator:create( this.rng, this.prefix )
 		}
+	end
+
+	if this.template.data.link_array then
+		local more = count + this.rng:between(
+			this.template.data.link_array.max_count,
+			this.template.data.link_array.min_count
+		)
+
+		this.urlgenerator:depth_settings(
+			this.template.data.link_array.depth_max or this.link_depth_max,
+			this.template.data.link_array.depth_min or this.depth_min
+		)
+
+		for i = count, more do
+			ret[ i ] = {
+				description = this.wordlist.choose( this.rng ),
+				link = this.urlgenerator:create( this.rng, this.prefix )
+			}
+		end
 	end
 
 	return ret
