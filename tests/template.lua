@@ -28,19 +28,9 @@ describe("Templating Module", function()
 		for k, v in pairs(x.data) do	-- luacheck: ignore 213
 			count = count + 1
 		end
-		assert.is_equal(2, count)
 
-		--
-		-- Defaults
-		--
-		assert.is_table(x.data.links)
-		assert.is_table(x.data.links[1])
-		assert.is_equal('footer_link', x.data.links[1].name)
-
-		assert.is_equal(1, x.data.links[1].depth_min)
-		assert.is_equal(5, x.data.links[1].depth_max)
-		--assert.is_equal(1, x.data.links[1].description_min)
-		--assert.is_equal(5, x.data.links[1].description_max)
+		assert.is_equal(1, count)
+		assert.is_nil(x.data.links)
 
 	end)
 
@@ -65,7 +55,7 @@ describe("Templating Module", function()
 		--
 		-- Set by template
 		--
-		assert.is_equal(2, count)
+		assert.is_equal(1, count)
 		assert.is_table(x.data.markov)
 
 		assert.is_equal(1, #(x.data.markov))
@@ -73,18 +63,7 @@ describe("Templating Module", function()
 		assert.is_equal('content', x.data.markov[1].name)
 		assert.is_equal(15, x.data.markov[1]['min'])
 		assert.is_equal(200, x.data.markov[1]['max'])
-
-		--
-		-- Defaults
-		--
-		assert.is_table(x.data.links)
-		assert.is_table(x.data.links[1])
-		assert.is_equal('footer_link', x.data.links[1].name)
-
-		assert.is_equal(1, x.data.links[1].depth_min)
-		assert.is_equal(5, x.data.links[1].depth_max)
-		--assert.is_equal(1, x.data.links[1].description_min)
-		--assert.is_equal(5, x.data.links[1].description_max)
+		assert.is_nil(x.data.links)
 
 	end)
 
@@ -104,11 +83,10 @@ describe("Templating Module", function()
 			count = count + 1
 		end
 
-		assert.is_equal(2, count)
+		assert.is_equal(1, count)
 		assert.is_table(x.data.markov)
 		assert.is_equal(1, #(x.data.markov))
-		assert.is_table(x.data.links)
-		assert.is_equal(1, #(x.data.links))
+		assert.is_nil(x.data.links)
 
 	end)
 
@@ -157,16 +135,9 @@ describe("Templating Module", function()
 		for k in pairs(x.data) do	-- luacheck: ignore 213
 			count = count + 1
 		end
-		assert.is_equal(2, count)
+		assert.is_equal(1, count)
 
-		assert.is_table(x.data.links)
-		assert.is_table(x.data.links[1])
-		assert.is_equal('footer_link', x.data.links[1].name)
-
-		assert.is_equal(1, x.data.links[1].depth_min)
-		assert.is_equal(5, x.data.links[1].depth_max)
-		--assert.is_equal(1, x.data.links[1].description_min)
-		--assert.is_equal(5, x.data.links[1].description_max)
+		assert.is_nil(x.data.links)
 
 		--
 		-- Side Location
@@ -192,8 +163,6 @@ describe("Templating Module", function()
 
 		assert.is_equal(10, y.data.links[1].depth_min)
 		assert.is_equal(15, y.data.links[1].depth_max)
-		--assert.is_equal(10, y.data.links[1].description_min)
-		--assert.is_equal(55, y.data.links[1].description_max)
 
 	end)
 

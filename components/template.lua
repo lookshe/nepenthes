@@ -43,15 +43,17 @@ local function template_schema()
 			}
 		),
 
-		links = cl.array {
-			{
-				name = 'footer_link',
-				depth_min = 1,
-				depth_max = 5,
-				--description_min = 1,
-				--description_max = 5
+		links = cl.default_nil(
+			cl.array {
+				{
+					name = 'footer_link',
+					depth_min = 1,
+					depth_max = 5,
+					--description_min = 1,
+					--description_max = 5
+				}
 			}
-		},
+		),
 
 		link_array = cl.default_nil ({
 			min_count = 5,
@@ -59,7 +61,6 @@ local function template_schema()
 			depth_min = 1,
 			depth_max = 5
 		}),
-
 
 		booleans = cl.default_nil (
 			cl.array {
