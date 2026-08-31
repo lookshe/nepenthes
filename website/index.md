@@ -15,7 +15,7 @@ their time. Lastly, Markov-babble is added to the pages, to give the
 crawlers something to scrape up and train their LLMs on, hopefully
 accelerating model collapse.
 
-[You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/nepenthes-demo)
+[You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/demonstration-tarpit)
 
 ***WARNING***
 -------------
