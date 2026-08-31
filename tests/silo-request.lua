@@ -393,11 +393,11 @@ describe("Silo/Request Builder Module", function()
 		local urls = req:urllist()
 
 		--
-		-- Before commit 219, these patterns were all different: the
+		-- Before commit 239, these patterns were all different: the
 		-- tests were consistent because the rng is psuedo-random, which
 		-- is how pages don't change for the same given URL.
 		--
-		-- After commit 219, more calls to the RNG happen, which causes
+		-- After commit 239, more calls to the RNG happen, which causes
 		-- everything to "slide" around. This test had to be updated but
 		-- in oddly predictable-ish ways; other tests needed similar
 		-- updates.
@@ -407,12 +407,12 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table( urls )
 		assert.is_equal( 6, #urls )
 
-		assert.is_equal('/rewinds/Paracelsus/tendinitis', urls[1].link)
-		assert.is_equal('/Victorville/estrangement/tapioca/catastrophic/inapt', urls[2].link)
-		assert.is_equal('/photon/Shea/isolationists/exit', urls[3].link)
-		assert.is_equal('/succinctness/Houyhnhnm/muckraked', urls[4].link)
-		assert.is_equal('/catalogers/unmarked/begs/daybreak/ruminations', urls[5].link)
-		assert.is_equal('/servant', urls[6].link)
+		assert.is_equal('/relaxants/catalogers', urls[1].link)
+		assert.is_equal('/rewinds/Paracelsus/tendinitis', urls[2].link)
+		assert.is_equal('/Victorville/estrangement/tapioca/catastrophic/inapt', urls[3].link)
+		assert.is_equal('/photon/Shea/isolationists/exit', urls[4].link)
+		assert.is_equal('/succinctness/Houyhnhnm/muckraked', urls[5].link)
+		assert.is_equal('/catalogers/unmarked/begs/daybreak/ruminations', urls[6].link)
 
 	end)
 
@@ -429,12 +429,28 @@ describe("Silo/Request Builder Module", function()
 				corpus = './tests/share/wiki-markov.txt',
 				wordlist = './tests/share/words.txt',
 
-				-- maximum four URLs in this particular template:
-				-- 1 footer, 3 link_array. Additionally link depth
-				-- is set to be between 2 and 4.
-				template = 'link_array_1'
+				-- Each run should generate exactly 50 URLs with depth
+				-- between 3 and 7, neither of which is default.
+				template = 'link_array_huge'
 			}
 		}
+
+		local function count_depth( tested_url )
+
+			assert.is_true( tested_url:sub(1, 1) == '/' )
+			tested_url = tested_url:sub(2, #tested_url)
+
+			local ret = 0
+			for _ in tested_url:gmatch('([^/]+)') do
+				ret = ret + 1
+			end
+
+			return ret
+
+		end
+
+		local lowest_depth = 10
+		local highest_depth = 0
 
 		silo.setup()
 
@@ -443,15 +459,32 @@ describe("Silo/Request Builder Module", function()
 			'/catastrophic'
 		)
 
-		local urls = req:urllist()
+		for _ = 1, 20 do
+			local urls = req:urllist()
 
-		assert.is_table( urls )
-		assert.is_equal( 4, #urls )
+			assert.is_table( urls )
+			assert.is_equal( 50, #urls )
 
-		assert.is_equal('/rewinds/Paracelsus/tendinitis/undisturbed', urls[1].link)
-		assert.is_equal('/estrangement/tapioca/catastrophic/inapt', urls[2].link)
-		assert.is_equal('/photon/Shea/isolationists/exit', urls[3].link)
-		assert.is_equal('/succinctness/Houyhnhnm/muckraked', urls[4].link)
+			for _, url in ipairs( urls ) do
+				local depth = count_depth( url.link )
+
+				assert.is_true( depth >= 3 )
+				assert.is_true( depth <= 7 )
+
+				if depth < lowest_depth then
+					lowest_depth = depth
+				end
+
+				if depth > highest_depth then
+					highest_depth = depth
+				end
+			end
+
+			req = silo.new_request( 'default', urls[1].link )
+		end
+
+		assert.is_equal( 3, lowest_depth )
+		assert.is_equal( 7, highest_depth )
 
 	end)
 
@@ -482,12 +515,12 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table( urls )
 		assert.is_equal( 6, #urls )
 
-		assert.is_equal('/maze/counties/staccatos/graphically/poling', urls[1].link)
-		assert.is_equal('/maze/Huff/Leicester', urls[2].link)
-		assert.is_equal('/maze/shelve/servant/shadowboxing/veranda', urls[3].link)
-		assert.is_equal('/maze/daybreak/sibyl/boasting/pythogenesis/ballpark', urls[4].link)
-		assert.is_equal('/maze/graphically/dearth/nutritious/objective/Huff', urls[5].link)
-		assert.is_equal('/maze/Houyhnhnm/staccatos/bosom/yourself/muckraked', urls[6].link)
+		assert.is_equal('/maze/caftans/undisturbed/sedate/Paracelsus/crying', urls[1].link)
+		assert.is_equal('/maze/counties/staccatos/graphically/poling', urls[2].link)
+		assert.is_equal('/maze/Huff/Leicester', urls[3].link)
+		assert.is_equal('/maze/shelve/servant/shadowboxing/veranda', urls[4].link)
+		assert.is_equal('/maze/daybreak/sibyl/boasting/pythogenesis/ballpark', urls[5].link)
+		assert.is_equal('/maze/graphically/dearth/nutritious/objective/Huff', urls[6].link)
 
 	end)
 
@@ -521,9 +554,10 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table( urls )
 		assert.is_equal( 6, #urls )
 
-		assert.is_equal('/maze/counties/staccatos/graphically/poling', urls[1].link)
-		assert.is_equal('/maze/Huff/Leicester', urls[2].link)
-		assert.is_equal('/maze/shelve/servant/shadowboxing/veranda', urls[3].link)
+		assert.is_equal('/maze/caftans/undisturbed/sedate/Paracelsus/crying', urls[1].link)
+		assert.is_equal('/maze/counties/staccatos/graphically/poling', urls[2].link)
+		assert.is_equal('/maze/Huff/Leicester', urls[3].link)
+		assert.is_equal('/maze/shelve/servant/shadowboxing/veranda', urls[4].link)
 
 		local req2 = silo.new_request(
 			'default',
@@ -536,15 +570,12 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table( urls2 )
 		assert.is_equal( 9, #urls2 )
 
-		assert.is_equal('/otherplace/veranda/festoon/mortarboards/ballpark/Gothic', urls2[1].link)
-		assert.is_equal('/otherplace/ruminations/mortifying/boasting/stones', urls2[2].link)
-		assert.is_equal('/otherplace/pythogenesis', urls2[3].link)
-		assert.is_equal('/otherplace/graphically/Khalid/teachable', urls2[4].link)
-		assert.is_equal('/otherplace/varied/encyclical/objective/staccatos', urls2[5].link)
-		assert.is_equal('/otherplace/lousiness/Huff/staccatos/bastardizes/handmaids', urls2[6].link)
-		assert.is_equal('/otherplace/ballpark', urls2[7].link)
-		assert.is_equal('/otherplace/relaxants/teachable/annual/medicals', urls2[8].link)
-		assert.is_equal('/otherplace/shelve/recur/WordPress/Victorville/stones', urls2[9].link)
+		assert.is_equal('/otherplace/fascists/Leicester/veranda/crankcase', urls2[1].link)
+		assert.is_equal('/otherplace/veranda/festoon/mortarboards/ballpark/Gothic', urls2[2].link)
+		assert.is_equal('/otherplace/ruminations/mortifying/boasting/stones', urls2[3].link)
+		assert.is_equal('/otherplace/pythogenesis', urls2[4].link)
+		assert.is_equal('/otherplace/graphically/Khalid/teachable', urls2[5].link)
+		assert.is_equal('/otherplace/varied/encyclical/objective/staccatos', urls2[6].link)
 
 	end)
 
@@ -575,7 +606,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_match('^%<%!DOCTYPE html%>', out)
 		assert.is_match('In other words, conditional on the state of affairs now', out)
 		assert.is_number(wait)
-		assert.is_equal(9, wait)
+		assert.is_equal(8, wait)
 
 	end)
 

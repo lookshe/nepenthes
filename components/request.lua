@@ -50,11 +50,11 @@ function _methods.urllist( this )
 		)
 
 		this.urlgenerator:depth_settings(
-			this.template.data.link_array.depth_max or this.link_depth_max,
-			this.template.data.link_array.depth_min or this.depth_min
+			this.template.data.link_array.depth_max,
+			this.template.data.link_array.depth_min
 		)
 
-		for i = count, more do
+		for i = count + 1, more do
 			ret[ i ] = {
 				description = this.wordlist.choose( this.rng ),
 				link = this.urlgenerator:create( this.rng, this.prefix )
