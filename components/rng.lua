@@ -51,8 +51,12 @@ end
 
 function _xorshiro.between( s, upper, lower )
 
-	if (upper - lower) <= 0 then
-		error("Requested random value range invalid")
+	local range = ( upper - lower )
+
+	assert(range >= 0, "Requested random value range invalid")
+
+	if range == 0 then
+		return upper
 	end
 
 	--

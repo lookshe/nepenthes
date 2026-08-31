@@ -67,4 +67,14 @@ describe("Deterministic Psuedo-RNG Generator", function()
 
 	end)
 
+
+	it("Short circuits when hardwired to a single value", function()
+
+		local test_rng = rng.new( '/place' )
+		for _ = 1, 200 do
+			assert.is_equal( 5, test_rng:between( 5, 5 ) )
+		end
+
+	end)
+
 end)
