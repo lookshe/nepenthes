@@ -46,8 +46,8 @@ cry. And who doesn't want that? Sad billionaires are funny.
 Can I put a link to your demo tarpit on my site?
 ------------------------------------------------
 
-This won't do anything to help _your_ site, at all, and might increase
-my load.
+Please don't. This won't do anything to help _your_ site, at all, and 
+might increase my load.
 
 What makes a tarpit is not a lot of links pointing to one place; it's
 a lot of places that do not respond quickly.
