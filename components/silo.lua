@@ -66,7 +66,7 @@ function _M.setup()
 			link_depth_max = siloconfig.link_depth_max or config.link_depth_max,
 			zero_delay = siloconfig.zero_delay,
 			bogon_filter = siloconfig.bogon_filter,
-			redirect_rate = siloconfig.redirect_rate
+			redirect_rate = siloconfig.redirect_rate or 0
 		}
 
 		if siloconfig.default then

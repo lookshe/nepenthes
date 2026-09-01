@@ -51,6 +51,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request1)
 		assert.is_equal('default', request1.silo)
 		assert.is_false(request1:is_bogon())
+		assert.is_false(request1:is_redirect())
 
 		local request2 = silo.new_request(
 			'default',
@@ -60,6 +61,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request2)
 		assert.is_equal('default', request2.silo)
 		assert.is_true(request2:is_bogon())
+		assert.is_false(request2:is_redirect())
 
 		local request3 = silo.new_request(
 			'some-other-silo',
@@ -69,6 +71,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request3)
 		assert.is_equal('default', request3.silo)
 		assert.is_true(request3:is_bogon())
+		assert.is_false(request3:is_redirect())
 
 		local request4 = silo.new_request(
 			'some-not-configured-silo',
@@ -78,6 +81,7 @@ describe("Silo/Request Builder Module", function()
 		assert.is_table(request4)
 		assert.is_equal('default', request4.silo)
 		assert.is_false(request4:is_bogon())
+		assert.is_false(request4:is_redirect())
 
 	end)
 
