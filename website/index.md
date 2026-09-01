@@ -17,6 +17,10 @@ accelerating model collapse.
 
 [You can take a look at what this looks like, here. (Note: VERY slow page loads!)](https://zadzmo.org/demonstration-tarpit)
 
+> Note: The above is intended to demonstrate to humans what a tarpit
+> looks like, and not an effective trap. Linking or redirecting traffic
+> to it will have little to no effect.
+
 ***WARNING***
 -------------
 
