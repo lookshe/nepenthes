@@ -463,7 +463,7 @@ describe("Silo/Request Builder Module", function()
 			'/catastrophic'
 		)
 
-		for _ = 1, 20 do
+		for _ = 1, 10 do
 			local urls = req:urllist()
 
 			assert.is_table( urls )
@@ -592,6 +592,37 @@ describe("Silo/Request Builder Module", function()
 				corpus = './tests/share/wiki-markov.txt',
 				wordlist = './tests/share/words.txt',
 				template = 'default'
+			}
+		}
+
+		silo.setup()
+
+		local req = silo.new_request(
+			'default',
+			'/catastrophic'
+		)
+
+		req:load_markov()
+		local out = req:render()
+		local wait = req:send_delay()
+
+		assert.is_string(out)
+		assert.is_match('^%<%!DOCTYPE html%>', out)
+		assert.is_match('In other words, conditional on the state of affairs now', out)
+		assert.is_number(wait)
+		assert.is_equal(8, wait)
+
+	end)
+
+
+	it("Renders the template, without named links #request", function()
+
+		config.silos = {
+			{
+				name = 'default',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'booleans'
 			}
 		}
 

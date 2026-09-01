@@ -137,8 +137,10 @@ function _methods.render( this )
 	local links = this:urllist()
 
 	-- Named links
-	for i, v in ipairs( this.template.data.links ) do	-- luacheck: ignore 213
-		this.vars[ v.name ] = table.remove( links )
+	if this.template.data.links then
+		for i, v in ipairs( this.template.data.links ) do	-- luacheck: ignore 213
+			this.vars[ v.name ] = table.remove( links )
+		end
 	end
 
 	-- Optional link array
