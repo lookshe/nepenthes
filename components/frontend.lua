@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.4
 
-local cqueues = require 'cqueues' -- for monotime()
+--local cqueues = require 'cqueues' -- for monotime()
+local corewait = require 'daemonparts.corewait'
 local output = require 'daemonparts.output'
 
 local silo = require 'components.silo'
@@ -14,7 +15,7 @@ local stats = require 'components.stats'
 local function checkpoint( times, name )
 	times[ #times + 1 ] = {
 		name = name,
-		at = cqueues.monotime()
+		at = corewait.monotime()
 	}
 end
 
@@ -96,7 +97,7 @@ function _M.preprocess( web )
 	if req:is_bogon() then
 		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
 		local pause = req:header_wait()
-		cqueues.poll( pause )
+		corewait.poll( pause )
 		log_bogon( web, req, pause ):mark_complete()
 		return web:notfound("Nothing exists at this URL")
 	end
@@ -104,7 +105,6 @@ function _M.preprocess( web )
 	local is_redirect, location = req:is_redirect()
 	if is_redirect then
 		local pause = req:header_wait()
-		--cqueues.poll( pause )
 		local logged = log_redirect( web, req, pause )
 		local page = '< href="' .. location .. '">Moved Here</a>'
 
@@ -130,11 +130,12 @@ function _M.GET( web )
 
 	local req = web.vars.req
 	local ts = web.vars.ts
-
 	checkpoint( ts, 'preprocess' )
+
 	req:load_markov()
 	req:set_booleans()
 	checkpoint( ts, 'markov' )
+
 	local page = req:render()
 	local wait = req:send_delay()
 	checkpoint( ts, 'rendering' )
@@ -184,7 +185,7 @@ function _M.HEAD( web )
 	local req = web.vars.req
 
 	local pause = req:header_wait()
-	cqueues.poll( pause )
+	corewait.poll( pause )
 	log_head( web, req, pause )
 	web.headers['content-type'] = 'text/html; charset=UTF-8'
 	return web:ok("")
