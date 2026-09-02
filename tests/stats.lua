@@ -128,6 +128,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_equal(0, s1.cpu)
 		assert.is_equal(0, s1.bytes_sent)
 		assert.is_equal(0, s1.delay)
+		assert.is_equal(0, s1.redirects)
 
 		-- some stats not keyed to requests
 		assert.is_number(s1.memory_usage)
@@ -144,6 +145,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.000305, s2.cpu))
 		assert.is_equal(1809, s2.bytes_sent)
 		assert.is_equal(13, s2.delay)
+		assert.is_equal(0, s2.redirects)
 
 		assert.is_number(s2.memory_usage)
 		assert.is_number(s2.cpu_total)
@@ -159,6 +161,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.000524, s3.cpu))
 		assert.is_equal(3378, s3.bytes_sent)
 		assert.is_equal(33, s3.delay)
+		assert.is_equal(0, s3.redirects)
 
 		assert.is_number(s3.memory_usage)
 		assert.is_number(s3.cpu_total)
@@ -174,6 +177,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.000896, s4.cpu))
 		assert.is_equal(4893, s4.bytes_sent)
 		assert.is_equal(38, s4.delay)
+		assert.is_equal(0, s4.redirects)
 
 		assert.is_number(s4.memory_usage)
 		assert.is_number(s4.cpu_total)
@@ -189,6 +193,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.001144, s5.cpu))
 		assert.is_equal(6780, s5.bytes_sent)
 		assert.is_equal(49, s5.delay)
+		assert.is_equal(0, s5.redirects)
 
 		assert.is_number(s5.memory_usage)
 		assert.is_number(s5.cpu_total)
@@ -204,6 +209,7 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.001545, s6.cpu))
 		assert.is_equal(8585, s6.bytes_sent)
 		assert.is_equal(57, s6.delay)
+		assert.is_equal(0, s6.redirects)
 
 		assert.is_number(s6.memory_usage)
 		assert.is_number(s6.cpu_total)
@@ -219,6 +225,129 @@ describe("Hit Counting/Statistics Module", function()
 		assert.is_true(float_equals(0.001838, s7.cpu))
 		assert.is_equal(10135, s7.bytes_sent)
 		assert.is_equal(63, s7.delay)
+		assert.is_equal(0, s7.redirects)
+
+		assert.is_number(s7.memory_usage)
+		assert.is_number(s7.cpu_total)
+
+	end)
+
+
+	it("Logs Redirects", function()
+
+		stats.clear()
+		local s1 = stats.compute()
+		assert.is_equal(0, s1.hits)
+		assert.is_equal(0, s1.addresses)
+		assert.is_equal(0, s1.agents)
+		assert.is_equal(0, s1.cpu)
+		assert.is_equal(0, s1.bytes_sent)
+		assert.is_equal(0, s1.delay)
+		assert.is_equal(0, s1.redirects)
+
+		-- some stats not keyed to requests
+		assert.is_number(s1.memory_usage)
+		assert.is_number(s1.cpu_total)
+
+		local e1 = stats.new_entry( entries[1] )
+		e1:record( 1809, 13 )
+		e1:mark_complete()
+
+		local s2 = stats.compute()
+		assert.is_equal(1, s2.hits)
+		assert.is_equal(1, s2.addresses)
+		assert.is_equal(1, s2.agents)
+		assert.is_true(float_equals(0.000305, s2.cpu))
+		assert.is_equal(1809, s2.bytes_sent)
+		assert.is_equal(13, s2.delay)
+		assert.is_equal(0, s2.redirects)
+
+		assert.is_number(s2.memory_usage)
+		assert.is_number(s2.cpu_total)
+
+		local redir1 = copy( entries[2] )
+		redir1.response = 302
+
+		local e2 = stats.new_entry( redir1 )
+		e2:record( 1569, 20 )
+		e2:mark_complete()
+
+		local s3 = stats.compute()
+		assert.is_equal(2, s3.hits)
+		assert.is_equal(2, s3.addresses)
+		assert.is_equal(2, s3.agents)
+		assert.is_true(float_equals(0.000524, s3.cpu))
+		assert.is_equal(3378, s3.bytes_sent)
+		assert.is_equal(33, s3.delay)
+		assert.is_equal(1, s3.redirects)
+
+		assert.is_number(s3.memory_usage)
+		assert.is_number(s3.cpu_total)
+
+		local e3 = stats.new_entry( entries[3] )
+		e3:record( 1515, 5 )
+		e3:mark_complete()
+
+		local s4 = stats.compute()
+		assert.is_equal(3, s4.hits)
+		assert.is_equal(3, s4.addresses)
+		assert.is_equal(3, s4.agents)
+		assert.is_true(float_equals(0.000896, s4.cpu))
+		assert.is_equal(4893, s4.bytes_sent)
+		assert.is_equal(38, s4.delay)
+		assert.is_equal(1, s4.redirects)
+
+		assert.is_number(s4.memory_usage)
+		assert.is_number(s4.cpu_total)
+
+
+		local redir2 = copy( entries[4] )
+		redir2.response = 302
+
+		local e4 = stats.new_entry( redir2 )
+		e4:record( 1887, 11 )
+		e4:mark_complete()
+
+		local s5 = stats.compute()
+		assert.is_equal(4, s5.hits)
+		assert.is_equal(4, s5.addresses)
+		assert.is_equal(4, s5.agents)
+		assert.is_true(float_equals(0.001144, s5.cpu))
+		assert.is_equal(6780, s5.bytes_sent)
+		assert.is_equal(49, s5.delay)
+		assert.is_equal(2, s5.redirects)
+
+		assert.is_number(s5.memory_usage)
+		assert.is_number(s5.cpu_total)
+
+		local e5 = stats.new_entry( entries[5] )
+		e5:record( 1805, 8 )
+		e5:mark_complete()
+
+		local s6 = stats.compute()
+		assert.is_equal(5, s6.hits)
+		assert.is_equal(5, s6.addresses)
+		assert.is_equal(5, s6.agents)
+		assert.is_true(float_equals(0.001545, s6.cpu))
+		assert.is_equal(8585, s6.bytes_sent)
+		assert.is_equal(57, s6.delay)
+		assert.is_equal(2, s6.redirects)
+
+		assert.is_number(s6.memory_usage)
+		assert.is_number(s6.cpu_total)
+
+		local e6 = stats.new_entry( entries[6] )
+		e6:record( 1550, 6 )
+		e6:mark_complete()
+
+		local s7 = stats.compute()
+		assert.is_equal(6, s7.hits)
+		assert.is_equal(6, s7.addresses)
+		assert.is_equal(6, s7.agents)
+		assert.is_true(float_equals(0.001838, s7.cpu))
+		assert.is_equal(10135, s7.bytes_sent)
+		assert.is_equal(63, s7.delay)
+		assert.is_equal(2, s7.redirects)
 
 		assert.is_number(s7.memory_usage)
 		assert.is_number(s7.cpu_total)

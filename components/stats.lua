@@ -137,6 +137,7 @@ function _M.compute( silo )
 		bytes_sent_total = 0,
 		bytes_generated_total = 0,
 		hits_total = 0,
+		redirects = 0,
 		uptime = os.time() - start
 	}
 
@@ -160,6 +161,10 @@ function _M.compute( silo )
 
 		if v.response == 404 then
 			ret.bogons = ret.bogons + 1
+		end
+
+		if v.response == 302 then
+			ret.redirects = ret.redirects + 1
 		end
 
 		if not seen_addresses[ v.address ] then
