@@ -186,10 +186,10 @@ end
 function _M.HEAD( web )
 
 	local req = web.vars.req
-
-	local pause = req:header_wait()
+	local pause = 0
 
 	if not req.zero_delay then
+		pause = req:header_wait()
 		corewait.poll( pause )
 	end
 

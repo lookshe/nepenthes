@@ -101,6 +101,13 @@ describe("Frontend Routes", function()
 				max_wait = 5,
 				header_min_wait = 1,
 				header_max_wait = 1
+			},
+			{
+				name = 'zerodelay',
+				corpus = './tests/share/wiki-markov.txt',
+				wordlist = './tests/share/words.txt',
+				template = 'default',
+				zero_delay = true
 			}
 		}
 
@@ -114,6 +121,10 @@ describe("Frontend Routes", function()
 		output.switch('table', logged_lines)
 	end)
 
+
+	-- ####
+	-- 		Actual tests
+	-- ####
 
 	it("Handles GET", function()
 
@@ -211,11 +222,8 @@ describe("Frontend Routes", function()
 
 	end)
 
-	it("Filters bogons", function()
-		pending("Not yet written")
-	end)
 
-	it("Switches silos", function()
+	it("Filters bogons", function()
 		pending("Not yet written")
 	end)
 
@@ -226,12 +234,55 @@ describe("Frontend Routes", function()
 
 
 	it("Handles GET - zero delay", function()
-		pending("Not yet written")
+
+		local test_start = cqueues.monotime()
+		local web = mock_request( 'GET', '/' )
+		web['HTTP_X_SILO'] = 'zerodelay'
+
+		local vars = frontend.preprocess( web )
+		assert.is_table( vars )
+		web.vars = vars
+
+		local status, headers, out = frontend.GET( web )
+		assert.is_function( out )
+		assert.is_table( headers )
+		assert.is_equal( '200 OK', status )
+
+		local s = ''
+		for val in out do
+			s = s .. val
+		end
+
+		assert.is_string(s)
+		assert.is_equal( 1647, #s )
+		local test_end = cqueues.monotime()
+		local duration = test_end - test_start
+		assert.is_true( duration < 1 )
+
+		assert.is_equal( 1, #logged_lines )
+
 	end)
 
 
 	it("Handles HEAD - zero delay", function()
-		pending("Not yet written")
+
+		local test_start = cqueues.monotime()
+		local web = mock_request( 'HEAD', '/' )
+		web['HTTP_X_SILO'] = 'zerodelay'
+
+		local vars = frontend.preprocess( web )
+		assert.is_table( vars )
+		web.vars = vars
+
+		local status, headers, out = frontend.HEAD( web )
+		assert.is_equal( '', out )
+		assert.is_table( headers )
+		assert.is_equal( '200 OK', status )
+
+		local test_end = cqueues.monotime()
+		local duration = test_end - test_start
+		assert.is_true( duration < 1 )
+
 	end)
 
 
