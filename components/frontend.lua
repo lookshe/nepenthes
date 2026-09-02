@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.4
 
---local cqueues = require 'cqueues' -- for monotime()
+local http_util = require 'http.util'
 local corewait = require 'daemonparts.corewait'
 local output = require 'daemonparts.output'
 
@@ -89,13 +89,15 @@ local _M = {}
 --
 function _M.preprocess( web )
 
+	local path = http_util.decodeURI( web.PATH_INFO )
+
 	local ts = {}
 	checkpoint( ts, 'start' )
 
-	local req = silo.new_request( web.HTTP_X_SILO, web.PATH_INFO )
+	local req = silo.new_request( web.HTTP_X_SILO, path )
 
 	if req:is_bogon() then
-		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", web.PATH_INFO)
+		output.notice("Bogon URL:", web.REMOTE_ADDR, "asked for", path)
 		local pause = req:header_wait()
 		corewait.poll( pause )
 		log_bogon( web, req, pause ):mark_complete()
@@ -108,7 +110,7 @@ function _M.preprocess( web )
 		local logged = log_redirect( web, req, pause )
 		local page = '< href="' .. location .. '">Moved Here</a>'
 
-		web.headers:upsert('location', location)
+		web.headers['location'] = location
 		return '302 Found', web.headers, stutter.delay_iterator (
 			page, logged,
 			stutter.generate_pattern( pause, #page )
@@ -117,6 +119,7 @@ function _M.preprocess( web )
 
 	return {
 		ts  = ts,
+		path = path,
 		req = req
 	}
 
@@ -150,7 +153,7 @@ function _M.GET( web )
 	local time_spent = ts[ #ts ].at - ts[1].at
 	local logged = stats.new_entry {
 		address = web.REMOTE_ADDR,
-		uri = web.PATH_INFO,
+		uri = web.vars.path,
 		agent = web.HTTP_X_USER_AGENT,
 		silo = req.silo,
 		bytes_generated = #page,
@@ -185,7 +188,11 @@ function _M.HEAD( web )
 	local req = web.vars.req
 
 	local pause = req:header_wait()
-	corewait.poll( pause )
+
+	if not req.zero_delay then
+		corewait.poll( pause )
+	end
+
 	log_head( web, req, pause )
 	web.headers['content-type'] = 'text/html; charset=UTF-8'
 	return web:ok("")
